@@ -220,10 +220,12 @@ function setNutrition(on) {
   root.classList.toggle('hide-nutrition', !on);
   try { localStorage.setItem('yolkie-nutrition', on ? 'on' : 'off'); } catch (e) {}
   document.querySelectorAll('.js-nutri-toggle').forEach((t) => { t.checked = on; });
+  document.querySelectorAll('.js-nutri-hide').forEach((t) => { t.checked = !on; });
 }
 document.querySelectorAll('.js-nutri-toggle').forEach((t) => { t.checked = nutritionOn(); });
 document.addEventListener('change', (e) => {
   if (e.target.matches && e.target.matches('.js-nutri-toggle')) setNutrition(e.target.checked);
+  if (e.target.matches && e.target.matches('.js-nutri-hide')) setNutrition(!e.target.checked);
 });
 
 // Hero Yolkie: dozes on the couch, perks up when you point at a button, changes face when poked.
@@ -253,14 +255,17 @@ if (heroYolk) {
 
 /* ---------- The demo (try.html) ---------- */
 
-// Thirteen everyday recipes, three or four for each meal (`meal`). Amounts are for `base` servings; `step` is the smallest sensible
-// increment when scaling, so eggs stay whole and cans go in halves. Nutrition is per serving
+// Twenty-seven everyday recipes, six to nine for each meal (`meal`), each tagged with a cuisine, the diets
+// it fits (`diet`; keto, low-carb and high-protein come from the numbers) and its allergens.
+// Amounts are for `base` servings; `step` is the smallest sensible increment when scaling, so eggs stay whole and cans go in halves. Nutrition is per serving
 // and a rough estimate. Steps: { do } is a task you tick off, { timer } also starts a timer when
 // you tick it, { wait } pauses until a timer ends (or has `until` minutes left).
 const RECIPES = [
   /* Breakfast */
   {
     id: 'scrambled', meal: 'breakfast', name: 'Soft scrambled eggs on toast', time: 10, effort: 1, base: 2, kcal: 400, protein: 20,
+    cuisine: 'British', diet: ['vegetarian'], allergens: ['egg', 'dairy', 'gluten'],
+    nut: { carbs: 32, fiber: 3, fat: 21, sugar: 6, sodium: 560 },
     egg: 'Scrambled eggs? Don’t tell Scramble.',
     blurb: 'Low heat, slow stir, done before the toast pops. Tomatoes on the side so it counts as balanced.',
     dishes: ['non-stick pan', 'bowl'],
@@ -282,15 +287,17 @@ const RECIPES = [
     ],
   },
   {
-    id: 'oatmeal', meal: 'breakfast', name: 'Peanut butter banana oatmeal', time: 10, effort: 1, base: 2, kcal: 440, protein: 17,
+    id: 'oatmeal', meal: 'breakfast', name: 'Peanut butter banana oatmeal', time: 10, effort: 1, base: 2, kcal: 440, protein: 16,
+    cuisine: 'American', diet: ['vegan'], allergens: ['peanut', 'soy', 'gluten'],
+    nut: { carbs: 58, fiber: 8, fat: 15, sugar: 22, sodium: 190 },
     blurb: 'One pot, five minutes of stirring now and then, and it keeps you going till lunch.',
     dishes: ['saucepan'],
     ingredients: [
       { q: 1, u: 'cup', n: 'rolled oats', s: 'Pantry', step: 0.25 },
-      { q: 2, u: 'cup', n: 'milk (any kind)', s: 'Dairy', step: 0.5 },
+      { q: 2, u: 'cup', n: 'soy milk (or any plant milk)', s: 'Dairy', step: 0.5 },
       { q: 1, n: 'banana', p: 'bananas', s: 'Produce', step: 0.5 },
       { q: 2, u: 'tbsp', n: 'peanut butter', s: 'Pantry', step: 0.5 },
-      { q: 2, u: 'tsp', n: 'honey', s: 'Pantry', step: 1 },
+      { q: 2, u: 'tsp', n: 'maple syrup', s: 'Pantry', step: 1 },
     ],
     spices: [{ q: 0.5, u: 'tsp', n: 'Ground cinnamon', step: 0.25, swap: 'A pinch of pumpkin pie spice or nutmeg. Or skip it.' }],
     zero: 'Put the saucepan on the stove.',
@@ -298,11 +305,13 @@ const RECIPES = [
       { do: 'Oats, milk, cinnamon and a pinch of salt into the saucepan. Medium heat.', timer: { id: 'oats', label: 'Oats', mins: 5 } },
       { do: 'Peel the banana and slice it. A butter knife is fine.', mins: 1 },
       { wait: 'oats', note: 'Give it a stir now and then so it doesn’t catch. This moves on by itself.', clean: { text: 'Milk back in the fridge, oats back in the cupboard.' } },
-      { do: 'Heat off. Spoon into bowls and top with banana, peanut butter and a drizzle of honey.', mins: 1 },
+      { do: 'Heat off. Spoon into bowls and top with banana, peanut butter and a drizzle of maple syrup.', mins: 1 },
     ],
   },
   {
     id: 'pancakes', meal: 'breakfast', name: 'Weekend pancakes with berries', time: 30, effort: 2, base: 2, kcal: 570, protein: 14,
+    cuisine: 'American', diet: ['vegetarian'], allergens: ['egg', 'dairy', 'gluten'],
+    nut: { carbs: 86, fiber: 3, fat: 19, sugar: 34, sodium: 720 },
     blurb: 'Small, fluffy pancakes in two batches. Lumpy batter is correct batter.',
     dishes: ['mixing bowl', 'frying pan'],
     ingredients: [
@@ -337,6 +346,8 @@ const RECIPES = [
   /* Lunch and dinner */
   {
     id: 'quesadillas', meal: 'lunch', name: 'Black bean quesadillas', time: 15, effort: 1, base: 2, kcal: 540, protein: 24,
+    cuisine: 'Mexican', diet: ['vegetarian'], allergens: ['gluten', 'dairy'],
+    nut: { carbs: 58, fiber: 12, fat: 23, sugar: 4, sodium: 980 },
     blurb: 'Crispy, melty and mostly assembly. The pan does the rest.',
     dishes: ['frying pan', 'bowl', 'cutting board'],
     ingredients: [
@@ -362,6 +373,8 @@ const RECIPES = [
   },
   {
     id: 'fried-rice', meal: 'dinner', name: 'Egg fried rice', time: 15, effort: 1, base: 2, kcal: 470, protein: 17,
+    cuisine: 'Chinese', diet: ['vegetarian', 'dairy-free'], allergens: ['egg', 'soy', 'gluten', 'sesame'],
+    nut: { carbs: 66, fiber: 5, fat: 15, sugar: 4, sodium: 1050 },
     egg: 'Egg fried rice? Eggs? …Fine. I respect it.',
     blurb: 'Ready-cooked rice, a hot pan and four minutes of leaving it alone.',
     dishes: ['large frying pan', 'bowl'],
@@ -388,6 +401,8 @@ const RECIPES = [
   },
   {
     id: 'lemon-chicken', meal: 'dinner', name: 'Lemon garlic chicken & rice', time: 30, effort: 2, base: 2, kcal: 610, protein: 42,
+    cuisine: 'Mediterranean', diet: [], allergens: ['dairy', 'gluten'],
+    nut: { carbs: 62, fiber: 4, fat: 21, sugar: 3, sodium: 820 },
     blurb: 'Golden chicken, buttery lemon green beans, and rice that finishes at the same time.',
     dishes: ['saucepan', 'frying pan', 'cutting board'],
     ingredients: [
@@ -421,6 +436,8 @@ const RECIPES = [
   },
   {
     id: 'peanut-noodles', meal: 'lunch', name: 'Peanut noodles with crunchy veg', time: 20, effort: 2, base: 2, kcal: 560, protein: 21,
+    cuisine: 'Thai', diet: ['vegan'], allergens: ['peanut', 'soy', 'gluten'], has: ['spicy'],
+    nut: { carbs: 72, fiber: 8, fat: 20, sugar: 10, sodium: 900 },
     blurb: 'A quick peanut sauce, cold crunchy veg and hot noodles. Weirdly great.',
     dishes: ['big pot', 'bowl', 'cutting board'],
     ingredients: [
@@ -432,7 +449,7 @@ const RECIPES = [
       { q: 1, n: 'lime', p: 'limes', s: 'Produce', step: 0.5 },
       { q: 3, u: 'tbsp', n: 'peanut butter', s: 'Pantry', step: 0.5 },
       { q: 2, u: 'tbsp', n: 'soy sauce', s: 'Pantry', step: 0.5 },
-      { q: 1, u: 'tsp', n: 'honey', s: 'Pantry', step: 0.25 },
+      { q: 1, u: 'tsp', n: 'maple syrup', s: 'Pantry', step: 0.25 },
     ],
     spices: [
       { q: 0.5, u: 'tsp', n: 'Red pepper flakes', step: 0.25, swap: 'A squeeze of hot sauce, or leave it out.' },
@@ -441,7 +458,7 @@ const RECIPES = [
     zero: 'Fill the big pot with water and put it on the stove.',
     steps: [
       { do: 'Lid on, high heat, pinch of salt.', timer: { id: 'boil', label: 'Water', mins: 6 } },
-      { do: 'In the bowl, whisk the peanut butter, soy sauce, honey, spices, lime juice and 3 tbsp of hot tap water.', mins: 3 },
+      { do: 'In the bowl, whisk the peanut butter, soy sauce, maple syrup, spices, lime juice and 3 tbsp of hot tap water.', mins: 3 },
       { do: 'Cut the carrot and cucumber into thin sticks. Slice the green onions.', mins: 4 },
       { wait: 'boil', clean: { text: 'Rinse the knife and cutting board and put them on the rack.', dish: 'cutting board' } },
       { do: 'Noodles and edamame into the boiling water.', timer: { id: 'noodles', label: 'Noodles', mins: 4 } },
@@ -451,6 +468,8 @@ const RECIPES = [
   },
   {
     id: 'soup', meal: 'lunch', name: 'Tomato soup & grilled cheese', time: 25, effort: 2, base: 2, kcal: 740, protein: 23,
+    cuisine: 'American', diet: ['vegetarian'], allergens: ['dairy', 'gluten'],
+    nut: { carbs: 76, fiber: 7, fat: 38, sugar: 18, sodium: 1450 },
     blurb: 'The classic pair, timed so the sandwiches come out of the pan just as the soup is ready.',
     dishes: ['saucepan', 'frying pan', 'cutting board'],
     ingredients: [
@@ -485,6 +504,8 @@ const RECIPES = [
   },
   {
     id: 'sheet-pan', meal: 'dinner', name: 'Sausage & potato sheet-pan dinner', time: 45, effort: 1, base: 2, kcal: 690, protein: 29,
+    cuisine: 'Italian', diet: ['dairy-free'], allergens: ['gluten'],
+    nut: { carbs: 42, fiber: 6, fat: 45, sugar: 9, sodium: 1180 },
     blurb: 'The oven does almost all of it. You chop for about eight minutes, total.',
     dishes: ['sheet pan', 'cutting board'],
     ingredients: [
@@ -514,6 +535,8 @@ const RECIPES = [
   },
   {
     id: 'turkey-chili', meal: 'dinner', name: 'Turkey chili with rice', time: 50, effort: 3, base: 4, kcal: 560, protein: 40,
+    cuisine: 'Tex-Mex', diet: ['gluten-free'], allergens: ['dairy'], has: ['spicy'],
+    nut: { carbs: 62, fiber: 11, fat: 16, sugar: 9, sodium: 760 },
     blurb: 'A proper pot of chili, with the rice timed to land when the chili does.',
     dishes: ['big pot', 'saucepan', 'cutting board'],
     ingredients: [
@@ -553,6 +576,8 @@ const RECIPES = [
   /* Snacks */
   {
     id: 'hummus-plate', meal: 'snack', name: 'Hummus & crunchy veg plate', time: 10, effort: 1, base: 2, kcal: 290, protein: 9,
+    cuisine: 'Middle Eastern', diet: ['vegan'], allergens: ['sesame', 'gluten'],
+    nut: { carbs: 34, fiber: 7, fat: 14, sugar: 5, sodium: 480 },
     blurb: 'Warm pita, cold crunchy veg and a swoosh of hummus. Looks fancy, takes ten minutes.',
     dishes: ['cutting board', 'small bowl'],
     ingredients: [
@@ -574,6 +599,8 @@ const RECIPES = [
   },
   {
     id: 'popcorn', meal: 'snack', name: 'Parmesan stovetop popcorn', time: 10, effort: 2, base: 2, kcal: 370, protein: 8,
+    cuisine: 'American', diet: ['vegetarian', 'gluten-free'], allergens: ['dairy'],
+    nut: { carbs: 32, fiber: 6, fat: 24, sugar: 0, sodium: 420 },
     blurb: 'Real popcorn in one pot, with butter, parmesan and a little garlic. Movie optional.',
     dishes: ['big pot with a lid', 'big bowl'],
     ingredients: [
@@ -598,6 +625,8 @@ const RECIPES = [
   },
   {
     id: 'chickpeas', meal: 'snack', name: 'Crispy roasted chickpeas', time: 40, effort: 1, base: 2, kcal: 240, protein: 10,
+    cuisine: 'Spanish', diet: ['vegan', 'gluten-free'], allergens: [],
+    nut: { carbs: 30, fiber: 9, fat: 9, sugar: 1, sodium: 380 },
     blurb: 'A can of chickpeas, a hot oven and almost no effort. They crisp up more as they cool.',
     dishes: ['sheet pan', 'bowl'],
     ingredients: [
@@ -618,6 +647,403 @@ const RECIPES = [
       { do: 'Shake the pan so they roll over.', timer: { id: 'roast2', label: 'Roast, round 2', mins: 10 } },
       { wait: 'roast2', clean: { text: 'Towel in the laundry. Wipe the counter by the sink.' } },
       { do: 'Tip them into the bowl with the spices and toss while they’re hot.', mins: 1 },
+    ],
+  },
+  /* Added for the diet filters: every meal keeps at least two options under each single diet */
+  {
+    id: 'omelette', meal: 'breakfast', name: 'Spinach & feta omelette', time: 10, effort: 1, base: 2, kcal: 410, protein: 26,
+    cuisine: 'Greek', diet: ['vegetarian', 'gluten-free'], allergens: ['egg', 'dairy'],
+    nut: { carbs: 4, fiber: 1, fat: 32, sugar: 2, sodium: 720 },
+    egg: 'An omelette? Right in front of me? Bold.',
+    blurb: 'One big folded omelette, cut in two. Wilted spinach, salty feta, ten minutes.',
+    dishes: ['non-stick pan', 'bowl'],
+    ingredients: [
+      { q: 6, n: 'egg', p: 'eggs', s: 'Dairy', step: 1 },
+      { q: 2, u: 'cup', n: 'baby spinach', s: 'Produce', step: 0.5 },
+      { q: 0.5, u: 'cup', n: 'crumbled feta', s: 'Dairy', step: 0.25 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [
+      { q: 0.5, u: 'tsp', n: 'Dried oregano', step: 0.25, swap: 'Dried dill, or skip it.' },
+      { q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it. The feta brings the salt.' },
+    ],
+    zero: 'Put the pan on the stove and get the eggs out of the fridge.',
+    steps: [
+      { do: 'Crack the eggs into the bowl with the oregano, pepper and a pinch of salt. Beat with a fork.', mins: 2 },
+      { do: 'Oil in the pan, medium heat. Add the spinach and stir until it wilts.', mins: 2 },
+      { do: 'Pour in the eggs and swirl so they cover the pan. Lid on.', timer: { id: 'set', label: 'Omelette', mins: 3 } },
+      { wait: 'set', note: 'Lift an edge now and then so the runny egg flows underneath.', clean: { text: 'Rinse the egg bowl before it dries.', dish: 'bowl' } },
+      { do: 'Scatter the feta over one half, fold it over and slide it out. Cut it in two.', mins: 1 },
+    ],
+  },
+  {
+    id: 'salmon-eggs', meal: 'breakfast', name: 'Smoked salmon eggs with avocado', time: 10, effort: 1, base: 2, kcal: 400, protein: 25,
+    cuisine: 'Nordic', diet: ['pescatarian', 'gluten-free', 'dairy-free'], allergens: ['egg', 'fish'],
+    nut: { carbs: 7, fiber: 5, fat: 30, sugar: 1, sodium: 820 },
+    blurb: 'Soft eggs cooked in olive oil, cold smoked salmon and buttery avocado. Brunch energy, weekday effort.',
+    dishes: ['non-stick pan', 'bowl'],
+    ingredients: [
+      { q: 4, n: 'egg', p: 'eggs', s: 'Dairy', step: 1 },
+      { q: 4, u: 'oz', n: 'smoked salmon', s: 'Meat', step: 1 },
+      { q: 1, n: 'avocado', p: 'avocados', s: 'Produce', step: 0.5 },
+      { q: 0.5, n: 'lemon', p: 'lemons', s: 'Produce', step: 0.5 },
+      { q: 2, u: 'tbsp', n: 'fresh chives', s: 'Produce', step: 1 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it, or a pinch of paprika.' }],
+    zero: 'Get the bowl out and crack the eggs into it.',
+    steps: [
+      { do: 'Beat the eggs with the pepper and a pinch of salt.', mins: 1 },
+      { do: 'Halve the avocado, scoop it out and slice it. Squeeze a little lemon over.', mins: 2 },
+      { do: 'Oil in the pan, low heat. Pour in the eggs and stir slowly.', timer: { id: 'eggs', label: 'Eggs', mins: 3 } },
+      { wait: 'eggs', note: 'Keep stirring gently. Take them off while they still look a little wet.', clean: { text: 'Rinse the egg bowl now.', dish: 'bowl' } },
+      { do: 'Plate the eggs with the salmon and avocado. Snip the chives over the top.', mins: 1 },
+    ],
+  },
+  {
+    id: 'tofu-tacos', meal: 'breakfast', name: 'Tofu scramble breakfast tacos', time: 20, effort: 2, base: 2, kcal: 540, protein: 28,
+    cuisine: 'Mexican', diet: ['vegan', 'gluten-free'], allergens: ['soy'],
+    nut: { carbs: 48, fiber: 11, fat: 26, sugar: 3, sodium: 640 },
+    blurb: 'Golden crumbled tofu with black beans and spinach, in warm corn tortillas. Salsa on everything.',
+    dishes: ['frying pan'],
+    ingredients: [
+      { q: 1, n: 'block extra-firm tofu', p: 'blocks extra-firm tofu', size: '14 oz', s: 'Produce', step: 0.5 },
+      { q: 6, n: 'corn tortilla', p: 'corn tortillas', s: 'Pantry', step: 1 },
+      { q: 0.5, u: 'can', n: 'black beans', size: '15 oz', s: 'Pantry', step: 0.5 },
+      { q: 2, u: 'cup', n: 'baby spinach', s: 'Produce', step: 0.5 },
+      { q: 0.5, u: 'cup', n: 'salsa', s: 'Pantry', step: 0.25 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [
+      { q: 0.5, u: 'tsp', n: 'Ground turmeric', step: 0.25, swap: 'Skip it. It’s mostly there for the sunny colour.' },
+      { q: 0.5, u: 'tsp', n: 'Ground cumin', step: 0.25, swap: 'A pinch of chili powder, or skip it.' },
+      { q: 0.5, u: 'tsp', n: 'Garlic powder', step: 0.25, swap: 'Skip it. The salsa has your back.' },
+    ],
+    zero: 'Put the frying pan on the stove.',
+    steps: [
+      { do: 'Drain the tofu and pat it dry. Crumble it into rough bits with your hands.', mins: 2 },
+      { do: 'Oil in the pan, medium-high heat. Tofu in with the spices and a pinch of salt.', timer: { id: 'tofu', label: 'Tofu', mins: 6 } },
+      { do: 'Drain and rinse the beans.', mins: 1 },
+      { wait: 'tofu', note: 'Stir every couple of minutes so it browns in spots.', clean: { text: 'Can in the recycling. Wipe the counter.' } },
+      { do: 'Stir in the beans and spinach until the spinach wilts.', mins: 2 },
+      { do: 'Warm the tortillas in the microwave under a damp paper towel.', mins: 1 },
+      { do: 'Fill the tortillas and top with salsa.', mins: 1 },
+    ],
+  },
+  {
+    id: 'greek-chicken', meal: 'lunch', name: 'Greek chicken salad with feta', time: 20, effort: 2, base: 2, kcal: 510, protein: 40,
+    cuisine: 'Greek', diet: ['gluten-free'], allergens: ['dairy'],
+    nut: { carbs: 12, fiber: 3, fat: 33, sugar: 6, sodium: 980 },
+    blurb: 'Hot oregano chicken over a cold, crunchy salad with olives, feta and a lemony dressing.',
+    dishes: ['frying pan', 'big bowl', 'cutting board'],
+    ingredients: [
+      { q: 0.75, u: 'lb', n: 'boneless chicken breast', s: 'Meat', step: 0.25 },
+      { q: 0.5, n: 'cucumber', p: 'cucumbers', s: 'Produce', step: 0.5 },
+      { q: 1, u: 'cup', n: 'cherry tomatoes', s: 'Produce', step: 0.25 },
+      { q: 0.25, n: 'red onion', p: 'red onions', s: 'Produce', step: 0.25 },
+      { q: 0.25, u: 'cup', n: 'kalamata olives', s: 'Pantry', step: 0.25 },
+      { q: 0.5, u: 'cup', n: 'crumbled feta', s: 'Dairy', step: 0.25 },
+      { q: 1, n: 'lemon', p: 'lemons', s: 'Produce', step: 0.5 },
+      { q: 3, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [
+      { q: 1, u: 'tsp', n: 'Dried oregano', step: 0.25, swap: 'Dried thyme or Italian seasoning.' },
+      { q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' },
+    ],
+    zero: 'Put the frying pan on the stove and the big bowl on the counter.',
+    steps: [
+      { do: 'Slice the chicken into strips. Toss with 1 tbsp of the oil, half the oregano and a pinch of salt.', mins: 3 },
+      { do: 'Medium-high heat. Chicken into the pan in one layer.', timer: { id: 'c1', label: 'Chicken, side 1', mins: 4 } },
+      { do: 'Chop the cucumber, halve the tomatoes and slice the onion thinly. All into the big bowl.', mins: 4 },
+      { wait: 'c1', clean: { text: 'Rinse the cutting board and knife.', dish: 'cutting board' } },
+      { do: 'Turn the chicken strips over.', timer: { id: 'c2', label: 'Chicken, side 2', mins: 4 } },
+      { do: 'Whisk the rest of the oil with the lemon juice, oregano and pepper. Pour it over the veg.', mins: 2 },
+      { wait: 'c2', clean: { text: 'Olive oil and oregano back in the cupboard.' } },
+      { do: 'Add the olives, feta and chicken to the bowl and toss.', mins: 1 },
+    ],
+  },
+  {
+    id: 'tuna-cups', meal: 'lunch', name: 'Lemony tuna lettuce cups', time: 10, effort: 1, base: 2, kcal: 390, protein: 32,
+    cuisine: 'American', diet: ['pescatarian', 'gluten-free', 'dairy-free'], allergens: ['fish'],
+    nut: { carbs: 9, fiber: 6, fat: 25, sugar: 2, sodium: 560 },
+    blurb: 'Tuna salad without the mayo: lemon, olive oil, crunchy celery and avocado, scooped into lettuce.',
+    dishes: ['bowl', 'cutting board'],
+    ingredients: [
+      { q: 2, u: 'can', n: 'tuna in water', size: '5 oz', s: 'Pantry', step: 1 },
+      { q: 1, n: 'avocado', p: 'avocados', s: 'Produce', step: 0.5 },
+      { q: 1, n: 'celery stalk', p: 'celery stalks', s: 'Produce', step: 1 },
+      { q: 0.25, n: 'red onion', p: 'red onions', s: 'Produce', step: 0.25 },
+      { q: 1, n: 'lemon', p: 'lemons', s: 'Produce', step: 0.5 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+      { q: 1, u: 'tsp', n: 'Dijon mustard', s: 'Pantry', step: 0.5 },
+      { q: 1, n: 'head butter lettuce', p: 'heads butter lettuce', s: 'Produce', step: 0.5 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it, or a pinch of red pepper flakes.' }],
+    zero: 'Get the bowl and the can opener out.',
+    steps: [
+      { do: 'Drain the tuna and flake it into the bowl.', mins: 2 },
+      { do: 'Finely chop the celery and onion. Dice the avocado.', mins: 4 },
+      { do: 'Mix it all with the lemon juice, oil, mustard, pepper and a pinch of salt.', mins: 2 },
+      { do: 'Separate the lettuce leaves, rinse and shake them dry. Spoon the tuna in.', mins: 2 },
+    ],
+  },
+  {
+    id: 'quinoa-bowl', meal: 'lunch', name: 'Chickpea quinoa bowl with lemon tahini', time: 25, effort: 2, base: 2, kcal: 590, protein: 19,
+    cuisine: 'Middle Eastern', diet: ['vegan', 'gluten-free'], allergens: ['sesame'],
+    nut: { carbs: 76, fiber: 16, fat: 22, sugar: 6, sodium: 520 },
+    blurb: 'Fluffy quinoa, spiced chickpeas and crunchy veg under a creamy lemon tahini sauce.',
+    dishes: ['saucepan', 'bowl', 'cutting board'],
+    ingredients: [
+      { q: 0.75, u: 'cup', n: 'quinoa', s: 'Pantry', step: 0.25 },
+      { q: 1, u: 'can', n: 'chickpeas', size: '15 oz', s: 'Pantry', step: 0.5 },
+      { q: 2, u: 'cup', n: 'baby spinach', s: 'Produce', step: 0.5 },
+      { q: 0.5, n: 'cucumber', p: 'cucumbers', s: 'Produce', step: 0.5 },
+      { q: 1, u: 'cup', n: 'cherry tomatoes', s: 'Produce', step: 0.25 },
+      { q: 3, u: 'tbsp', n: 'tahini', s: 'Pantry', step: 0.5 },
+      { q: 1, n: 'lemon', p: 'lemons', s: 'Produce', step: 0.5 },
+      { q: 1, u: 'clove', n: 'garlic', s: 'Produce', step: 1 },
+    ],
+    spices: [
+      { q: 0.5, u: 'tsp', n: 'Ground cumin', step: 0.25, swap: 'A little extra paprika.' },
+      { q: 0.5, u: 'tsp', n: 'Smoked paprika', step: 0.25, swap: 'Regular paprika, or skip it.' },
+    ],
+    zero: 'Fill the kettle and switch it on.',
+    steps: [
+      { do: 'Rinse the quinoa. Into the saucepan with 1½ cups of boiling water and a pinch of salt. Lid on, low heat.', timer: { id: 'q', label: 'Quinoa', mins: 15 } },
+      { do: 'Drain and rinse the chickpeas. Toss them with the spices.', mins: 2 },
+      { do: 'Chop the cucumber and halve the tomatoes.', mins: 3 },
+      { do: 'Whisk the tahini with the lemon juice, crushed garlic and 3 tbsp of water until smooth.', mins: 3 },
+      { wait: 'q', clean: { text: 'Rinse the cutting board and knife.', dish: 'cutting board' } },
+      { do: 'Fluff the quinoa. Build the bowls: spinach, quinoa, chickpeas and veg, with the sauce on top.', mins: 2 },
+    ],
+  },
+  {
+    id: 'salmon', meal: 'dinner', name: 'Garlic butter salmon & green beans', time: 20, effort: 2, base: 2, kcal: 480, protein: 36,
+    cuisine: 'French', diet: ['pescatarian', 'gluten-free'], allergens: ['fish', 'dairy'],
+    nut: { carbs: 10, fiber: 4, fat: 32, sugar: 4, sodium: 420 },
+    blurb: 'Crispy-skinned salmon basted in garlic butter, with snappy green beans tossed in the pan.',
+    dishes: ['frying pan', 'saucepan'],
+    ingredients: [
+      { q: 2, n: 'salmon fillet', p: 'salmon fillets', size: '6 oz', s: 'Meat', step: 1 },
+      { q: 0.5, u: 'lb', n: 'green beans', s: 'Produce', step: 0.25 },
+      { q: 2, u: 'tbsp', n: 'butter', s: 'Dairy', step: 0.5 },
+      { q: 3, u: 'clove', n: 'garlic', s: 'Produce', step: 1 },
+      { q: 1, n: 'lemon', p: 'lemons', s: 'Produce', step: 0.5 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [
+      { q: 0.5, u: 'tsp', n: 'Dried dill', step: 0.25, swap: 'Dried parsley, or skip it.' },
+      { q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' },
+    ],
+    zero: 'Fill the saucepan with water and put it on to boil.',
+    steps: [
+      { do: 'Pat the salmon dry. Season with the dill, pepper and a pinch of salt.', mins: 2 },
+      { do: 'Trim the green beans. Crush the garlic.', mins: 3 },
+      { do: 'Beans into the boiling water.', timer: { id: 'beans', label: 'Green beans', mins: 4 } },
+      { do: 'Oil in the frying pan, medium-high heat. Salmon in, skin side down.', timer: { id: 's1', label: 'Salmon, side 1', mins: 5 } },
+      { wait: 'beans', clean: { text: 'Drain the beans and set them aside. Leave the saucepan to soak.' } },
+      { wait: 's1', clean: { text: 'Dill and pepper back in the cupboard.' } },
+      { do: 'Flip the salmon. Add the butter and garlic around it.', timer: { id: 's2', label: 'Salmon, side 2', mins: 3 } },
+      { wait: 's2', note: 'Spoon the garlic butter over the salmon while it finishes.', clean: { text: 'Get the plates out.' } },
+      { do: 'Toss the beans in the pan butter. Plate up with lemon squeezed over.', mins: 1 },
+    ],
+  },
+  {
+    id: 'tuscan-chicken', meal: 'dinner', name: 'Creamy Tuscan chicken & mushrooms', time: 30, effort: 2, base: 2, kcal: 620, protein: 44,
+    cuisine: 'Italian', diet: ['gluten-free'], allergens: ['dairy'],
+    nut: { carbs: 12, fiber: 3, fat: 44, sugar: 6, sodium: 860 },
+    blurb: 'Golden chicken thighs in a garlicky parmesan cream with mushrooms, spinach and sun-dried tomatoes.',
+    dishes: ['large frying pan', 'cutting board'],
+    ingredients: [
+      { q: 1, u: 'lb', n: 'boneless chicken thighs', s: 'Meat', step: 0.25 },
+      { q: 8, u: 'oz', n: 'mushrooms', s: 'Produce', step: 4 },
+      { q: 3, u: 'cup', n: 'baby spinach', s: 'Produce', step: 0.5 },
+      { q: 0.25, u: 'cup', n: 'sun-dried tomatoes', s: 'Pantry', step: 0.25 },
+      { q: 0.5, u: 'cup', n: 'heavy cream', s: 'Dairy', step: 0.25 },
+      { q: 0.25, u: 'cup', n: 'grated parmesan', s: 'Dairy', step: 0.25 },
+      { q: 3, u: 'clove', n: 'garlic', s: 'Produce', step: 1 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [
+      { q: 1, u: 'tsp', n: 'Italian seasoning', step: 0.25, swap: 'Dried oregano or basil.' },
+      { q: 0.25, u: 'tsp', n: 'Red pepper flakes', step: 0.25, swap: 'Leave it out. It’s just a little warmth.' },
+    ],
+    zero: 'Put the large frying pan on the stove.',
+    steps: [
+      { do: 'Pat the chicken dry. Season with the Italian seasoning and a pinch of salt.', mins: 2 },
+      { do: 'Oil in the pan, medium-high heat. Chicken in.', timer: { id: 'c1', label: 'Chicken, side 1', mins: 6 } },
+      { do: 'Slice the mushrooms, crush the garlic and chop the sun-dried tomatoes.', mins: 4 },
+      { wait: 'c1', clean: { text: 'Rinse the cutting board and knife.', dish: 'cutting board' } },
+      { do: 'Flip the chicken.', timer: { id: 'c2', label: 'Chicken, side 2', mins: 5 } },
+      { wait: 'c2', clean: { text: 'Wipe the counter next to the stove.' } },
+      { do: 'Chicken onto a plate. Mushrooms into the pan.', timer: { id: 'mush', label: 'Mushrooms', mins: 5 } },
+      { wait: 'mush', clean: { text: 'Spices back in the cupboard.' } },
+      { do: 'Add the garlic, tomatoes, cream and parmesan. Stir in the spinach until it wilts, then put the chicken back in.', mins: 3 },
+    ],
+  },
+  {
+    id: 'curry', meal: 'dinner', name: 'Coconut chickpea curry with rice', time: 35, effort: 2, base: 2, kcal: 640, protein: 17,
+    cuisine: 'Indian', diet: ['vegan', 'gluten-free'], allergens: [],
+    nut: { carbs: 92, fiber: 14, fat: 22, sugar: 10, sodium: 780 },
+    blurb: 'A mild, creamy curry from the cupboard, with spinach stirred in at the end and fluffy rice.',
+    dishes: ['big pot', 'saucepan', 'cutting board'],
+    ingredients: [
+      { q: 0.75, u: 'cup', n: 'basmati rice', s: 'Pantry', step: 0.25 },
+      { q: 1, u: 'can', n: 'chickpeas', size: '15 oz', s: 'Pantry', step: 0.5 },
+      { q: 1, u: 'can', n: 'light coconut milk', size: '13.5 oz', s: 'Pantry', step: 0.5 },
+      { q: 0.5, u: 'can', n: 'diced tomatoes', size: '15 oz', s: 'Pantry', step: 0.5 },
+      { q: 1, n: 'onion', p: 'onions', s: 'Produce', step: 0.5 },
+      { q: 2, u: 'clove', n: 'garlic', s: 'Produce', step: 1 },
+      { q: 2, u: 'cup', n: 'baby spinach', s: 'Produce', step: 0.5 },
+      { q: 0.25, u: 'cup', n: 'fresh cilantro', s: 'Produce', step: 0.25 },
+      { q: 1, u: 'tbsp', n: 'vegetable oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [
+      { q: 1, u: 'tbsp', n: 'Curry powder', step: 0.5, swap: 'Garam masala, or cumin and paprika together.' },
+      { q: 0.5, u: 'tsp', n: 'Ground turmeric', step: 0.25, swap: 'Skip it.' },
+      { q: 0.5, u: 'tsp', n: 'Ground ginger', step: 0.25, swap: 'Skip it, or grate in a little fresh ginger.' },
+    ],
+    zero: 'Fill the kettle and switch it on.',
+    steps: [
+      { do: 'Rinse the rice. Into the saucepan with 1½ cups of boiling water. Lid on, lowest heat.', timer: { id: 'rice', label: 'Rice', mins: 15 } },
+      { do: 'Chop the onion. Crush the garlic.', mins: 3 },
+      { do: 'Oil in the big pot, medium heat. Onion in with a pinch of salt.', timer: { id: 'onion', label: 'Onion', mins: 5 } },
+      { do: 'Drain and rinse the chickpeas.', mins: 1 },
+      { wait: 'onion', clean: { text: 'Rinse the cutting board and knife.', dish: 'cutting board' } },
+      { do: 'Stir in the garlic and spices for a minute. Add the chickpeas, coconut milk and tomatoes.', timer: { id: 'simmer', label: 'Curry', mins: 10 } },
+      { wait: 'simmer', clean: { text: 'Cans in the recycling. Spices back in the cupboard.' } },
+      { do: 'Stir in the spinach until it wilts. Taste, and add salt if it needs it.', mins: 1 },
+      { wait: 'rice', clean: { text: 'Get the bowls out.' } },
+      { do: 'Fluff the rice. Curry on top, cilantro over.', mins: 1 },
+    ],
+  },
+  {
+    id: 'sweet-potato-tacos', meal: 'dinner', name: 'Sweet potato & black bean tacos', time: 40, effort: 1, base: 2, kcal: 520, protein: 15,
+    cuisine: 'Mexican', diet: ['vegan', 'gluten-free'], allergens: [], has: ['spicy'],
+    nut: { carbs: 92, fiber: 19, fat: 11, sugar: 12, sodium: 620 },
+    blurb: 'Smoky roasted sweet potato, warm beans and quick-pickled onion. The oven does the hard part.',
+    dishes: ['sheet pan', 'saucepan'],
+    ingredients: [
+      { q: 2, n: 'sweet potato', p: 'sweet potatoes', s: 'Produce', step: 1 },
+      { q: 1, u: 'can', n: 'black beans', size: '15 oz', s: 'Pantry', step: 0.5 },
+      { q: 6, n: 'corn tortilla', p: 'corn tortillas', s: 'Pantry', step: 1 },
+      { q: 0.5, n: 'red onion', p: 'red onions', s: 'Produce', step: 0.5 },
+      { q: 1, n: 'lime', p: 'limes', s: 'Produce', step: 0.5 },
+      { q: 0.25, u: 'cup', n: 'fresh cilantro', s: 'Produce', step: 0.25 },
+      { q: 0.5, u: 'cup', n: 'salsa', s: 'Pantry', step: 0.25 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [
+      { q: 1, u: 'tsp', n: 'Chili powder', step: 0.25, swap: 'Smoked paprika, for smoky without the heat.' },
+      { q: 0.5, u: 'tsp', n: 'Ground cumin', step: 0.25, swap: 'Skip it.' },
+    ],
+    zero: 'Turn the oven on to 425°F (220°C).',
+    steps: [
+      { do: 'Cut the sweet potatoes into small cubes, skin on. Toss them on the sheet pan with the oil, spices and salt.', mins: 6 },
+      { do: 'Into the oven.', timer: { id: 'roast', label: 'Sweet potatoes', mins: 25 } },
+      { do: 'Slice the onion thinly and squeeze half the lime over it. Leave it to quick-pickle.', mins: 2 },
+      { do: 'Beans into the saucepan with a splash of water and a pinch of salt. Low heat.', mins: 1 },
+      { wait: 'roast', note: 'Give the pan a shake halfway if you think of it.', clean: { text: 'Wipe the counter and put the spices away.' } },
+      { do: 'Warm the tortillas in the microwave under a damp paper towel.', mins: 1 },
+      { do: 'Fill with beans, sweet potato, pickled onion, salsa and cilantro. Lime on the side.', mins: 2 },
+    ],
+  },
+  {
+    id: 'lemon-pasta', meal: 'dinner', name: 'Lemon spinach pasta with parmesan', time: 20, effort: 1, base: 2, kcal: 640, protein: 22,
+    cuisine: 'Italian', diet: ['vegetarian'], allergens: ['gluten', 'dairy'],
+    nut: { carbs: 92, fiber: 6, fat: 20, sugar: 4, sodium: 520 },
+    blurb: 'Spaghetti tossed with butter, lemon, garlic and parmesan until glossy. Spinach wilts right in.',
+    dishes: ['big pot', 'colander'],
+    ingredients: [
+      { q: 8, u: 'oz', n: 'spaghetti', s: 'Pantry', step: 2 },
+      { q: 4, u: 'cup', n: 'baby spinach', s: 'Produce', step: 0.5 },
+      { q: 1, n: 'lemon', p: 'lemons', s: 'Produce', step: 0.5 },
+      { q: 2, u: 'clove', n: 'garlic', s: 'Produce', step: 1 },
+      { q: 2, u: 'tbsp', n: 'butter', s: 'Dairy', step: 0.5 },
+      { q: 0.5, u: 'cup', n: 'grated parmesan', s: 'Dairy', step: 0.25 },
+    ],
+    spices: [
+      { q: 0.5, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' },
+      { q: 0.25, u: 'tsp', n: 'Red pepper flakes', step: 0.25, swap: 'Leave it out.' },
+    ],
+    zero: 'Fill the big pot with water and put it on high heat.',
+    steps: [
+      { do: 'Lid on, pinch of salt.', timer: { id: 'boil', label: 'Water', mins: 6 } },
+      { do: 'Zest the lemon, then juice it. Crush the garlic.', mins: 3 },
+      { wait: 'boil', clean: { text: 'Put the colander in the sink.' } },
+      { do: 'Spaghetti in. Stir so it doesn’t stick.', timer: { id: 'pasta', label: 'Spaghetti', mins: 9 } },
+      { wait: 'pasta', note: 'Scoop out a mug of the pasta water before you drain it.', clean: { text: 'Lemon peel in the compost. Wipe the counter.' } },
+      { do: 'Drain, then back into the pot off the heat with the butter, garlic, spinach and a splash of pasta water.', mins: 2 },
+      { do: 'Toss in the lemon juice, zest, parmesan and pepper until glossy.', mins: 1 },
+    ],
+  },
+  {
+    id: 'yogurt-bowl', meal: 'snack', name: 'Greek yogurt berry crunch', time: 5, effort: 1, base: 2, kcal: 340, protein: 26,
+    cuisine: 'Greek', diet: ['vegetarian', 'gluten-free'], allergens: ['dairy', 'treenut'],
+    nut: { carbs: 26, fiber: 4, fat: 14, sugar: 20, sodium: 85 },
+    blurb: 'Thick yogurt, berries and toasted almonds. Feels like dessert, holds you till dinner.',
+    dishes: ['small pan'],
+    ingredients: [
+      { q: 2, u: 'cup', n: 'Greek yogurt', s: 'Dairy', step: 0.5 },
+      { q: 1, u: 'cup', n: 'berries, fresh or frozen', s: 'Produce', step: 0.25 },
+      { q: 0.25, u: 'cup', n: 'sliced almonds', s: 'Pantry', step: 0.25 },
+      { q: 2, u: 'tsp', n: 'honey', s: 'Pantry', step: 1 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Ground cinnamon', step: 0.25, swap: 'Skip it.' }],
+    zero: 'Put the small pan on the stove.',
+    steps: [
+      { do: 'Almonds into the dry pan, medium heat.', timer: { id: 'nuts', label: 'Almonds', mins: 3 } },
+      { do: 'Spoon the yogurt into two bowls.', mins: 1 },
+      { wait: 'nuts', note: 'Shake the pan now and then. They go from golden to burnt fast.', clean: { text: 'Yogurt back in the fridge.' } },
+      { do: 'Top with the berries, almonds, honey and a pinch of cinnamon.', mins: 1 },
+    ],
+  },
+  {
+    id: 'deviled-eggs', meal: 'snack', name: 'Smoky deviled eggs', time: 20, effort: 1, base: 2, kcal: 250, protein: 13,
+    cuisine: 'American', diet: ['vegetarian', 'gluten-free', 'dairy-free'], allergens: ['egg'],
+    nut: { carbs: 1, fiber: 0, fat: 21, sugar: 1, sodium: 290 },
+    egg: 'Deviled eggs. I’m going to pretend I didn’t see this.',
+    blurb: 'Creamy, tangy and a little smoky. The party snack you can make for just yourself.',
+    dishes: ['saucepan', 'bowl'],
+    ingredients: [
+      { q: 4, n: 'egg', p: 'eggs', s: 'Dairy', step: 1 },
+      { q: 2, u: 'tbsp', n: 'mayonnaise', s: 'Pantry', step: 0.5 },
+      { q: 1, u: 'tsp', n: 'Dijon mustard', s: 'Pantry', step: 0.5 },
+      { q: 1, u: 'tbsp', n: 'fresh chives', s: 'Produce', step: 0.5 },
+    ],
+    spices: [
+      { q: 0.25, u: 'tsp', n: 'Smoked paprika', step: 0.25, swap: 'Regular paprika.' },
+      { q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' },
+    ],
+    zero: 'Put the saucepan on the stove with a few inches of water.',
+    steps: [
+      { do: 'Bring the water to a boil, then lower the eggs in gently.', timer: { id: 'boil', label: 'Eggs', mins: 10 } },
+      { do: 'Fill the bowl with cold water, and ice if you have it.', mins: 1 },
+      { wait: 'boil', clean: { text: 'Get the mayo and mustard out.' } },
+      { do: 'Eggs into the cold water.', timer: { id: 'cool', label: 'Cooling', mins: 5 } },
+      { wait: 'cool', clean: { text: 'Pour out the saucepan and leave it to dry.', dish: 'saucepan' } },
+      { do: 'Peel and halve the eggs. Mash the yolks with the mayo, mustard and pepper. Yes, the yolks. Sorry.', mins: 4 },
+      { do: 'Spoon it back in. Paprika and chives on top.', mins: 1 },
+    ],
+  },
+  {
+    id: 'rollups', meal: 'snack', name: 'Turkey, cheese & pickle roll-ups', time: 5, effort: 1, base: 2, kcal: 310, protein: 28,
+    cuisine: 'American', diet: ['gluten-free'], allergens: ['dairy'],
+    nut: { carbs: 4, fiber: 1, fat: 20, sugar: 2, sodium: 1150 },
+    blurb: 'Deli turkey and Swiss rolled around a crunchy pickle spear. No cooking, all crunch.',
+    dishes: ['cutting board'],
+    ingredients: [
+      { q: 6, u: 'oz', n: 'sliced deli turkey', s: 'Meat', step: 2 },
+      { q: 4, u: 'slice', n: 'Swiss cheese', s: 'Dairy', step: 1 },
+      { q: 2, n: 'dill pickle', p: 'dill pickles', s: 'Pantry', step: 1 },
+      { q: 1, u: 'tbsp', n: 'yellow mustard', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' }],
+    zero: 'Get the cutting board out.',
+    steps: [
+      { do: 'Cut each pickle lengthwise into four spears.', mins: 1 },
+      { do: 'Lay out the turkey slices, a piece of cheese on each, and a stripe of mustard.', mins: 2 },
+      { do: 'Roll each one around a pickle spear. Cut them in half if you like.', mins: 2 },
     ],
   },
 ];
@@ -641,29 +1067,275 @@ function describe(item, qty) {
   return { qty: `${fmtQty(qty)}${unit ? ' ' + unit : ''}`, name: `${name}${size}` };
 }
 
+// Diets, allergies, dislikes and the "already have" chips. Keto, low-carb and high-protein
+// come from each recipe's numbers; the rest are tagged by hand on the recipe (`diet`).
+const DIETS = [
+  { id: 'keto', label: 'Keto' }, { id: 'vegetarian', label: 'Vegetarian' }, { id: 'vegan', label: 'Vegan' },
+  { id: 'pescatarian', label: 'Pescatarian' }, { id: 'gluten-free', label: 'Gluten-free' }, { id: 'dairy-free', label: 'Dairy-free' },
+  { id: 'high-protein', label: 'High-protein' }, { id: 'low-carb', label: 'Low-carb' },
+];
+const ALLERGENS = [
+  { id: 'peanut', label: 'Peanuts' }, { id: 'treenut', label: 'Tree nuts' }, { id: 'dairy', label: 'Milk' },
+  { id: 'egg', label: 'Eggs' }, { id: 'gluten', label: 'Wheat / gluten' }, { id: 'soy', label: 'Soy' },
+  { id: 'sesame', label: 'Sesame' }, { id: 'fish', label: 'Fish' }, { id: 'shellfish', label: 'Shellfish' },
+];
+const DISLIKE_IDEAS = ['cilantro', 'mushrooms', 'olives', 'onion', 'tomatoes', 'avocado', 'coconut', 'spicy food'];
+const HAVE = [
+  { id: 'chicken', label: 'Chicken', test: (n) => /chicken/.test(n) && !/bouillon|broth/.test(n) },
+  { id: 'eggs', label: 'Eggs', test: (n) => /^eggs?$/.test(n) },
+  { id: 'rice', label: 'Rice', test: (n) => /\brice\b/.test(n) },
+  { id: 'pasta', label: 'Pasta', test: (n) => /pasta|spaghetti|noodle/.test(n) },
+  { id: 'tortillas', label: 'Tortillas', test: (n) => /tortilla/.test(n) },
+  { id: 'potatoes', label: 'Potatoes', test: (n) => /potato/.test(n) },
+  { id: 'beans', label: 'Beans', test: (n) => /black beans|kidney beans|chickpea/.test(n) },
+  { id: 'cheese', label: 'Cheese', test: (n) => /cheese|cheddar|parmesan|feta/.test(n) },
+  { id: 'spinach', label: 'Spinach', test: (n) => /spinach/.test(n) },
+  { id: 'lemon', label: 'Lemon', test: (n) => /\blemons?\b/.test(n) },
+];
+const MEMBERS = [
+  { name: 'You' },
+  { name: 'Yolkie', yolkie: true },
+  { name: 'Boyd', idle: 'boyd-default', win: 'boyd-happy', lose: 'boyd-default' },
+  { name: 'Scramble', idle: 'scramble-default', win: 'scramble-default', lose: 'scramble-pout' },
+];
+const CHALLENGES = [
+  { id: 'rescue', name: 'Use-it-up week', goal: 2, unit: 'fridge rescues', icon: 'kitchen', blurb: 'Cook 2 meals with something you already have.', badge: 'Fridge hero' },
+  { id: 'speed', name: 'Speed round', goal: 3, unit: 'meals under 20 minutes', icon: 'bolt', blurb: 'Cook 3 meals that take under 20 minutes.', badge: 'Quick draw' },
+  { id: 'explorer', name: 'Explorer', goal: 2, unit: 'new cuisines', icon: 'travel_explore', blurb: 'Cook 2 cuisines you haven’t cooked here yet.', badge: 'Globetrotter' },
+];
+
+// Yolkie's closet: accessory layers drawn in the mascot's own viewBox (-110 -200 220 220), laid
+// over the untouched mascot SVG. `box` crops each one for its closet thumbnail.
+const INK = '#2A1E3F';
+const CLOSET = [
+  { id: 'chef', name: 'Chef hat', slot: 'head', at: 1, box: '-62 -206 124 80', svg: `<g>
+    <path d="M-44,-146 C-48,-160 -42,-166 -36,-168 C-46,-186 -24,-200 -10,-190 C-4,-204 22,-204 26,-188 C42,-196 58,-180 44,-166 C50,-160 48,-150 44,-146 Z" fill="#fff" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M-16,-178 Q-14,-166 -12,-158 M14,-180 Q12,-168 12,-158" stroke="#DAD4EA" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M-46,-150 Q0,-162 46,-150 L46,-132 Q0,-144 -46,-132 Z" fill="#fff" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/></g>` },
+  { id: 'beanie', name: 'Beanie', slot: 'head', at: 3, box: '-80 -190 160 94', svg: `<g>
+    <path d="M-66,-114 C-70,-176 70,-176 66,-114 Z" fill="#6B4DE6" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M-30,-156 L-36,-120 M0,-160 L0,-120 M30,-156 L36,-120" stroke="#4E35BE" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <rect x="-70" y="-126" width="140" height="22" rx="11" fill="#4E35BE" stroke="${INK}" stroke-width="4"/>
+    <circle cx="0" cy="-168" r="14" fill="#fff" stroke="${INK}" stroke-width="4"/></g>` },
+  { id: 'apron', name: 'Apron', slot: 'body', at: 5, box: '-62 -66 124 60', svg: `<g>
+    <path d="M-56,-46 Q-42,-60 -26,-50 M56,-46 Q42,-60 26,-50" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M-26,-50 L26,-50 L34,-20 Q0,-8 -34,-20 Z" fill="#fff" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M-12,-34 L12,-34 L12,-24 Q0,-20 -12,-24 Z" fill="none" stroke="#B9AFD6" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="0" cy="-43" r="3.5" fill="#FFC83D"/></g>` },
+  { id: 'shades', name: 'Sunglasses', slot: 'face', at: 8, box: '-72 -112 144 42', svg: `<g>
+    <path d="M-66,-98 L-42,-95 M66,-98 L42,-95" stroke="#1E1A2E" stroke-width="5" stroke-linecap="round"/>
+    <rect x="-44" y="-104" width="38" height="26" rx="11" fill="#1E1A2E"/>
+    <rect x="6" y="-104" width="38" height="26" rx="11" fill="#1E1A2E"/>
+    <path d="M-7,-95 Q0,-101 7,-95" stroke="#1E1A2E" stroke-width="5" fill="none"/>
+    <path d="M-36,-97 L-26,-97 M14,-97 L24,-97" stroke="#fff" stroke-width="3" opacity=".7" stroke-linecap="round"/></g>` },
+  { id: 'scarf', name: 'Scarf', slot: 'neck', at: 12, box: '-66 -54 132 70', svg: `<g>
+    <path d="M26,-26 L40,6 L24,10 L14,-22 Z" fill="#FF7D6B" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M-60,-46 Q0,-20 60,-46 L58,-28 Q0,-2 -58,-28 Z" fill="#FF7D6B" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M-30,-34 L-28,-19 M0,-30 L0,-15 M30,-34 L28,-19" stroke="#FFC83D" stroke-width="4" stroke-linecap="round"/></g>` },
+  { id: 'party', name: 'Party hat', slot: 'head', at: 20, box: '-44 -206 96 72', svg: `<g transform="rotate(14 0 -150)">
+    <path d="M-26,-148 L0,-194 L26,-148 Q0,-140 -26,-148 Z" fill="#2E9E6A" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>
+    <circle cx="-7" cy="-160" r="4" fill="#FFC83D"/><circle cx="7" cy="-170" r="4" fill="#FFC83D"/><circle cx="8" cy="-154" r="4" fill="#fff"/>
+    <circle cx="0" cy="-194" r="7" fill="#FF7D6B" stroke="${INK}" stroke-width="3"/></g>` },
+];
+const SLOT_ORDER = ['body', 'neck', 'face', 'head'];
+const accLayers = (outfit) => SLOT_ORDER.map((s) => (outfit[s] ? CLOSET.find((c) => c.id === outfit[s]).svg : '')).join('');
+
+const lower = (s) => String(s).toLowerCase();
+const stem = (s) => lower(s).trim().replace(/ food$/, '').replace(/(es|s)$/, '');
+const labelOf = (list, id) => (list.find((x) => x.id === id) || { label: id }).label;
+const listText = (arr) => (arr.length < 2 ? arr.join('') : `${arr.slice(0, -1).join(', ')} and ${arr[arr.length - 1]}`);
+const byId = (id) => RECIPES.find((r) => r.id === id);
+const itemNames = (r) => [...r.ingredients, ...r.spices].map((i) => lower(i.n));
+const mentions = (r, term) => (stem(term) === 'spicy' ? (r.has || []).includes('spicy') : itemNames(r).some((n) => n.includes(stem(term))));
+function dietsOf(r) {
+  if (!r.dietSet) {
+    const d = new Set(r.diet);
+    if (d.has('vegan')) { d.add('vegetarian'); d.add('dairy-free'); }
+    if (d.has('vegetarian')) d.add('pescatarian');
+    if (r.protein >= 25) d.add('high-protein');
+    if (r.nut.carbs <= 25) d.add('low-carb');
+    if (r.nut.carbs - r.nut.fiber <= 10) d.add('keto');
+    r.dietSet = d;
+  }
+  return r.dietSet;
+}
+const allergic = (r, list) => list.some((a) => (ALLERGENS.some((x) => x.id === a) ? r.allergens.includes(a) : mentions(r, a)));
+const passes = (r, f) => f.diets.every((d) => dietsOf(r).has(d)) && !f.dislikes.some((t) => mentions(r, t)) && !allergic(r, f.allergies);
+const haveTest = (key) => { const p = HAVE.find((h) => h.id === key); return p ? p.test : (n) => n.includes(stem(key)); };
+const hasItem = (item, have) => have.some((k) => haveTest(k)(lower(item.n)));
+const usesHave = (r, have) => have.filter((k) => r.ingredients.some((i) => haveTest(k)(lower(i.n))));
+const haveLabel = (key) => lower(labelOf(HAVE, key));
+const CUISINES = [...new Set(RECIPES.map((r) => r.cuisine))].sort();
+const ALL_ITEMS = [...new Set(RECIPES.flatMap((r) => r.ingredients.map((i) => lower(i.n))))].sort();
+
+// localStorage, wrapped so a blocked or full store never breaks the demo.
+const store = {
+  get(key, fallback) { try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch (e) { return fallback; } },
+  set(key, v) { try { localStorage.setItem(key, JSON.stringify(v)); } catch (e) {} },
+  del(key) { try { localStorage.removeItem(key); } catch (e) {} },
+};
+const PREFS_KEY = 'yolkie-prefs';     // choices: diets, allergies, goals, outfit, reminders, the last pick
+const ACTIVITY_KEY = 'yolkie-activity'; // real activity: meals finished in cook mode, badges, the challenge
+const SAMPLE_KEY = 'yolkie-sample';   // the tester's sample week; while it exists, every stat reads and writes it instead
+const DAY = 864e5;
+const weekStart = (t = Date.now()) => { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); };
+const dayKey = (t = Date.now()) => new Date(t).toLocaleDateString('en-CA');
+const toMin = (t) => { const [h, m] = String(t).split(':').map(Number); return h * 60 + m; };
+const clock12 = (mins) => { const h = Math.floor(mins / 60) % 24; return `${h % 12 || 12}:${String(mins % 60).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`; };
+
 const demo = document.getElementById('demo');
 if (demo) {
   const $ = (sel, el = demo) => el.querySelector(sel);
   const $$ = (sel, el = demo) => [...el.querySelectorAll(sel)];
-  const state = { meal: '', energy: 0, time: 0, fits: [], idx: 0, another: 0, recipe: null, servings: 2, marks: {}, out: {}, buy: {}, cook: null, vote: null };
 
-  // Yolkie: one face, one speech bubble (a polite live region), five expressions from the brand kit.
+  /* Saved choices and activity */
+  const freshPrefs = () => ({
+    diets: [], dislikes: [], allergies: [], houseAllergies: [[], [], [], []], names: MEMBERS.map((m) => m.name),
+    houseSize: 4, houseGoal: 10, goal: 3, takeout: 15, takeoutAsked: false, outfit: {}, tab: 'cook',
+    reminders: { breakfast: { on: false, time: '07:30' }, lunch: { on: false, time: '11:30' }, dinner: { on: true, time: '17:30' } },
+    notToday: '', quiet: { on: true, from: '21:30', to: '07:00' }, dietAsk: { key: '', count: 0, never: false }, last: {},
+  });
+  const prefs = Object.assign(freshPrefs(), store.get(PREFS_KEY, {}));
+  prefs.reminders = Object.assign(freshPrefs().reminders, prefs.reminders);
+  const savePrefs = () => store.set(PREFS_KEY, prefs);
+  const sampleOn = () => !!store.get(SAMPLE_KEY, null);
+  const activity = () => Object.assign({ meals: [], badges: [], challenge: null }, store.get(sampleOn() ? SAMPLE_KEY : ACTIVITY_KEY, {}));
+  const saveActivity = (a) => store.set(sampleOn() ? SAMPLE_KEY : ACTIVITY_KEY, a);
+
+  const state = {
+    meal: '', energy: 0, time: 0, have: [], haveDone: false, fromCheckin: false, temp: null, shown: false,
+    fits: [], pool: [], fallback: false, idx: 0, another: 0, recipe: null, servings: Number(prefs.last.servings) || 2,
+    marks: {}, out: {}, buy: {}, cook: null, vote: null, done: null, askDiet: null,
+  };
+  const eff = () => ({ diets: state.temp ? state.temp.diets : prefs.diets, dislikes: state.temp ? state.temp.dislikes : prefs.dislikes, allergies: prefs.allergies });
+  const savePick = () => {
+    prefs.last = { meal: state.meal, energy: state.energy, time: state.time, have: state.have, haveDone: state.haveDone, servings: state.servings };
+    savePrefs();
+  };
+
+  // Everything shown on Me, House and Wrapped is worked out from the meals list.
+  // "Mine" are the meals tagged as cooked by You, which is the default.
+  function statsFor(a) {
+    const meals = a.meals.filter((m) => byId(m.r)).sort((x, y) => x.at - y.at);
+    const mine = meals.filter((m) => !m.cook);
+    const ws = weekStart();
+    const cuisines = [];
+    const recipes = [];
+    mine.forEach((m) => {
+      const r = byId(m.r);
+      if (!cuisines.includes(r.cuisine)) cuisines.push(r.cuisine);
+      if (!recipes.includes(r.id)) recipes.push(r.id);
+    });
+    return {
+      meals, mine, cooked: mine.length, cuisines, recipes,
+      week: mine.filter((m) => m.at >= ws).length,
+      houseWeek: meals.filter((m) => m.at >= ws).length,
+      kept: mine.length * prefs.takeout,
+      houseKept: meals.length * prefs.takeout,
+      rescues: mine.filter((m) => m.have && m.have.length).length,
+      dodged: mine.reduce((n, m) => n + (m.rinsed || 0), 0),
+      tidies: mine.reduce((n, m) => n + (m.tidies || 0), 0),
+    };
+  }
+  function challengeProgress(a, s) {
+    if (!a.challenge) return 0;
+    const since = s.mine.filter((m) => m.at >= a.challenge.start);
+    if (a.challenge.id === 'rescue') return since.filter((m) => m.have && m.have.length).length;
+    if (a.challenge.id === 'speed') return since.filter((m) => byId(m.r).time < 20).length;
+    const before = new Set(s.mine.filter((m) => m.at < a.challenge.start).map((m) => byId(m.r).cuisine));
+    return new Set(since.map((m) => byId(m.r).cuisine).filter((c) => !before.has(c))).size;
+  }
+  // A finished challenge turns into a badge and frees the slot for the next one.
+  function settleChallenge(a) {
+    const ch = a.challenge && CHALLENGES.find((c) => c.id === a.challenge.id);
+    if (!ch || challengeProgress(a, statsFor(a)) < ch.goal) return null;
+    a.badges.push({ id: ch.id, at: Date.now() });
+    a.challenge = null;
+    return ch;
+  }
+
+  /* Yolkie, dressed */
   const face = $('.yolk-face');
+  const wear = $('.js-yolk-wear');
   const says = $('.yolk-says');
   const mascotDir = face.getAttribute('src').replace(/[^/]+$/, '');
   ['default', 'happy', 'meh', 'sleepy', 'surprised'].forEach((m) => { new Image().src = `${mascotDir}yolk-${m}.svg`; });
+  // Only accessories that are unlocked in the current data (real or sample) are worn.
+  function worn() {
+    const n = statsFor(activity()).cooked;
+    const out = {};
+    Object.entries(prefs.outfit).forEach(([slot, id]) => { const it = CLOSET.find((c) => c.id === id); if (it && n >= it.at) out[slot] = id; });
+    return out;
+  }
+  const accSvg = (outfit) => `<svg class="yolk-acc" viewBox="-110 -200 220 220" aria-hidden="true" focusable="false">${accLayers(outfit)}</svg>`;
+  const yolkieArt = (mood = 'default', cls = '', outfit = worn()) => `<span class="yolk-wear ${cls}"><img src="${mascotDir}yolk-${mood}.svg" alt="" width="220" height="220">${accSvg(outfit)}</span>`;
+  const dress = () => { $('.yolk-acc', wear).innerHTML = accLayers(worn()); };
+
   let yolkLater;
   function yolk(mood, line, opts = {}) {
     clearTimeout(yolkLater);
     if (!face.getAttribute('src').endsWith(`yolk-${mood}.svg`)) face.src = `${mascotDir}yolk-${mood}.svg`;
     if (line) says.textContent = line;
-    replay(face, opts.celebrate ? 'is-celebrating' : 'is-wobbling');
+    replay(wear, opts.celebrate ? 'is-celebrating' : 'is-wobbling');
     if (opts.then) yolkLater = setTimeout(() => yolk(...opts.then), opts.after || 1600);
   }
+
+  /* Members of the house (single device) */
+  const rawName = (i) => (prefs.names[i] || '').trim() || MEMBERS[i].name;
+  const memberName = (i) => esc(rawName(i));
+  const memberAllergies = (i) => (i === 0 ? prefs.allergies : prefs.houseAllergies[i] || []);
+  const houseMembers = () => Array.from({ length: prefs.houseSize }, (_, i) => i);
+  function avatar(i, mood = 'idle', extra = '') {
+    const p = MEMBERS[i];
+    if (p.yolkie) return `<span class="avatar ${extra}">${yolkieArt({ idle: 'default', win: 'happy', lose: 'meh' }[mood])}</span>`;
+    if (p[mood]) return `<span class="avatar ${extra}"><img src="${mascotDir}${p[mood]}.svg" alt="" width="220" height="220"></span>`;
+    return `<span class="avatar avatar--guest ${extra}"><span class="icon" aria-hidden="true">person</span></span>`;
+  }
+
+  // Small building blocks
+  const tag = (group, id, label, on, disabled = false) => `<button type="button" class="tag${on ? ' is-on' : ''}" data-group="${group}" data-id="${esc(id)}" aria-pressed="${on}"${disabled ? ' disabled' : ''}>${on ? '<span class="icon" aria-hidden="true">check</span>' : ''}${esc(label)}</button>`;
+  function ring(n, goal, label, cls = '') {
+    const C = 2 * Math.PI * 52;
+    const pct = Math.min(1, n / goal);
+    return `<div class="ring ${cls}${n >= goal ? ' is-full' : ''}" role="img" aria-label="${label}: ${n} of ${goal}">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="ring__track" cx="60" cy="60" r="52"/><circle class="ring__fill" cx="60" cy="60" r="52" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${(C * (1 - pct)).toFixed(1)}" transform="rotate(-90 60 60)"/></svg>
+      <span class="ring__num" aria-hidden="true"><span>${n}<small>/${goal}</small></span></span></div>`;
+  }
+  const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+  /* Tabs: Cook, Me, House */
+  const tabs = $$('[role="tab"]');
+  function showTab(name, focus = false) {
+    tabs.forEach((t) => {
+      const on = t.dataset.tab === name;
+      t.setAttribute('aria-selected', String(on));
+      t.tabIndex = on ? 0 : -1;
+      if (on && focus) t.focus();
+    });
+    $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== name; });
+    if (prefs.tab !== name) { prefs.tab = name; savePrefs(); }
+    if (name === 'me') renderMe();
+    if (name === 'house') renderHouse();
+  }
+  tabs.forEach((t, k) => {
+    t.addEventListener('click', () => {
+      showTab(t.dataset.tab);
+      if (t.dataset.tab === 'me') yolk('happy', 'Your progress. It only goes up from here.');
+      if (t.dataset.tab === 'house') yolk('default', 'The whole house, on one phone. Pass it around.');
+      if (t.dataset.tab === 'cook') yolk('default', 'Back to the kitchen.');
+    });
+    t.addEventListener('keydown', (e) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (!d) return;
+      e.preventDefault();
+      showTab(tabs[(k + d + tabs.length) % tabs.length].dataset.tab, true);
+    });
+  });
 
   // Stages: one visible at a time; the track shows how far along you are.
   const ORDER = ['pick', 'check', 'cook', 'done'];
   function go(name) {
+    if (prefs.tab !== 'cook') showTab('cook');
     $$('[data-stage]').forEach((s) => { s.hidden = s.dataset.stage !== name; });
     const pos = ORDER.indexOf(name === 'vote' ? 'pick' : name);
     $$('[data-track]').forEach((li, i) => {
@@ -675,6 +1347,13 @@ if (demo) {
     if (title) title.focus({ preventScroll: true });
   }
   $$('.js-go').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
+
+  /* Sheets (native <dialog>: focus stays inside, Escape closes) */
+  const openSheet = (d) => { if (!d.open) d.showModal(); };
+  const closeSheet = (d) => { if (d.open) d.close(); };
+  $$('dialog.sheet').forEach((d) => d.addEventListener('click', (e) => {
+    if (e.target === d || e.target.closest('.js-close')) closeSheet(d);
+  }));
 
   /* 1. Pick */
   const MEALS = {
@@ -690,24 +1369,139 @@ if (demo) {
   const pickedLine = (r) => (r.egg
     ? ['surprised', r.egg]
     : ['happy', PICKED[Math.floor(Math.random() * PICKED.length)].replace('%s', r.name).replace('%m', mealOf(r).label).replace('%M', cap(mealOf(r).label))]);
+  const slot = $('.js-meal-slot');
 
-  // Recipes for the chosen meal that fit the time and energy, best match first: effort close
-  // to your energy, and using most of the time you have. If none fit, the quickest one.
+  // The diet summary chip, the "just this meal" undo link and the one-time default question.
+  function summarize(f) {
+    const parts = f.diets.map((d) => labelOf(DIETS, d));
+    if (f.dislikes.length) parts.push(`No ${f.dislikes[0]}${f.dislikes.length > 1 ? ` +${f.dislikes.length - 1}` : ''}`);
+    if (f.allergies.length) parts.push(plural(f.allergies.length, 'allergy', 'allergies'));
+    return parts.join(' · ') || 'No preferences';
+  }
+  const dietWords = (ids) => ids.map((d) => labelOf(DIETS, d)).join(' + ');
+  function renderDietBar() {
+    $('.js-diet-summary').textContent = summarize(eff());
+    $('.js-diet-temp').innerHTML = state.temp
+      ? `<span class="icon" aria-hidden="true">schedule</span><span>Just this meal.</span> <button type="button" class="link-btn js-diet-back">Back to ${prefs.diets.length ? esc(dietWords(prefs.diets)) : 'your usual'}</button>`
+      : '';
+    $('.js-diet-ask').innerHTML = state.askDiet
+      ? `<div class="ask-card" role="group" aria-label="Make this diet your default?"><p>Want to make ${esc(dietWords(state.askDiet))} your default?</p>
+          <button type="button" class="btn btn--primary btn--small js-ask-yes">Yes</button><button type="button" class="btn btn--ghost btn--small js-ask-no">No thanks</button></div>`
+      : '';
+  }
+  // Re-pick after any filter change, if a suggestion is on screen.
+  function refilter(line) {
+    renderDietBar();
+    if (state.shown) { rank(); const l = suggest(false); yolk(...(line || l)); }
+    else if (line) yolk(...line);
+  }
+  $('.js-diet-bar').addEventListener('click', (e) => {
+    if (e.target.closest('.js-diet-chip')) openQuick();
+    if (e.target.closest('.js-diet-back')) { state.temp = null; refilter(['default', 'Back to your usual.']); $('.js-diet-chip').focus(); }
+    if (e.target.closest('.js-ask-yes')) {
+      prefs.diets = [...state.askDiet];
+      state.temp = null;
+      state.askDiet = null;
+      prefs.dietAsk = { key: '', count: 0, never: prefs.dietAsk.never };
+      savePrefs();
+      refilter(['happy', `Done. ${dietWords(prefs.diets)} is your default now.`]);
+      $('.js-diet-chip').focus();
+    }
+    if (e.target.closest('.js-ask-no')) {
+      state.askDiet = null;
+      prefs.dietAsk.never = true;
+      savePrefs();
+      renderDietBar();
+      yolk('default', 'Got it. I won’t ask again.');
+      $('.js-diet-chip').focus();
+    }
+  });
+
+  // The quick sheet changes the diet only. Allergies stay put; they live in Preferences.
+  const quickSheet = $('.js-quick-sheet');
+  let quickDraft = [];
+  function renderQuick() {
+    const al = prefs.allergies.map((a) => labelOf(ALLERGENS, a));
+    $('.js-quick-body').innerHTML = `
+      <div class="tags">${DIETS.map((d) => tag('quick', d.id, d.label, quickDraft.includes(d.id))).join('')}</div>
+      <p class="fine quick-note"><span class="icon" aria-hidden="true">lock</span>${al.length ? `Your allergies stay on: ${esc(listText(al))}.` : 'Allergies aren’t changed here.'} Change them in <button type="button" class="link-btn js-quick-prefs">Preferences</button>.</p>
+      <p class="quick-q">Use this for…</p>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn--primary js-quick-once">Just this meal</button>
+        <button type="button" class="btn btn--secondary js-quick-default">Make it my default</button>
+      </div>`;
+  }
+  function openQuick() { quickDraft = [...eff().diets]; renderQuick(); openSheet(quickSheet); }
+  const sameSet = (a, b) => a.length === b.length && a.every((x) => b.includes(x));
+  quickSheet.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-group="quick"]');
+    if (t) {
+      const id = t.dataset.id;
+      quickDraft = quickDraft.includes(id) ? quickDraft.filter((x) => x !== id) : [...quickDraft, id];
+      renderQuick();
+      $(`[data-group="quick"][data-id="${id}"]`, quickSheet).focus();
+    }
+    if (e.target.closest('.js-quick-prefs')) { closeSheet(quickSheet); openPrefs(); }
+    if (e.target.closest('.js-quick-once')) {
+      const dislikes = state.temp ? state.temp.dislikes : prefs.dislikes;
+      state.temp = sameSet(quickDraft, prefs.diets) && dislikes === prefs.dislikes ? null : { diets: [...quickDraft], dislikes };
+      closeSheet(quickSheet);
+      // Same "just this meal" diet three times running: offer it as the default, once.
+      const key = [...quickDraft].sort().join('+');
+      if (state.temp && key) {
+        prefs.dietAsk.count = prefs.dietAsk.key === key ? prefs.dietAsk.count + 1 : 1;
+        prefs.dietAsk.key = key;
+        if (prefs.dietAsk.count >= 3 && !prefs.dietAsk.never) { state.askDiet = [...quickDraft]; prefs.dietAsk.count = 0; }
+        savePrefs();
+      }
+      refilter(state.askDiet
+        ? ['happy', `${dietWords(state.askDiet)} three times running! Want it as your default?`]
+        : ['default', state.temp ? `Just this meal: ${summarize(eff())}.` : 'Same as usual, then.']);
+      $('.js-diet-chip').focus();
+    }
+    if (e.target.closest('.js-quick-default')) {
+      prefs.diets = [...quickDraft];
+      state.temp = null;
+      state.askDiet = null;
+      prefs.dietAsk.count = 0;
+      savePrefs();
+      closeSheet(quickSheet);
+      refilter(['happy', `Saved. ${prefs.diets.length ? dietWords(prefs.diets) : 'No diet'} from now on.`]);
+      $('.js-diet-chip').focus();
+    }
+  });
+
+  // Recipes for the chosen meal that pass your filters and fit the time and energy. Ones that
+  // use more of what you already have come first; then effort close to your energy, and using
+  // most of the time you have. If none fit the time and energy, the quickest one that passes.
   function rank() {
     const score = (r) => (state.energy - r.effort) * 2 + (state.time - r.time) / 15;
-    const ofMeal = RECIPES.filter((r) => r.meal === state.meal);
-    state.fits = ofMeal.filter((r) => r.time <= state.time && r.effort <= state.energy).sort((a, b) => score(a) - score(b));
-    if (!state.fits.length) state.fits = ofMeal.sort((a, b) => a.time - b.time || a.effort - b.effort).slice(0, 1);
+    const haveN = (r) => usesHave(r, state.have).length;
+    state.pool = RECIPES.filter((r) => r.meal === state.meal && passes(r, eff()));
+    state.fits = state.pool.filter((r) => r.time <= state.time && r.effort <= state.energy).sort((a, b) => haveN(b) - haveN(a) || score(a) - score(b));
+    state.fallback = !state.fits.length && state.pool.length > 0;
+    if (state.fallback) state.fits = [...state.pool].sort((a, b) => a.time - b.time || a.effort - b.effort).slice(0, 1);
     state.idx = 0;
     state.another = 0;
   }
 
+  function haveBadge(r) {
+    const n = state.have.length;
+    const used = usesHave(r, state.have);
+    if (!n || !used.length) return '';
+    const text = used.length === n ? (n === 1 ? `Uses your ${haveLabel(used[0])}` : `Uses all ${n}`) : `Uses ${used.length} of ${n}`;
+    return `<span class="have-badge"><span class="icon" aria-hidden="true">kitchen</span>${text}</span>`;
+  }
+  const amountFor = (item, r, servings) => describe(item, scaleQty(item, servings, r.base));
+
   function renderMeal(note = '') {
     const r = state.recipe;
+    const need = r.ingredients.filter((i) => !hasItem(i, state.have));
+    state.shown = true;
     $('.js-pick-hint').hidden = true;
-    $('.js-meal-slot').innerHTML = `
+    slot.innerHTML = `
       <article class="meal-card${reduceMotion ? '' : ' is-new'}">
-        <p class="eyebrow">Yolkie's pick · ${cap(mealOf(r).label)}</p>
+        <div class="meal-card__top"><p class="eyebrow">Yolkie's pick · ${cap(mealOf(r).label)} · ${r.cuisine}</p>${haveBadge(r)}</div>
         <h3 class="meal-card__name">${r.name}</h3>
         <p class="meal-card__blurb">${r.blurb}</p>
         <div class="meal-stats">
@@ -715,19 +1509,57 @@ if (demo) {
           <span class="stat stat--dishes"><span class="icon" aria-hidden="true">skillet</span>Dishes: ${r.dishes.length}</span>
           <span class="stat nutri">~${r.kcal} kcal</span>
           <span class="stat nutri">~${r.protein} g protein</span>
+          <button type="button" class="stat stat--btn nutri js-nutri-open"><span class="icon" aria-hidden="true">nutrition</span>Nutrition</button>
         </div>
-        <p class="fine nutri">Per serving. Calories and protein are rough estimates.</p>
-        <label class="switch"><input type="checkbox" class="js-nutri-toggle"${nutritionOn() ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Show calories &amp; protein</label>
+        <p class="fine nutri">Per serving, estimated.</p>
+        <p class="have-line">${state.have.length
+          ? `You have ${esc(listText(state.have.map(haveLabel)))}. <button type="button" class="link-btn js-have-change">Change</button>`
+          : '<button type="button" class="link-btn js-have-change">Add what you already have</button>'}</p>
+        ${state.fromCheckin ? `<div class="ready-list"><p><span class="icon" aria-hidden="true">shopping_cart</span><strong>Shopping list ready</strong>· ${plural(need.length, 'item')}</p>
+          <ul>${need.map((i) => { const a = amountFor(i, r, state.servings); return `<li>${a.qty} ${a.name}</li>`; }).join('')}</ul></div>` : ''}
         ${note ? `<p class="meal-note">${note}</p>` : ''}
         <div class="actions">
           <button type="button" class="btn btn--primary js-cook-this"><span class="btn__dot" aria-hidden="true"></span>Let's make this</button>
           <button type="button" class="btn btn--secondary js-another">Another one</button>
-          <button type="button" class="btn btn--ghost js-vote-start"><span class="icon" aria-hidden="true">how_to_vote</span>Vote with roommates</button>
+          <button type="button" class="btn btn--ghost js-vote-start"><span class="icon" aria-hidden="true">how_to_vote</span>Vote with the house</button>
         </div>
       </article>`;
   }
 
+  // Nothing passes the filters: say so kindly and offer the one change that opens most up.
+  function loosenIdea() {
+    const f = eff();
+    const opts = [
+      ...f.diets.map((d) => ({ label: labelOf(DIETS, d), f: { ...f, diets: f.diets.filter((x) => x !== d) } })),
+      ...f.dislikes.map((t) => ({ label: `no ${t}`, f: { ...f, dislikes: f.dislikes.filter((x) => x !== t) } })),
+    ];
+    opts.forEach((o) => { o.n = RECIPES.filter((r) => r.meal === state.meal && passes(r, o.f)).length; });
+    return opts.filter((o) => o.n).sort((a, b) => b.n - a.n)[0];
+  }
+  let loosen = null;
+  function renderEmpty() {
+    const f = eff();
+    const meal = MEALS[state.meal].label;
+    loosen = loosenIdea();
+    state.shown = true;
+    $('.js-pick-hint').hidden = true;
+    const onlyAllergies = !f.diets.length && !f.dislikes.length;
+    slot.innerHTML = `
+      <article class="meal-card meal-card--empty${reduceMotion ? '' : ' is-new'}">
+        <p class="eyebrow">Hmm</p>
+        <h3 class="meal-card__name">No ${meal} matches all of that.</h3>
+        <p class="meal-card__blurb">Right now it's ${esc(summarize(f))}.</p>
+        ${loosen
+          ? `<p class="meal-note">Without ${esc(loosen.label)}, there ${loosen.n === 1 ? 'is 1 option' : `are ${loosen.n} options`}.</p>
+             <div class="actions"><button type="button" class="btn btn--primary js-loosen">Try without ${esc(loosen.label)}, just this meal</button><button type="button" class="btn btn--ghost js-open-prefs">Open preferences</button></div>`
+          : `<p class="meal-note">${onlyAllergies ? `Your allergies rule out every ${meal} in this demo. That’s the filter doing its job. Another meal might work.` : 'Loosening one thing doesn’t open anything up here. Another meal, or a change in preferences, might.'}</p>
+             <div class="actions"><button type="button" class="btn btn--ghost js-open-prefs">Open preferences</button></div>`}
+      </article>`;
+    return ['meh', loosen ? `No ${meal} fits all that. Want to loosen one thing?` : `Nothing for ${meal} here. Not your fault. Mine, really.`];
+  }
+
   function suggest(isAnother) {
+    if (!state.fits.length) return renderEmpty();
     let note = '';
     if (isAnother) {
       state.idx = (state.idx + 1) % state.fits.length;
@@ -737,44 +1569,137 @@ if (demo) {
           ? `That’s the only ${MEALS[state.meal].label} that fits right now. More time or energy opens up more.`
           : `That’s all ${state.fits.length} ${MEALS[state.meal].plural} that fit. Back to the first one.`;
       }
+    } else if (state.fallback) {
+      note = `Nothing fits that time and energy, so here’s the quickest ${MEALS[state.meal].label} that matches your preferences.`;
     }
     state.recipe = state.fits[state.idx];
     renderMeal(note);
     return state.another >= 3 ? ['meh', `Picky today. Valid. How about ${state.recipe.name}?`] : pickedLine(state.recipe);
   }
 
+  /* "What do you already have?": an optional step before the suggestion */
+  function haveTags() {
+    const full = state.have.length >= 3;
+    const customs = state.have.filter((k) => !HAVE.some((h) => h.id === k));
+    return [...HAVE.map((h) => tag('have', h.id, h.label, state.have.includes(h.id), full && !state.have.includes(h.id))),
+      ...customs.map((k) => tag('have', k, k, true))].join('');
+  }
+  function renderHave(focus = true) {
+    state.shown = false;
+    $('.js-pick-hint').hidden = true;
+    slot.innerHTML = `
+      <section class="have-card${reduceMotion ? '' : ' is-new'}" aria-labelledby="have-title">
+        <p class="eyebrow">Optional</p>
+        <h3 id="have-title" tabindex="-1">What do you already have?</h3>
+        <p class="fine js-have-count">Pick up to 3 and Yolkie leans toward meals that use them. ${state.have.length} of 3 picked.</p>
+        <div class="tags js-have-tags" role="group" aria-label="Ingredients you have">${haveTags()}</div>
+        <div class="have-search"><span class="icon" aria-hidden="true">search</span><label class="sr-only" for="have-search">Search ingredients</label>
+          <input id="have-search" class="js-have-search" type="search" placeholder="Search, like tofu or salmon" autocomplete="off" maxlength="30"></div>
+        <div class="tags js-have-results" aria-live="polite"></div>
+        <div class="actions">
+          <button type="button" class="btn btn--primary js-have-go"><span class="btn__dot" aria-hidden="true"></span>Suggest a meal</button>
+          <button type="button" class="btn btn--ghost js-have-skip">Skip</button>
+        </div>
+      </section>`;
+    if (focus) $('#have-title').focus({ preventScroll: true });
+  }
+  function toggleHave(key) {
+    state.have = state.have.includes(key) ? state.have.filter((k) => k !== key) : state.have.length < 3 ? [...state.have, key] : state.have;
+    $('.js-have-tags').innerHTML = haveTags();
+    $('.js-have-count').textContent = `Pick up to 3 and Yolkie leans toward meals that use them. ${state.have.length} of 3 picked.`;
+    const search = $('.js-have-search');
+    if (search && search.value) showHaveResults(search.value);
+    savePick();
+  }
+  function showHaveResults(term) {
+    const t = lower(term).trim();
+    const box = $('.js-have-results');
+    if (!t) { box.innerHTML = ''; return; }
+    const hits = ALL_ITEMS.filter((n) => n.includes(t) && !state.have.includes(n)).slice(0, 6);
+    box.innerHTML = hits.length
+      ? hits.map((n) => `<button type="button" class="tag tag--add" data-group="have-add" data-id="${esc(n)}"${state.have.length >= 3 ? ' disabled' : ''}><span class="icon" aria-hidden="true">add</span>${esc(n)}</button>`).join('')
+      : '<span class="fine">None of the demo recipes use that.</span>';
+  }
+  function leaveHave(skip) {
+    if (skip) state.have = [];
+    state.haveDone = true;
+    savePick();
+    rank();
+    const line = suggest(false);
+    yolk(...line);
+    const btn = $('.js-cook-this') || $('.js-loosen') || $('.js-open-prefs', slot);
+    if (btn) btn.focus({ preventScroll: true });
+  }
+
   const nextQuestion = () => (!state.meal ? 'Which meal is it?' : !state.energy ? 'And how’s your energy?' : 'And how much time have you got?');
   $$('input[name="meal"], input[name="energy"], input[name="time"]').forEach((input) => input.addEventListener('change', () => {
     state[input.name] = input.name === 'meal' ? input.value : Number(input.value);
+    state.fromCheckin = false;
+    savePick();
     let line = null;
-    if (state.meal && state.energy && state.time) { rank(); line = suggest(false); }
+    if (state.meal && state.energy && state.time) {
+      if (state.haveDone) { rank(); line = suggest(false); }
+      else { renderHave(false); line = ['default', 'Before I pick: anything already in the fridge?']; }
+    }
     const first = input.name === 'meal' ? MEALS[state.meal].say : input.name === 'energy' ? ENERGY[state.energy] : null;
     if (first) yolk(...first, line ? { then: line, after: 1500 } : {});
     else if (line) yolk(...line);
     else yolk('default', `Got it. ${nextQuestion()}`);
   }));
+  const checkRadios = () => {
+    $$('input[name="meal"]').forEach((i) => { i.checked = i.value === state.meal; });
+    $$('input[name="energy"]').forEach((i) => { i.checked = Number(i.value) === state.energy; });
+    $$('input[name="time"]').forEach((i) => { i.checked = Number(i.value) === state.time; });
+  };
 
-  $('.js-meal-slot').addEventListener('click', (e) => {
-    if (e.target.closest('.js-another')) { yolk(...suggest(true)); $('.js-another').focus(); }
-    if (e.target.closest('.js-cook-this')) startCheck(state.recipe);
-    if (e.target.closest('.js-vote-start')) startVote();
+  slot.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t.closest('.js-another')) { yolk(...suggest(true)); $('.js-another').focus(); }
+    if (t.closest('.js-cook-this')) startCheck(state.recipe);
+    if (t.closest('.js-vote-start')) startVote();
+    if (t.closest('.js-have-change')) { renderHave(); yolk('default', 'What’s in the fridge?'); }
+    const h = t.closest('[data-group="have"]');
+    if (h) { toggleHave(h.dataset.id); const again = $(`[data-group="have"][data-id="${CSS.escape(h.dataset.id)}"]`); if (again && !again.disabled) again.focus(); else $('.js-have-search').focus(); }
+    const add = t.closest('[data-group="have-add"]');
+    if (add) { toggleHave(add.dataset.id); $('.js-have-search').value = ''; showHaveResults(''); $('.js-have-search').focus(); yolk('happy', `${cap(add.dataset.id)}. Noted.`); }
+    if (t.closest('.js-have-go')) leaveHave(false);
+    if (t.closest('.js-have-skip')) leaveHave(true);
+    if (t.closest('.js-loosen') && loosen) {
+      state.temp = { diets: loosen.f.diets, dislikes: loosen.f.dislikes };
+      refilter();
+      const btn = $('.js-cook-this');
+      if (btn) btn.focus({ preventScroll: true });
+    }
+  });
+  slot.addEventListener('input', (e) => { if (e.target.matches('.js-have-search')) showHaveResults(e.target.value); });
+  slot.addEventListener('keydown', (e) => {
+    if (e.target.matches('.js-have-search') && e.key === 'Enter') {
+      e.preventDefault();
+      const first = $('[data-group="have-add"]:not([disabled])');
+      if (first) first.click();
+    }
   });
 
   /* 2. Check: servings, have/need, spice rack, shopping list */
   function startCheck(recipe) {
     state.recipe = recipe;
-    state.servings = 2;
     state.marks = {};
     state.out = {};
     state.buy = {};
+    // What you said you have is ticked already; from the check-in, the rest is on the list.
+    recipe.ingredients.forEach((item, i) => {
+      if (hasItem(item, state.have)) state.marks[i] = 'have';
+      else if (state.fromCheckin) state.marks[i] = 'need';
+    });
     $('.js-check-meal').textContent = `${recipe.name} · ${recipe.time} min · Dishes: ${recipe.dishes.length}`;
     renderChecklist();
     renderShop();
     go('check');
-    yolk('default', 'Tap what you’ve got. No judgment.');
+    const had = Object.values(state.marks).filter((m) => m === 'have').length;
+    yolk('default', had ? `I ticked the ${plural(had, 'thing')} you already have. Tap the rest.` : 'Tap what you’ve got. No judgment.');
   }
 
-  const amount = (item) => describe(item, scaleQty(item, state.servings, state.recipe.base));
+  const amount = (item) => amountFor(item, state.recipe, state.servings);
 
   function renderChecklist() {
     $('.js-serv-count').textContent = state.servings;
@@ -825,8 +1750,9 @@ if (demo) {
   });
   const changeServings = (d) => {
     state.servings = Math.min(6, Math.max(1, state.servings + d));
-    renderChecklist();
-    renderShop();
+    savePick();
+    if (state.recipe && !$('[data-stage="check"]').hidden) { renderChecklist(); renderShop(); }
+    if (nutriSheet.open) renderNutri();
   };
   $('.js-serv-minus').addEventListener('click', () => changeServings(-1));
   $('.js-serv-plus').addEventListener('click', () => changeServings(1));
@@ -895,6 +1821,38 @@ if (demo) {
     setTimeout(() => { btn.textContent = 'Copy list'; }, 2000);
   });
 
+  /* Nutrition: estimates per serving, with totals for the servings you're cooking */
+  const nutriSheet = $('.js-nutri-sheet');
+  const NUTRIENTS = [
+    ['Calories', (r) => r.kcal, 'kcal'], ['Protein', (r) => r.protein, 'g'], ['Carbs', (r) => r.nut.carbs, 'g'],
+    ['Fiber', (r) => r.nut.fiber, 'g'], ['Fat', (r) => r.nut.fat, 'g'], ['Sugar', (r) => r.nut.sugar, 'g'], ['Sodium', (r) => r.nut.sodium, 'mg'],
+  ];
+  function renderNutri() {
+    const r = state.recipe;
+    const s = state.servings;
+    $('.js-nutri-body').innerHTML = `
+      <p class="nutri-sheet__meal">${r.name}</p>
+      <div class="servings">
+        <span class="servings__label" id="nutri-serv-label">Servings</span>
+        <div class="stepper" role="group" aria-labelledby="nutri-serv-label">
+          <button type="button" data-nserv="-1" aria-label="Fewer servings"${s <= 1 ? ' disabled' : ''}><span class="icon" aria-hidden="true">remove</span></button>
+          <output aria-live="polite">${s}</output>
+          <button type="button" data-nserv="1" aria-label="More servings"${s >= 6 ? ' disabled' : ''}><span class="icon" aria-hidden="true">add</span></button>
+        </div>
+      </div>
+      <table class="nutri-table">
+        <caption class="sr-only">Estimated nutrition for ${r.name}</caption>
+        <thead><tr><th scope="col">Nutrient</th><th scope="col">Per serving</th><th scope="col">For ${s}</th></tr></thead>
+        <tbody>${NUTRIENTS.map(([name, get, unit]) => `<tr><th scope="row">${name}</th><td>~${get(r)} ${unit}</td><td>~${get(r) * s} ${unit}</td></tr>`).join('')}</tbody>
+      </table>
+      <p class="fine">Estimates per serving, from typical ingredients. The totals follow the servings. Brands and portions vary.</p>`;
+  }
+  function openNutrition() { if (!state.recipe) return; renderNutri(); openSheet(nutriSheet); }
+  nutriSheet.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-nserv]');
+    if (b) { changeServings(Number(b.dataset.nserv)); const again = $(`[data-nserv="${b.dataset.nserv}"]`, nutriSheet); (again.disabled ? $('[data-nserv]:not([disabled])', nutriSheet) : again).focus(); }
+  });
+
   /* 3. Cook mode */
   const speedToggle = $('.js-demo-speed');
   const MIN = 60000;
@@ -908,7 +1866,7 @@ if (demo) {
 
   $('.js-start-cook').addEventListener('click', () => {
     stopCook();
-    state.cook = { r: state.recipe, i: -1, timers: new Map(), rinsed: new Set(), last: performance.now(), loop: setInterval(tick, 200) };
+    state.cook = { r: state.recipe, i: -1, timers: new Map(), rinsed: new Set(), tidies: 0, last: performance.now(), loop: setInterval(tick, 200) };
     $('.js-cook-title').textContent = state.recipe.name;
     $('.js-timers').innerHTML = '';
     renderNow();
@@ -926,7 +1884,7 @@ if (demo) {
     stopCook();
     state.cook = null;
     go('check');
-    yolk('meh', 'Paused. The kitchen will wait.');
+    yolk('default', 'Paused. The kitchen will wait.');
   });
 
   const fmtClock = (ms) => {
@@ -1007,6 +1965,7 @@ if (demo) {
     if (e.target.closest('.js-cleaned')) {
       const step = c.r.steps[c.i];
       if (step.clean.dish) c.rinsed.add(step.clean.dish);
+      c.tidies += 1;
       const box = $('.js-clean');
       box.classList.add('is-done');
       box.innerHTML = `<span class="icon" aria-hidden="true">check</span><p class="clean-prompt__text"><small>Clean as you go</small>Done. ${step.clean.dish ? 'One less dish later.' : 'Future you says thanks.'}</p>`;
@@ -1079,78 +2038,733 @@ if (demo) {
     }
   }
 
-  /* 4. Done */
+  /* 4. Done: the meal is saved, and everything it adds shows up here */
   function finishCook() {
     const c = state.cook;
     stopCook();
     const r = c.r;
-    const rinsed = c.rinsed.size;
+    const a = activity();
+    const before = statsFor(a);
+    const meal = {
+      id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, r: r.id, at: Date.now(), servings: state.servings,
+      have: usesHave(r, state.have), rinsed: c.rinsed.size, tidies: c.tidies, cook: 0, kudos: [],
+    };
+    a.meals.push(meal);
+    const finished = settleChallenge(a);
+    saveActivity(a);
+    const after = statsFor(a);
+    state.done = {
+      mealId: meal.id, finished,
+      goalHit: before.week < prefs.goal && after.week >= prefs.goal,
+      unlocked: CLOSET.filter((it) => before.cooked < it.at && after.cooked >= it.at),
+      newCuisine: !before.cuisines.includes(r.cuisine),
+      newRecipe: !before.recipes.includes(r.id),
+      askTakeout: !prefs.takeoutAsked,
+    };
+    if (!prefs.takeoutAsked) { prefs.takeoutAsked = true; savePrefs(); }
+    // "Just this meal" ends with the meal; what you had is used up.
+    state.temp = null;
+    state.have = [];
+    state.haveDone = false;
+    state.fromCheckin = false;
+    savePick();
+    renderDietBar();
+
     $('.js-done-title').textContent = `${cap(mealOf(r).label)}. Done.`;
     $('.js-done-meal').textContent = `${r.name}, for ${state.servings}.`;
+    $('.js-goal-hit').hidden = !state.done.goalHit;
     $('.js-done-stats').innerHTML = `
       <div class="done-stat"><dt>Dishes used</dt><dd>${r.dishes.length}<small>${r.dishes.join(', ')}</small></dd></div>
-      <div class="done-stat"><dt>Already rinsed</dt><dd>${rinsed}<small>${rinsed ? 'Thanks to clean-as-you-go.' : 'They’ll keep till tomorrow.'}</small></dd></div>
+      <div class="done-stat"><dt>Already rinsed</dt><dd>${meal.rinsed}<small>${meal.rinsed ? 'Thanks to clean-as-you-go.' : 'They’ll keep till tomorrow.'}</small></dd></div>
       <div class="done-stat nutri"><dt>Calories</dt><dd>~${r.kcal}<small>per serving, estimate</small></dd></div>
       <div class="done-stat nutri"><dt>Protein</dt><dd>~${r.protein} g<small>per serving, estimate</small></dd></div>`;
-    const logBtn = $('.js-log');
-    logBtn.disabled = false;
-    logBtn.innerHTML = '<span class="icon" aria-hidden="true">bookmark_add</span>Log it';
-    renderLog();
+    renderDone();
     state.cook = null;
+    dress();
     go('done');
     confetti($('.js-confetti'));
-    yolk('happy', `${cap(mealOf(r).label)}. Done. Look at you go!`, { celebrate: true });
+    if (state.done.goalHit) {
+      setTimeout(() => confetti($('.js-confetti')), 900);
+      yolk('happy', `Weekly goal: hit! ${plural(prefs.goal, 'meal')} this week. I’m so proud I could scramble.`, { celebrate: true });
+    } else if (state.done.unlocked.length) {
+      yolk('happy', `${cap(mealOf(r).label)}. Done. And ooh, something new in my closet!`, { celebrate: true });
+    } else {
+      yolk('happy', `${cap(mealOf(r).label)}. Done. Look at you go!`, { celebrate: true });
+    }
   }
 
-  const LOG_KEY = 'yolkie-log';
-  const readLog = () => { try { return JSON.parse(localStorage.getItem(LOG_KEY)) || []; } catch (e) { return []; } };
-  function renderLog() {
-    const log = readLog();
-    $('.js-log-list').innerHTML = log.slice(0, 5).map((entry) => {
-      const d = new Date(entry.at);
-      return `<li><span>${esc(entry.name)} · for ${Number(entry.servings) || 1}</span><time datetime="${d.toISOString()}">${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</time></li>`;
-    }).join('');
-    $('.js-clear-log').hidden = !log.length;
+  const gain = (icon, title, sub, cls = '') => `<li class="gain ${cls}"><span class="icon" aria-hidden="true">${icon}</span><p><strong>${title}</strong><small>${sub}</small></p></li>`;
+  function renderDone() {
+    const d = state.done;
+    const a = activity();
+    const meal = a.meals.find((m) => m.id === d.mealId);
+    const gainsBox = $('.js-gains');
+    const who = $('.js-who');
+    if (!meal) {
+      gainsBox.innerHTML = '<h3>Removed</h3><p class="fine">That one isn’t counted anymore. No harm done.</p>';
+      who.hidden = true;
+      return;
+    }
+    const s = statsFor(a);
+    const r = byId(meal.r);
+    const mine = !meal.cook;
+    const items = [];
+    items.push(gain('savings', mine ? `+$${prefs.takeout} kept in your pocket` : `+$${prefs.takeout} for the house`,
+      `Estimate, from your usual takeout cost.${mine ? ` $${s.kept} so far.` : ` The house: $${s.houseKept}.`}`, 'gain--money'));
+    if (meal.have.length) items.push(gain('kitchen', 'Fridge rescue!', `You used ${esc(listText(meal.have.map(haveLabel)))}.`));
+    if (mine && d.newCuisine) items.push(gain('approval', `New passport stamp: ${r.cuisine}`, 'Your first one here.'));
+    else if (mine && d.newRecipe) items.push(gain('approval', 'New recipe stamp', `${r.name}, first time.`));
+    if (meal.rinsed) items.push(gain('wash', `${plural(meal.rinsed, 'dish', 'dishes')} dodged`, 'Rinsed while something cooked, so they never hit the sink.'));
+    else if (meal.tidies) items.push(gain('wash', `${plural(meal.tidies, 'tidy-up')} done`, 'Clean as you go. Future you says thanks.'));
+    if (mine) {
+      const hit = s.week >= prefs.goal;
+      items.push(`<li class="gain gain--ring">${ring(s.week, prefs.goal, 'Weekly goal', 'ring--sm')}<p><strong>${hit ? 'Weekly goal hit!' : `${s.week} of ${prefs.goal} this week`}</strong><small>${hit ? 'Anything more is a bonus.' : 'Your weekly goal. No rush.'}</small></p></li>`);
+    } else {
+      items.push(gain('home', `The house: ${plural(s.houseWeek, 'meal')} this week`, `House goal: ${prefs.houseGoal}.`));
+    }
+    const active = a.challenge && CHALLENGES.find((c) => c.id === a.challenge.id);
+    if (d.finished) items.push(gain('military_tech', `Badge earned: ${d.finished.badge}`, `${d.finished.name}, done.`, 'gain--badge'));
+    else if (active) items.push(gain(active.icon, `${active.name}: ${challengeProgress(a, s)} of ${active.goal}`, active.unit));
+    const unlocks = mine ? d.unlocked.map((it) => {
+      const on = prefs.outfit[it.slot] === it.id;
+      return `<div class="unlock-card">${yolkieArt('happy', '', { ...worn(), [it.slot]: it.id })}<p><small>New in Yolkie’s closet</small><strong>${it.name}</strong></p>
+        <button type="button" class="btn btn--yolk btn--small" data-wear-now="${it.id}" aria-pressed="${on}">${on ? 'Wearing it' : 'Put it on'}</button></div>`;
+    }).join('') : '';
+    const ask = d.askTakeout ? `<form class="takeout-ask js-takeout-ask"><label for="takeout-once"><strong>Quick one, just this once:</strong> what does takeout usually cost you?</label>
+        <span class="takeout-ask__row"><span class="money"><span aria-hidden="true">$</span><input id="takeout-once" type="number" min="1" max="200" step="1" value="${prefs.takeout}" inputmode="decimal"></span>
+        <button class="btn btn--primary btn--small">Save</button></span><span class="fine">Change it any time in Preferences.</span></form>` : '';
+    gainsBox.innerHTML = `<h3>This meal counts</h3>${sampleOn() ? '<p class="fine">Saved to the sample week, not your real stats.</p>' : ''}
+      <ul class="gains">${items.join('')}</ul>${ask}${unlocks}
+      <p class="done-undo"><button type="button" class="link-btn js-unlog">Didn’t actually cook it? Remove it</button></p>`;
+    who.hidden = false;
+    who.innerHTML = whoHtml(meal);
   }
-  $('.js-log').addEventListener('click', (e) => {
-    const log = readLog();
-    log.unshift({ name: state.recipe.name, servings: state.servings, at: Date.now() });
-    try { localStorage.setItem(LOG_KEY, JSON.stringify(log.slice(0, 30))); } catch (err) {}
-    e.currentTarget.disabled = true;
-    e.currentTarget.innerHTML = '<span class="icon" aria-hidden="true">check</span>Logged';
-    renderLog();
-    yolk('happy', 'Logged. It lives on this device only.');
+  function whoHtml(meal) {
+    const people = [...new Set([...houseMembers(), meal.cook])];
+    return `<h3>Who cooked?</h3><p class="fine">Demo: pass the phone.</p>
+      <div class="tags" role="group" aria-label="Who cooked">${people.map((i) => tag('cook', i, rawName(i), meal.cook === i)).join('')}</div>
+      <p class="kudos-label">Everyone else: was it good?</p>
+      ${kudosRow(meal)}`;
+  }
+  function kudosRow(meal, small = false) {
+    const others = houseMembers().filter((i) => i !== meal.cook);
+    return `<div class="kudos-row">${others.map((i) => {
+      const on = meal.kudos.includes(i);
+      // Once tapped, the button turns into that member's sticker.
+      return `<button type="button" class="kudos-btn${small ? ' kudos-btn--sm' : ''}" data-meal="${meal.id}" data-kudos="${i}" aria-pressed="${on}">${avatar(i, on ? 'win' : 'idle', 'avatar--sm')}<span>${memberName(i)}: That was good!</span>${on ? '<span class="icon" aria-hidden="true">favorite</span>' : ''}</button>`;
+    }).join('')}</div>`;
+  }
+  function updateMeal(id, fn) {
+    const a = activity();
+    const meal = a.meals.find((m) => m.id === id);
+    if (!meal) return;
+    fn(meal, a);
+    saveActivity(a);
+  }
+  const toggleKudos = (id, i) => updateMeal(id, (m) => { m.kudos = m.kudos.includes(i) ? m.kudos.filter((x) => x !== i) : [...m.kudos, i]; });
+
+  const doneStage = $('[data-stage="done"]');
+  doneStage.addEventListener('click', (e) => {
+    const t = e.target;
+    const d = state.done;
+    if (!d) return;
+    const cook = t.closest('[data-group="cook"]');
+    if (cook) {
+      const i = Number(cook.dataset.id);
+      updateMeal(d.mealId, (m) => { m.cook = i; m.kudos = m.kudos.filter((x) => x !== i); });
+      renderDone();
+      dress();
+      $(`[data-group="cook"][data-id="${i}"]`).focus();
+      yolk('happy', i === 0 ? 'Chef: you. Obviously.' : `Chef: ${rawName(i)}. Nice one.`);
+    }
+    const k = t.closest('[data-kudos]');
+    if (k) {
+      const i = Number(k.dataset.kudos);
+      toggleKudos(d.mealId, i);
+      renderDone();
+      $(`[data-kudos="${i}"]`, doneStage).focus();
+      const meal = activity().meals.find((m) => m.id === d.mealId);
+      if (meal && meal.kudos.includes(i)) yolk('happy', `${rawName(i)} says that was good! Sticker earned.`);
+    }
+    const w = t.closest('[data-wear-now]');
+    if (w) {
+      const it = CLOSET.find((c) => c.id === w.dataset.wearNow);
+      prefs.outfit[it.slot] = prefs.outfit[it.slot] === it.id ? undefined : it.id;
+      savePrefs();
+      dress();
+      renderDone();
+      $(`[data-wear-now="${it.id}"]`).focus();
+      yolk('happy', prefs.outfit[it.slot] ? `${it.name}, on. How do I look?` : `${it.name}, off. Back to basics.`);
+    }
+    if (t.closest('.js-unlog')) {
+      const a = activity();
+      a.meals = a.meals.filter((m) => m.id !== d.mealId);
+      saveActivity(a);
+      renderDone();
+      dress();
+      $('.js-again').focus();
+      yolk('default', 'Removed. No harm done.');
+    }
+    if (t.closest('.js-see-me')) { showTab('me'); demo.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); $('.js-me .stage__title').focus({ preventScroll: true }); }
   });
-  $('.js-clear-log').addEventListener('click', () => {
-    try { localStorage.removeItem(LOG_KEY); } catch (e) {}
-    renderLog();
-    $('.js-log').focus();
+  doneStage.addEventListener('submit', (e) => {
+    if (!e.target.matches('.js-takeout-ask')) return;
+    e.preventDefault();
+    const v = Math.round(Number(e.target.querySelector('input').value));
+    if (v > 0) prefs.takeout = Math.min(200, v);
+    savePrefs();
+    state.done.askTakeout = false;
+    renderDone();
+    yolk('happy', `$${prefs.takeout} it is. I’ll count every meal against that.`);
   });
+
   $('.js-again').addEventListener('click', () => {
+    checkRadios();
+    if (state.meal && state.energy && state.time) renderHave(false);
     go('pick');
     yolk('default', 'Round two? Same questions, new meal.');
   });
 
-  /* Yolkie's picks (the house vote): three picks, pass the phone, one dramatic reveal */
-  const PEOPLE = [
-    { name: 'Yolkie', idle: 'yolk-default', win: 'yolk-happy', lose: 'yolk-meh' },
-    { name: 'Boyd', idle: 'boyd-default', win: 'boyd-happy', lose: 'boyd-default' },
-    { name: 'Scramble', idle: 'scramble-default', win: 'scramble-default', lose: 'scramble-pout' },
-    { name: 'Guest' },
-  ];
-  const voteBox = $('.js-vote');
-  const avatar = (i, mood = 'idle', extra = '') => (PEOPLE[i][mood]
-    ? `<span class="avatar ${extra}"><img src="${mascotDir}${PEOPLE[i][mood]}.svg" alt="" width="220" height="220"></span>`
-    : `<span class="avatar avatar--guest ${extra}"><span class="icon" aria-hidden="true">restaurant</span></span>`);
-  const pickMeta = (r) => `${r.time} min · Dishes: ${r.dishes.length}${r.time > state.time ? ' · a bit longer' : ''}`;
-  const playerName = (i) => esc(state.vote.names[i].trim() || PEOPLE[i].name);
+  /* Me: progress, goal, passport, challenges, closet, Wrapped */
+  const meBox = $('.js-me');
+  function renderMe() {
+    const a = activity();
+    const s = statsFor(a);
+    const goal = prefs.goal;
+    const hit = s.week >= goal;
+    const line = hit ? 'Goal hit this week! Anything more is a bonus.'
+      : s.week === 0 ? 'New week, fresh start. One meal gets the ring moving.'
+        : `${s.week} down, ${goal - s.week} to go. No rush.`;
+    const active = a.challenge && CHALLENGES.find((c) => c.id === a.challenge.id);
+    const prog = active ? challengeProgress(a, s) : 0;
+    meBox.innerHTML = `
+      <div class="tab-head"><h2 class="stage__title" tabindex="-1">Me</h2>
+        <p class="stage__sub">Everything here comes from meals finished in cook mode${sampleOn() ? ', and right now that’s the sample week' : ''}. Saved on this device only.</p></div>
+      <section class="panel goal-panel" aria-labelledby="goal-title">
+        ${ring(s.week, goal, 'Meals cooked this week')}
+        <div><h3 id="goal-title">Weekly goal</h3><p class="goal-line">${s.week} of ${plural(goal, 'meal')} this week</p><p class="fine">${line}</p>
+          <div class="count-choices" role="group" aria-label="Meals per week">${[2, 3, 4, 5].map((n) => `<button type="button" data-goal="${n}" aria-pressed="${n === goal}">${n}</button>`).join('')}</div></div>
+      </section>
+      <dl class="tiles">
+        <div class="tile tile--money"><dt><span class="icon" aria-hidden="true">savings</span>Takeout dodged</dt><dd>$${s.kept}<small>${s.cooked ? `You’ve kept $${s.kept} in your pocket. Estimate: ${s.cooked} × your usual $${prefs.takeout}.` : 'Each meal you cook adds your usual takeout cost. An estimate.'}</small></dd></div>
+        <div class="tile"><dt><span class="icon" aria-hidden="true">kitchen</span>Fridge rescues</dt><dd>${s.rescues}<small>Meals that used something you already had.</small></dd></div>
+        <div class="tile"><dt><span class="icon" aria-hidden="true">wash</span>Dishes dodged</dt><dd>${s.dodged}<small>${s.tidies ? `Rinsed as you went, plus ${plural(s.tidies, 'tiny tidy-up')}.` : 'Dishes rinsed while something cooked.'}</small></dd></div>
+        <div class="tile"><dt><span class="icon" aria-hidden="true">restaurant</span>Meals cooked</dt><dd>${s.cooked}<small>All time, on this device.</small></dd></div>
+      </dl>
+      <section class="panel" aria-labelledby="passport-title">
+        <h3 id="passport-title">Passport</h3><p class="fine">A stamp for every new cuisine and every new recipe.</p>
+        <h4 class="mini-head">Cuisines · ${s.cuisines.length} of ${CUISINES.length}</h4>
+        <ul class="stamps">${CUISINES.map((cu) => `<li class="stamp${s.cuisines.includes(cu) ? ' is-stamped' : ''}">${s.cuisines.includes(cu) ? '<span class="icon" aria-hidden="true">approval</span>' : ''}${cu}<span class="sr-only">${s.cuisines.includes(cu) ? ', stamped' : ', not yet'}</span></li>`).join('')}</ul>
+        <h4 class="mini-head">Recipes · ${s.recipes.length} of ${RECIPES.length}</h4>
+        ${s.recipes.length ? `<ul class="stamps stamps--recipes">${s.recipes.map((id) => `<li class="stamp is-stamped">${byId(id).name}</li>`).join('')}</ul>` : '<p class="fine">No stamps yet. Your first meal gets one.</p>'}
+      </section>
+      <section class="panel" aria-labelledby="ch-title">
+        <h3 id="ch-title">Challenges</h3><p class="fine">Optional, one at a time, no deadline. Stop whenever you like.</p>
+        ${active ? `<div class="challenge is-active"><span class="icon" aria-hidden="true">${active.icon}</span><div class="challenge__body"><strong>${active.name}</strong><p class="fine">${active.blurb}</p>
+            <div class="bar" role="img" aria-label="${prog} of ${active.goal}"><span style="width:${Math.min(100, (prog / active.goal) * 100)}%"></span></div><p class="fine">${prog} of ${active.goal} ${active.unit}</p></div>
+            <button type="button" class="btn btn--ghost btn--small js-ch-stop">Stop</button></div>`
+          : CHALLENGES.map((c) => `<div class="challenge"><span class="icon" aria-hidden="true">${c.icon}</span><div class="challenge__body"><strong>${c.name}</strong><p class="fine">${c.blurb}</p></div>
+            <button type="button" class="btn btn--secondary btn--small" data-ch="${c.id}">Start</button></div>`).join('')}
+        <h4 class="mini-head">Badges</h4>
+        ${a.badges.length ? `<div class="badges">${a.badges.map((b) => { const c = CHALLENGES.find((x) => x.id === b.id); return `<span class="badge"><span class="icon" aria-hidden="true">military_tech</span>${c.badge}</span>`; }).join('')}</div>` : '<p class="fine">Finish a challenge to earn one.</p>'}
+      </section>
+      <section class="panel" id="closet" aria-labelledby="closet-title">
+        <h3 id="closet-title">Yolkie’s closet</h3><p class="fine">New things unlock as you cook. ${plural(s.cooked, 'meal')} so far. Yolkie wears them all over the demo.</p>
+        <div class="closet-stage">${yolkieArt('happy')}</div>
+        <ul class="closet">${CLOSET.map((it) => {
+          const open = s.cooked >= it.at;
+          const on = open && prefs.outfit[it.slot] === it.id;
+          const left = it.at - s.cooked;
+          return `<li><button type="button" class="closet-item${open ? '' : ' is-locked'}${on ? ' is-on' : ''}" data-wear="${it.id}" aria-pressed="${on}"${open ? '' : ' aria-disabled="true"'}>
+            <svg class="closet-item__art" viewBox="${it.box}" aria-hidden="true" focusable="false">${it.svg}</svg>
+            <span class="closet-item__name">${it.name}</span>
+            <span class="closet-item__state">${open ? (on ? 'Wearing' : 'Put on') : `Cook ${plural(left, 'more meal')}`}</span></button></li>`;
+        }).join('')}</ul>
+      </section>
+      <section class="panel wrapped-teaser" aria-labelledby="wrapped-title">
+        <div><h3 id="wrapped-title">Yolkie Wrapped</h3><p class="fine">Your cooking so far, as a five-card story. Save any card as an image.</p></div>
+        <button type="button" class="btn btn--primary js-open-wrapped"><span class="btn__dot" aria-hidden="true"></span>Preview Yolkie Wrapped</button>
+      </section>`;
+  }
+  const refocus = (box, sel) => { const el = $(sel, box); if (el) el.focus(); };
+  meBox.addEventListener('click', (e) => {
+    const t = e.target;
+    const g = t.closest('[data-goal]');
+    if (g) {
+      prefs.goal = Number(g.dataset.goal);
+      savePrefs();
+      renderMe();
+      refocus(meBox, `[data-goal="${prefs.goal}"]`);
+      yolk('happy', `${plural(prefs.goal, 'meal')} a week. Sounds doable.`);
+    }
+    const ch = t.closest('[data-ch]');
+    if (ch) {
+      const a = activity();
+      a.challenge = { id: ch.dataset.ch, start: Date.now() };
+      saveActivity(a);
+      renderMe();
+      refocus(meBox, '.js-ch-stop');
+      yolk('happy', `${CHALLENGES.find((c) => c.id === ch.dataset.ch).name}, starting now. No deadline.`);
+    }
+    if (t.closest('.js-ch-stop')) {
+      const a = activity();
+      a.challenge = null;
+      saveActivity(a);
+      renderMe();
+      refocus(meBox, '[data-ch]');
+      yolk('default', 'Stopped. Pick another whenever.');
+    }
+    const w = t.closest('[data-wear]');
+    if (w) {
+      const it = CLOSET.find((c) => c.id === w.dataset.wear);
+      const left = it.at - statsFor(activity()).cooked;
+      if (left > 0) { yolk('default', `Cook ${plural(left, 'more meal')} and the ${it.name.toLowerCase()} is mine.`); return; }
+      prefs.outfit[it.slot] = prefs.outfit[it.slot] === it.id ? undefined : it.id;
+      savePrefs();
+      dress();
+      renderMe();
+      refocus(meBox, `[data-wear="${it.id}"]`);
+      yolk('happy', prefs.outfit[it.slot] ? `${it.name}, on. How do I look?` : `${it.name}, off.`);
+    }
+  });
 
+  /* House: single device, shared goal, kudos. No rankings. */
+  const houseBox = $('.js-house');
+  function renderHouse() {
+    const a = activity();
+    const s = statsFor(a);
+    const goal = prefs.houseGoal;
+    const recent = [...s.meals].reverse().slice(0, 6);
+    houseBox.innerHTML = `
+      <div class="tab-head"><h2 class="stage__title" tabindex="-1">House</h2><p class="stage__sub">One goal for everyone, and a sticker when someone cooks something good.</p></div>
+      <p class="vote-label"><span class="icon" aria-hidden="true">smartphone</span><span><strong>Demo: pass the phone.</strong> The whole house shares this one device here. In the app, everyone would join from their own phone.</span></p>
+      <section class="panel" aria-labelledby="members-title">
+        <div class="servings"><h3 id="members-title">Who’s in the house?</h3>
+          <span class="count-choices" role="group" aria-label="House size">${[2, 3, 4].map((n) => `<button type="button" data-house-size="${n}" aria-pressed="${n === prefs.houseSize}">${n}</button>`).join('')}</span></div>
+        <ul class="members">${houseMembers().map((i) => {
+          const al = memberAllergies(i).map((x) => labelOf(ALLERGENS, x));
+          return `<li class="member">${avatar(i)}<div class="member__body"><label for="member-${i}">${i === 0 ? 'You' : `Member ${i + 1}`}</label>
+            <input id="member-${i}" class="text-input" type="text" value="${memberName(i)}" data-house-name="${i}" maxlength="16" autocomplete="off">
+            <span class="member__allergy">Allergies: ${al.length ? esc(listText(al)) : 'none'}</span></div></li>`;
+        }).join('')}</ul>
+        <p class="fine">Allergies are set in <button type="button" class="link-btn js-prefs-house">Preferences</button>. Yolkie’s picks leave out anything a member can’t eat.</p>
+      </section>
+      <section class="panel goal-panel" aria-labelledby="house-goal-title">
+        ${ring(s.houseWeek, goal, 'House meals this week')}
+        <div><h3 id="house-goal-title">House goal</h3><p class="goal-line">The house cooked ${plural(s.houseWeek, 'meal')} this week</p>
+          <p class="fine">${s.houseWeek >= goal ? 'Goal hit! Everyone gets a gold star.' : s.houseWeek ? `${goal - s.houseWeek} more and the house hits ${goal}.` : 'New week, fresh start. Every meal counts, whoever cooks it.'}</p>
+          <div class="count-choices" role="group" aria-label="House meals per week">${[5, 7, 10, 14].map((n) => `<button type="button" data-house-goal="${n}" aria-pressed="${n === goal}">${n}</button>`).join('')}</div></div>
+      </section>
+      <section class="panel house-kept" aria-labelledby="house-kept-title"><span class="icon" aria-hidden="true">savings</span>
+        <div><h3 id="house-kept-title">House takeout dodged</h3><p class="house-kept__big">$${s.houseKept}</p><p class="fine">Estimate: ${plural(s.meals.length, 'meal')} × $${prefs.takeout}, everyone’s meals added together.</p></div></section>
+      <section class="panel" aria-labelledby="recent-title">
+        <h3 id="recent-title">Recent meals</h3><p class="fine">No rankings here. Just thanks.</p>
+        ${recent.length ? `<ul class="recent">${recent.map((m) => `<li><div class="recent__top"><strong>${byId(m.r).name}</strong><time datetime="${new Date(m.at).toISOString()}">${new Date(m.at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</time></div>
+          <p class="fine">Cooked by ${memberName(m.cook || 0)}</p>${kudosRow(m, true)}</li>`).join('')}</ul>` : '<p class="fine">Nothing cooked yet. The first meal lands here.</p>'}
+      </section>`;
+  }
+  houseBox.addEventListener('click', (e) => {
+    const t = e.target;
+    const size = t.closest('[data-house-size]');
+    if (size) { prefs.houseSize = Number(size.dataset.houseSize); savePrefs(); renderHouse(); refocus(houseBox, `[data-house-size="${prefs.houseSize}"]`); }
+    const g = t.closest('[data-house-goal]');
+    if (g) { prefs.houseGoal = Number(g.dataset.houseGoal); savePrefs(); renderHouse(); refocus(houseBox, `[data-house-goal="${prefs.houseGoal}"]`); }
+    const k = t.closest('[data-kudos]');
+    if (k) {
+      const i = Number(k.dataset.kudos);
+      toggleKudos(k.dataset.meal, i);
+      renderHouse();
+      refocus(houseBox, `[data-meal="${k.dataset.meal}"][data-kudos="${i}"]`);
+      yolk('happy', `${rawName(i)} left a sticker. Wholesome.`);
+    }
+    if (t.closest('.js-prefs-house')) openPrefs('prefs-house');
+  });
+  houseBox.addEventListener('input', (e) => {
+    if (e.target.matches('[data-house-name]')) { prefs.names[Number(e.target.dataset.houseName)] = e.target.value; savePrefs(); }
+  });
+  houseBox.addEventListener('change', (e) => { if (e.target.matches('[data-house-name]')) renderHouse(); });
+
+  /* Preferences sheet: diets, dislikes, allergies, nutrition, reminders, takeout, sample data */
+  const prefsSheet = $('.js-prefs-sheet');
+  const prefsBody = $('.js-prefs-body');
+  let resetArmed = false;
+  function renderPrefs() {
+    const sec = (title, body, id = '') => `<section class="sheet-sec"${id ? ` id="${id}"` : ''}><h3>${title}</h3>${body}</section>`;
+    const customAllergies = prefs.allergies.filter((x) => !ALLERGENS.some((a) => a.id === x));
+    const today = prefs.notToday === dayKey();
+    prefsBody.innerHTML =
+      sec('Diet', `<p class="fine">Recipes have to match every diet you turn on.</p>
+        <div class="tags">${DIETS.map((d) => tag('diet', d.id, d.label, prefs.diets.includes(d.id))).join('')}</div>`)
+      + sec('Never show me', `<p class="fine">Recipes with these are left out.</p>
+        <div class="tags">${prefs.dislikes.length ? prefs.dislikes.map((t) => `<button type="button" class="tag is-on" data-undislike="${esc(t)}"><span class="sr-only">Remove </span>${esc(t)}<span class="icon" aria-hidden="true">close</span></button>`).join('') : '<span class="fine">Nothing yet.</span>'}</div>
+        <div class="tags">${DISLIKE_IDEAS.filter((t) => !prefs.dislikes.includes(t)).map((t) => `<button type="button" class="tag tag--add" data-dislike="${t}"><span class="icon" aria-hidden="true">add</span>${t}</button>`).join('')}</div>
+        <form class="add-row js-add-dislike"><label class="sr-only" for="dislike-input">Add something to never show</label><input id="dislike-input" class="text-input" type="text" placeholder="Add an ingredient" maxlength="30" autocomplete="off"><button class="btn btn--secondary btn--small">Add</button></form>`)
+      + sec('Allergies', `<p class="allergy-note"><span class="icon" aria-hidden="true">info</span>We filter recipes, but always check labels.</p>
+        <p class="fine">Strict filters: a recipe with any of these never shows up. They can only be changed here.</p>
+        <div class="tags">${ALLERGENS.map((a) => tag('allergy', a.id, a.label, prefs.allergies.includes(a.id))).join('')}${customAllergies.map((x) => tag('allergy', x, x, true)).join('')}</div>
+        <form class="add-row js-add-allergy"><label class="sr-only" for="allergy-input">Add another allergy</label><input id="allergy-input" class="text-input" type="text" placeholder="Another allergy, like mustard" maxlength="30" autocomplete="off"><button class="btn btn--secondary btn--small">Add</button></form>`)
+      + sec('Household allergies', `<p class="fine">Yolkie’s picks (the house vote) leave out anything a member can’t eat.</p>
+        ${[1, 2, 3].map((i) => { const al = prefs.houseAllergies[i]; return `<details class="member-allergies"><summary><span>${memberName(i)}</span><span class="fine">${al.length ? esc(listText(al.map((x) => labelOf(ALLERGENS, x)))) : 'None'}</span></summary>
+          <div class="tags">${ALLERGENS.map((a) => tag(`house-${i}`, a.id, a.label, al.includes(a.id))).join('')}</div></details>`; }).join('')}`, 'prefs-house')
+      + sec('Nutrition', `<label class="switch"><input type="checkbox" class="js-nutri-hide"${nutritionOn() ? '' : ' checked'}><span class="switch__track" aria-hidden="true"></span>Hide nutrition</label>
+        <p class="fine">Hides every calorie, protein and nutrition number, here and on the home page.</p>`)
+      + sec('Check-in reminders', `<p class="fine">Preview: real reminders arrive in the app.</p>
+        ${['breakfast', 'lunch', 'dinner'].map((k) => `<div class="remind-row"><label class="switch"><input type="checkbox" data-remind="${k}"${prefs.reminders[k].on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Remind me before ${k}</label>
+          <label class="time-field"><span class="sr-only">${cap(k)} reminder time</span><input class="time-input" type="time" data-remind-time="${k}" value="${prefs.reminders[k].time}"></label></div>`).join('')}
+        <div class="remind-row"><span>${today ? 'Paused for today. Back tomorrow.' : 'Need a day off?'}</span><button type="button" class="btn btn--secondary btn--small js-not-today" aria-pressed="${today}">${today ? 'Undo' : 'Not today'}</button></div>
+        <div class="remind-row"><label class="switch"><input type="checkbox" class="js-quiet"${prefs.quiet.on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Quiet hours</label>
+          <span class="time-pair"><input class="time-input" type="time" data-quiet="from" value="${prefs.quiet.from}" aria-label="Quiet hours start"> to <input class="time-input" type="time" data-quiet="to" value="${prefs.quiet.to}" aria-label="Quiet hours end"></span></div>
+        <p class="fine"><button type="button" class="link-btn js-open-checkin">Preview the check-in</button></p>`, 'prefs-reminders')
+      + sec('Takeout', `<label class="money-field" for="takeout-input">Your usual takeout meal costs <span class="money"><span aria-hidden="true">$</span><input id="takeout-input" class="js-takeout" type="number" min="1" max="200" step="1" value="${prefs.takeout}" inputmode="decimal"></span></label>
+        <p class="fine">Each meal you finish adds this to “takeout dodged”. It’s an estimate.</p>`)
+      + sec('Sample data for testers', sampleOn()
+        ? '<p>Sample data is on. Everything you see, and anything you cook, uses the sample week.</p><button type="button" class="btn btn--secondary btn--small js-clear-sample">Clear sample data</button>'
+        : '<p class="fine">Fills in a realistic, made-up week so you can see everything at once. It’s kept apart from your real stats and clears in one tap.</p><button type="button" class="btn btn--secondary btn--small js-load-sample">Load sample week</button>')
+      + sec('Start over', `<p class="fine">Clears every choice and meal this demo saved on this device.</p><button type="button" class="btn btn--ghost btn--small js-reset-all">${resetArmed ? 'Tap again to clear everything' : 'Clear all demo data'}</button>`);
+  }
+  function openPrefs(section) {
+    resetArmed = false;
+    renderPrefs();
+    openSheet(prefsSheet);
+    if (section) {
+      const el = document.getElementById(section);
+      el.scrollIntoView({ block: 'start' });
+      const first = $('summary, input, button', el);
+      if (first) first.focus();
+    }
+  }
+  const afterPrefs = () => { savePrefs(); refilter(); if (prefs.tab === 'house') renderHouse(); };
+  const rerenderPrefs = (sel) => { renderPrefs(); const el = sel && $(sel, prefsSheet); if (el) el.focus(); };
+  const openDetails = () => $$('.member-allergies', prefsSheet).map((d) => d.open);
+  prefsSheet.addEventListener('click', (e) => {
+    const t = e.target;
+    const tg = t.closest('[data-group]');
+    if (tg) {
+      const { group, id } = tg.dataset;
+      const flip = (list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
+      if (group === 'diet') prefs.diets = flip(prefs.diets);
+      if (group === 'allergy') prefs.allergies = flip(prefs.allergies);
+      if (group.startsWith('house-')) { const i = Number(group.slice(6)); prefs.houseAllergies[i] = flip(prefs.houseAllergies[i]); }
+      const was = openDetails();
+      afterPrefs();
+      rerenderPrefs(`[data-group="${group}"][data-id="${CSS.escape(id)}"]`);
+      $$('.member-allergies', prefsSheet).forEach((d, k) => { d.open = was[k]; });
+    }
+    const add = t.closest('[data-dislike]');
+    if (add) { prefs.dislikes = [...prefs.dislikes, add.dataset.dislike]; afterPrefs(); rerenderPrefs('#dislike-input'); }
+    const rm = t.closest('[data-undislike]');
+    if (rm) { prefs.dislikes = prefs.dislikes.filter((x) => x !== rm.dataset.undislike); afterPrefs(); rerenderPrefs('#dislike-input'); }
+    if (t.closest('.js-not-today')) { prefs.notToday = prefs.notToday === dayKey() ? '' : dayKey(); savePrefs(); rerenderPrefs('.js-not-today'); }
+    if (t.closest('.js-open-checkin')) { closeSheet(prefsSheet); openCheckin(); }
+    if (t.closest('.js-load-sample')) {
+      store.set(SAMPLE_KEY, sampleWeek());
+      dataChanged();
+      rerenderPrefs('.js-clear-sample');
+      yolk('happy', 'Sample week loaded. It’s all made up, and your real stats are safe.');
+    }
+    if (t.closest('.js-clear-sample')) { clearSample(); rerenderPrefs('.js-load-sample'); }
+    if (t.closest('.js-reset-all')) {
+      if (!resetArmed) { resetArmed = true; rerenderPrefs('.js-reset-all'); return; }
+      [PREFS_KEY, ACTIVITY_KEY, SAMPLE_KEY, 'yolkie-log', 'yolkie-nutrition'].forEach((k) => store.del(k));
+      location.reload();
+    }
+  });
+  prefsSheet.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = e.target.querySelector('input');
+    const v = lower(input.value).trim().replace(/\s+/g, ' ');
+    if (!v) return;
+    if (e.target.matches('.js-add-dislike') && !prefs.dislikes.includes(v)) prefs.dislikes = [...prefs.dislikes, v];
+    if (e.target.matches('.js-add-allergy') && !prefs.allergies.includes(v)) prefs.allergies = [...prefs.allergies, v];
+    afterPrefs();
+    rerenderPrefs(e.target.matches('.js-add-dislike') ? '#dislike-input' : '#allergy-input');
+  });
+  prefsSheet.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.dataset.remind) prefs.reminders[t.dataset.remind].on = t.checked;
+    if (t.dataset.remindTime && t.value) prefs.reminders[t.dataset.remindTime].time = t.value;
+    if (t.matches('.js-quiet')) prefs.quiet.on = t.checked;
+    if (t.dataset.quiet && t.value) prefs.quiet[t.dataset.quiet] = t.value;
+    if (t.matches('.js-takeout')) { const v = Math.round(Number(t.value)); if (v > 0) prefs.takeout = Math.min(200, v); prefs.takeoutAsked = true; t.value = prefs.takeout; }
+    savePrefs();
+    if (prefs.tab === 'me') renderMe();
+    if (prefs.tab === 'house') renderHouse();
+  });
+
+  /* Pre-meal check-in (simulated) */
+  const checkinSheet = $('.js-checkin');
+  function upcomingReminder() {
+    const now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const on = ['breakfast', 'lunch', 'dinner'].filter((k) => prefs.reminders[k].on).map((k) => ({ meal: k, at: toMin(prefs.reminders[k].time) }));
+    if (!on.length) return { meal: mins < 630 ? 'breakfast' : mins < 900 ? 'lunch' : mins < 1290 ? 'dinner' : 'snack', at: mins, off: true };
+    return on.find((r) => r.at > mins) || on[0];
+  }
+  const inQuiet = (at) => {
+    if (!prefs.quiet.on) return false;
+    const f = toMin(prefs.quiet.from);
+    const t = toMin(prefs.quiet.to);
+    return f <= t ? at >= f && at < t : at >= f || at < t;
+  };
+  function openCheckin() {
+    const r = upcomingReminder();
+    // The lock screen shows the moment the reminder would arrive: later today, or tomorrow.
+    const now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const when = new Date(now.getTime() + (r.at < mins ? DAY : 0));
+    const notes = [];
+    if (r.off) notes.push('All reminders are off, so the app wouldn’t send this. Here’s the preview anyway.');
+    if (prefs.notToday === dayKey()) notes.push('“Not today” is on, so the app would stay quiet until tomorrow.');
+    if (inQuiet(r.at)) notes.push('That time is inside your quiet hours, so the app would hold it.');
+    $('.js-checkin-body').innerHTML = `
+      <div class="phone">
+        <div class="phone__bar" aria-hidden="true"><span>${clock12(r.at)}</span><span><span class="icon">signal_cellular_alt</span><span class="icon">battery_5_bar</span></span></div>
+        <p class="phone__date">${when.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        <p class="phone__clock">${clock12(r.at).replace(/ (am|pm)$/, '')}</p>
+        <div class="notif" role="group" aria-labelledby="notif-text">
+          <div class="notif__head"><span class="notif__icon">${yolkieArt('happy')}</span><span class="notif__app">Yolkie</span><span class="notif__when">now</span></div>
+          <p class="notif__text" id="notif-text"><span class="sr-only">Yolkie: </span>Hungry in an hour? How’s your energy?</p>
+          <p class="notif__meta">${cap(MEALS[r.meal].label)} check-in · ${clock12(r.at)}</p>
+          <div class="notif__actions" role="group" aria-label="Your energy">
+            <button type="button" data-checkin="1">Wiped</button><button type="button" data-checkin="2">Okay</button><button type="button" data-checkin="3">Good</button>
+          </div>
+        </div>
+      </div>
+      <div class="checkin-foot">
+        <p class="preview-label"><span class="icon" aria-hidden="true">visibility</span>Preview: real reminders arrive in the app.</p>
+        ${notes.map((n) => `<p class="fine">${n}</p>`).join('')}
+        <div class="checkin-foot__row"><button type="button" class="link-btn js-checkin-prefs">Change reminder times</button><button type="button" class="btn btn--ghost btn--small js-close">Close</button></div>
+      </div>`;
+    openSheet(checkinSheet);
+    $('[data-checkin="2"]', checkinSheet).focus();
+  }
+  checkinSheet.addEventListener('click', (e) => {
+    if (e.target.closest('.js-checkin-prefs')) { closeSheet(checkinSheet); openPrefs('prefs-reminders'); return; }
+    const b = e.target.closest('[data-checkin]');
+    if (!b) return;
+    const r = upcomingReminder();
+    closeSheet(checkinSheet);
+    // Straight to the suggestion, with the shopping list worked out.
+    state.meal = r.meal;
+    state.energy = Number(b.dataset.checkin);
+    state.time = state.time || Number(prefs.last.time) || 30;
+    state.haveDone = true;
+    state.fromCheckin = true;
+    checkRadios();
+    savePick();
+    go('pick');
+    rank();
+    const line = suggest(false);
+    const btn = $('.js-cook-this');
+    if (btn) btn.focus({ preventScroll: true });
+    yolk(...ENERGY[state.energy], { then: state.recipe && state.fits.length ? ['happy', `${cap(MEALS[state.meal].label)}’s sorted, and your list is ready.`] : line, after: 1500 });
+  });
+
+  /* Yolkie Wrapped: a swipeable story, any card saved as an image */
+  const wrappedSheet = $('.js-wrapped');
+  const TONES = { plum: ['#6B4DE6', '#FFFFFF'], yolk: ['#FFC83D', '#1E1A2E'], basil: ['#2E9E6A', '#1E1A2E'], night: ['#1E1740', '#F6F4FB'], paper: ['#F6F4FB', '#1E1A2E'] };
+  const MEAL_HOURS = { breakfast: [5, 11], lunch: [11, 15], dinner: [17, 22] };
+  // Chaos night: the fridge rescue with the most "already have" items, extra points if it was
+  // cooked well outside its usual hours (pancakes at 10:30 pm).
+  function oddest(meals) {
+    const odd = (m) => { const h = new Date(m.at).getHours(); const w = MEAL_HOURS[byId(m.r).meal]; return w && (h < w[0] || h >= w[1]) ? 3 : 0; };
+    return meals.filter((m) => m.have && m.have.length).map((m) => ({ m, score: m.have.length + odd(m) }))
+      .sort((a, b) => b.score - a.score || b.m.at - a.m.at).map((x) => x.m)[0];
+  }
+  function wrappedCards() {
+    const s = statsFor(activity());
+    const fill = 'Keep cooking to fill this in.';
+    const counts = {};
+    s.mine.forEach((m) => { counts[m.r] = counts[m.r] || { n: 0, at: 0 }; counts[m.r].n += 1; counts[m.r].at = m.at; });
+    const top = Object.entries(counts).sort((a, b) => b[1].n - a[1].n || b[1].at - a[1].at)[0];
+    const chaos = oddest(s.mine);
+    const when = chaos && new Date(chaos.at);
+    return [
+      { tone: 'plum', mood: 'happy', kicker: 'Meals cooked', big: String(s.cooked), title: s.cooked === 1 ? 'meal, cooked by you' : 'meals, cooked by you', sub: s.cooked < 3 ? fill : 'Every one of them from hungry to fed.' },
+      { tone: 'yolk', mood: 'surprised', kicker: 'Top dish', big: top ? `${top[1].n}×` : '–', title: top ? byId(top[0]).name : 'No favourite yet', sub: top ? (top[1].n > 1 ? 'Your comfort pick.' : 'All tied at one, so here’s the latest.') : fill },
+      { tone: 'basil', mood: 'happy', kicker: 'Money kept', big: `$${s.kept}`, title: 'kept in your pocket', sub: s.cooked ? `Estimate: ${s.cooked} × your usual $${prefs.takeout} takeout.` : fill },
+      { tone: 'night', mood: 'default', kicker: 'Cuisines stamped', big: String(s.cuisines.length), title: s.cuisines.length === 1 ? 'cuisine in your passport' : 'cuisines in your passport', sub: s.cuisines.length ? s.cuisines.join(' · ') : fill },
+      { tone: 'paper', mood: 'surprised', kicker: 'Chaos night', big: chaos ? clock12(when.getHours() * 60 + when.getMinutes()) : '?', title: chaos ? byId(chaos.r).name : 'No chaos yet', sub: chaos ? `Made from ${listText(chaos.have.map(haveLabel))} on a ${when.toLocaleDateString(undefined, { weekday: 'long' })}. Bold.` : `${fill} Fridge rescues count.` },
+    ];
+  }
+  let storyCards = [];
+  let storyAt = 0;
+  function renderWrapped() {
+    storyCards = wrappedCards();
+    storyAt = 0;
+    const sample = sampleOn();
+    $('.js-wrapped-body').innerHTML = `
+      <div class="story js-story" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Yolkie Wrapped. Swipe or use the arrow keys.">
+        ${storyCards.map((c, k) => `<article class="story-card story-card--${c.tone}" role="group" aria-roledescription="slide" aria-label="${k + 1} of ${storyCards.length}: ${c.kicker}">
+          <p class="story-card__kicker">Yolkie Wrapped · ${c.kicker}</p>
+          <p class="story-card__big">${esc(c.big)}</p>
+          <p class="story-card__title">${esc(c.title)}</p>
+          <p class="story-card__sub">${esc(c.sub)}</p>
+          ${yolkieArt(c.mood, 'story-card__yolk')}
+          ${sample ? '<p class="story-card__sample">Sample data</p>' : ''}
+        </article>`).join('')}
+      </div>
+      <div class="story-nav">
+        <button type="button" class="icon-btn js-story-prev" aria-label="Previous card"><span class="icon" aria-hidden="true">chevron_left</span></button>
+        <span class="story-dots" aria-hidden="true">${storyCards.map((_, k) => `<span${k === 0 ? ' class="is-on"' : ''}></span>`).join('')}</span>
+        <span class="sr-only js-story-pos" aria-live="polite">Card 1 of ${storyCards.length}</span>
+        <button type="button" class="icon-btn js-story-next" aria-label="Next card"><span class="icon" aria-hidden="true">chevron_right</span></button>
+      </div>
+      <div class="story-actions">
+        <button type="button" class="btn btn--primary js-story-save"><span class="icon" aria-hidden="true">download</span>Save as image</button>
+        <button type="button" class="btn btn--ghost js-close">Close</button>
+      </div>
+      <p class="fine js-story-status" aria-live="polite"></p>`;
+    const story = $('.js-story', wrappedSheet);
+    story.addEventListener('scroll', () => {
+      const k = Math.round(story.scrollLeft / story.clientWidth);
+      if (k === storyAt) return;
+      storyAt = k;
+      $$('.story-dots span', wrappedSheet).forEach((d, i) => d.classList.toggle('is-on', i === k));
+      $('.js-story-pos', wrappedSheet).textContent = `Card ${k + 1} of ${storyCards.length}`;
+    }, { passive: true });
+    story.addEventListener('keydown', (e) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (d) { e.preventDefault(); toCard(storyAt + d); }
+    });
+  }
+  function toCard(k) {
+    const story = $('.js-story', wrappedSheet);
+    const i = Math.max(0, Math.min(storyCards.length - 1, k));
+    story.scrollTo({ left: i * story.clientWidth, behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
+  const loadImg = (src) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = src; });
+  function wrapText(g, text, x, y, maxW, lineH) {
+    let line = '';
+    text.split(' ').forEach((w) => {
+      const test = line ? `${line} ${w}` : w;
+      if (g.measureText(test).width > maxW && line) { g.fillText(line, x, y); line = w; y += lineH; } else line = test;
+    });
+    if (line) g.fillText(line, x, y);
+    return y + lineH;
+  }
+  // Draws the card on a 1080×1350 canvas (Yolkie and the outfit included) and downloads it.
+  async function saveCard() {
+    const c = storyCards[storyAt];
+    const [bg, fg] = TONES[c.tone];
+    const status = $('.js-story-status', wrappedSheet);
+    try {
+      await Promise.all(['800 100px "Bricolage Grotesque"', '700 40px "DM Sans"'].map((f) => document.fonts.load(f)));
+      const cv = document.createElement('canvas');
+      cv.width = 1080;
+      cv.height = 1350;
+      const g = cv.getContext('2d');
+      g.fillStyle = bg;
+      g.fillRect(0, 0, 1080, 1350);
+      g.fillStyle = 'rgba(255,255,255,.14)';
+      g.beginPath(); g.arc(1000, 90, 260, 0, Math.PI * 2); g.fill();
+      g.fillStyle = fg;
+      g.font = '700 38px "DM Sans", sans-serif';
+      g.fillText(`YOLKIE WRAPPED · ${c.kicker.toUpperCase()}`, 80, 130);
+      let size = 260;
+      g.font = `800 ${size}px "Bricolage Grotesque", sans-serif`;
+      while (g.measureText(c.big).width > 920 && size > 80) { size -= 10; g.font = `800 ${size}px "Bricolage Grotesque", sans-serif`; }
+      g.fillText(c.big, 72, 140 + size);
+      g.font = '800 64px "Bricolage Grotesque", sans-serif';
+      let y = wrapText(g, c.title, 80, 240 + size, 920, 72);
+      g.font = '500 40px "DM Sans", sans-serif';
+      wrapText(g, c.sub, 80, y + 20, 820, 54);
+      const outfit = worn();
+      const body = await loadImg(`${mascotDir}yolk-${c.mood}.svg`);
+      const acc = await loadImg(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-110 -200 220 220">${accLayers(outfit)}</svg>`)}`);
+      g.drawImage(body, 600, 860, 420, 420);
+      g.drawImage(acc, 600, 860, 420, 420);
+      g.font = '700 30px "DM Sans", sans-serif';
+      g.fillText(sampleOn() ? 'yolkie.isolatedideas.dev · sample data' : 'yolkie.isolatedideas.dev · demo', 80, 1280);
+      const blob = await new Promise((res) => cv.toBlob(res, 'image/png'));
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `yolkie-wrapped-${storyAt + 1}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      status.textContent = `Saved card ${storyAt + 1} as an image.`;
+    } catch (err) {
+      status.textContent = 'Couldn’t save that one. Try a screenshot instead?';
+    }
+  }
+  wrappedSheet.addEventListener('click', (e) => {
+    if (e.target.closest('.js-story-prev')) toCard(storyAt - 1);
+    if (e.target.closest('.js-story-next')) toCard(storyAt + 1);
+    if (e.target.closest('.js-story-save')) saveCard();
+  });
+
+  /* Sample week for testers: realistic, made up, and never mixed into real stats */
+  function sampleWeek() {
+    const now = Date.now();
+    const at = (daysAgo, time) => {
+      const d = new Date(now - daysAgo * DAY);
+      const [h, m] = time.split(':').map(Number);
+      d.setHours(h, m, 0, 0);
+      let t = d.getTime();
+      while (t > now) t -= DAY;
+      return t;
+    };
+    const plan = [
+      ['omelette', 0, '08:10', 0, ['eggs', 'spinach', 'cheese'], [2]],
+      ['sweet-potato-tacos', 1, '19:20', 0, ['tortillas', 'beans'], [1, 3]],
+      ['quesadillas', 2, '12:40', 2, ['tortillas', 'cheese'], [0]],
+      ['pancakes', 2, '22:30', 0, ['eggs'], [3]],
+      ['curry', 3, '19:05', 0, ['rice', 'beans', 'spinach'], [1, 2, 3]],
+      ['hummus-plate', 4, '15:30', 3, [], [0]],
+      ['peanut-noodles', 5, '12:15', 0, ['pasta'], []],
+      ['lemon-chicken', 6, '18:50', 0, ['chicken', 'lemon', 'rice'], [2]],
+      ['popcorn', 7, '20:30', 1, [], [0, 2]],
+      ['fried-rice', 8, '19:00', 0, ['eggs', 'rice'], []],
+      ['oatmeal', 9, '07:45', 0, [], []],
+      ['salmon', 10, '19:15', 0, ['lemon'], [1]],
+    ];
+    const meals = plan.map(([id, d, t, cook, have, kudos], k) => {
+      const r = byId(id);
+      const cleans = r.steps.filter((s) => s.clean);
+      return { id: `sample${k}`, r: id, at: at(d, t), servings: 2, have: usesHave(r, have), rinsed: cleans.filter((s) => s.clean.dish).length, tidies: cleans.length, cook, kudos };
+    });
+    return { meals, badges: [{ id: 'rescue', at: now - 4 * DAY }], challenge: { id: 'speed', start: now - 2.5 * DAY } };
+  }
+  function syncBanner() { $('.js-sample-banner').hidden = !sampleOn(); }
+  function dataChanged() {
+    syncBanner();
+    dress();
+    if (prefs.tab === 'me') renderMe();
+    if (prefs.tab === 'house') renderHouse();
+  }
+  function clearSample() {
+    store.del(SAMPLE_KEY);
+    dataChanged();
+    yolk('default', 'Sample data cleared. Back to your real stats.');
+  }
+
+  // Buttons that live in several places
+  demo.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t.closest('.js-open-prefs')) openPrefs();
+    if (t.closest('.js-open-checkin') && !t.closest('.js-prefs-sheet')) openCheckin();
+    if (t.closest('.js-nutri-open')) openNutrition();
+    if (t.closest('.js-open-wrapped')) { renderWrapped(); openSheet(wrappedSheet); $('.js-story', wrappedSheet).focus(); }
+    if (t.closest('.js-sample-banner .js-clear-sample')) { clearSample(); $('.js-open-prefs').focus(); }
+  });
+
+  /* Yolkie's picks (the house vote): up to three picks that work for everyone's allergies */
+  const voteBox = $('.js-vote');
+  const pickMeta = (r) => `${r.time} min · Dishes: ${r.dishes.length}${r.time > state.time ? ' · a bit longer' : ''}`;
+  const playerName = memberName;
+  const safeFor = (r, count) => Array.from({ length: count }, (_, i) => i).every((i) => !allergic(r, memberAllergies(i)));
   // Picks: this one, then what else fits, then the rest of the same meal (quickest first).
-  function startVote() {
+  function votePicks(count) {
     const meal = state.recipe.meal;
     const sameMeal = RECIPES.filter((r) => r.meal === meal && !state.fits.includes(r)).sort((a, b) => a.time - b.time);
-    const others = [...state.fits, ...sameMeal, ...RECIPES.filter((r) => r.meal !== meal)].filter((r) => r !== state.recipe);
-    state.vote = { picks: [state.recipe, others[0], others[1]], count: 3, names: PEOPLE.map((p) => p.name), votes: [], turn: 0 };
+    return [state.recipe, ...state.fits, ...sameMeal].filter((r, k, all) => all.indexOf(r) === k)
+      .filter((r) => passes(r, eff()) && safeFor(r, count)).slice(0, 3);
+  }
+  function startVote() {
+    const count = Math.max(2, prefs.houseSize);
+    state.vote = { count, picks: votePicks(count), votes: [], turn: 0 };
     renderVoteSetup();
     go('vote');
     yolk('surprised', `A vote? Democracy, at ${mealOf().at}. I love it.`);
@@ -1158,9 +2772,12 @@ if (demo) {
 
   function renderVoteSetup() {
     const v = state.vote;
+    const short = v.picks.length < 2;
     voteBox.innerHTML = `
       <div class="panel">
-        <h3>Three ${mealOf(v.picks[0]).label} picks</h3>
+        <h3>${short ? 'Not enough to vote on' : `${v.picks.length === 3 ? 'Three' : 'Two'} ${mealOf(state.recipe).label} picks`}</h3>
+        <p class="fine">Every pick works for everyone’s allergies${v.count > 1 ? ` in a house of ${v.count}` : ''}.</p>
+        ${short ? `<p class="meal-note">Only ${v.picks.length ? `${v.picks[0].name} works` : 'nothing works'} for everyone right now. Check allergies in <button type="button" class="link-btn js-open-prefs">Preferences</button>, or try fewer people.</p>` : ''}
         <div class="ballot">${v.picks.map((r) => `<div class="pick"><span class="pick__name">${r.name}</span><span class="pick__meta">${pickMeta(r)}</span></div>`).join('')}</div>
       </div>
       <div class="panel">
@@ -1168,13 +2785,14 @@ if (demo) {
           <span class="servings__label" id="people-label">How many people?</span>
           <span class="count-choices" role="group" aria-labelledby="people-label">${[2, 3, 4].map((n) => `<button type="button" data-count="${n}" aria-pressed="${n === v.count}">${n}</button>`).join('')}</span>
         </div>
-        <ul class="player-list">${v.names.slice(0, v.count).map((name, i) => `
-          <li class="player">${avatar(i)}<label>Player ${i + 1}<input type="text" value="${esc(name)}" data-p="${i}" maxlength="16" autocomplete="off"></label></li>`).join('')}
+        <ul class="player-list">${Array.from({ length: v.count }, (_, i) => `
+          <li class="player">${avatar(i)}<label>Player ${i + 1}<input type="text" value="${playerName(i)}" data-p="${i}" maxlength="16" autocomplete="off"></label></li>`).join('')}
         </ul>
       </div>
       <div class="stage-actions">
         <button type="button" class="btn btn--secondary js-vote-back">Back to my pick</button>
-        <button type="button" class="btn btn--primary js-vote-begin"><span class="btn__dot" aria-hidden="true"></span>Start the vote</button>
+        ${short ? (v.picks.length ? '<button type="button" class="btn btn--primary js-vote-solo"><span class="btn__dot" aria-hidden="true"></span>Cook it</button>' : '')
+          : '<button type="button" class="btn btn--primary js-vote-begin"><span class="btn__dot" aria-hidden="true"></span>Start the vote</button>'}
       </div>`;
   }
 
@@ -1249,17 +2867,17 @@ if (demo) {
           <button type="button" class="btn btn--primary js-vote-cook"><span class="btn__dot" aria-hidden="true"></span>Cook the winner</button>
         </div>`;
       confetti($('.js-vote-confetti', voteBox));
-      const pouter = v.count >= 3 && v.votes[2] !== win;
-      if (pouter) yolk('happy', `${r.name} it is! ${playerName(2)} is pouting. ${playerName(2)} will be fine.`, { celebrate: true });
-      else if (v.votes[0] !== win) yolk('meh', `${r.name} wins. I voted for something else. I’m fine. Totally fine.`);
+      const pouter = v.count >= 4 && v.votes[3] !== win;
+      if (pouter) yolk('happy', `${r.name} it is! ${rawName(3)} is pouting. ${rawName(3)} will be fine.`, { celebrate: true });
+      else if (v.votes[1] !== win) yolk('meh', `${r.name} wins. I voted for something else. I’m fine. Totally fine.`);
       else yolk('happy', `${r.name} wins. Democracy is delicious.`, { celebrate: true });
     };
     if (reduceMotion) { land(); return; }
     // A spotlight hops between the picks, slowing down, and stops on the winner.
-    const hops = 9 + win;
+    const hops = v.picks.length * 3 + win;
     let n = 0;
     const hop = () => {
-      cards.forEach((c, k) => c.classList.toggle('is-spot', k === n % 3));
+      cards.forEach((c, k) => c.classList.toggle('is-spot', k === n % v.picks.length));
       if (n >= hops) { setTimeout(land, 300); return; }
       n += 1;
       setTimeout(hop, 80 + n * n * 5);
@@ -1271,9 +2889,10 @@ if (demo) {
     const v = state.vote;
     const t = e.target;
     const count = t.closest('[data-count]');
-    if (count) { v.count = Number(count.dataset.count); renderVoteSetup(); $(`[data-count="${v.count}"]`, voteBox).focus(); }
+    if (count) { v.count = Number(count.dataset.count); v.picks = votePicks(v.count); renderVoteSetup(); $(`[data-count="${v.count}"]`, voteBox).focus(); }
     if (t.closest('.js-vote-back')) { go('pick'); yolk('default', 'Back to just you. Peaceful.'); }
     if (t.closest('.js-vote-begin')) { v.votes = []; v.turn = 0; renderHandoff(); yolk('default', 'No peeking. I’m watching. Sort of.'); }
+    if (t.closest('.js-vote-solo')) startCheck(v.picks[0]);
     if (t.closest('.js-vote-ready')) renderBallot();
     const cast = t.closest('.js-cast');
     if (cast) {
@@ -1286,6 +2905,24 @@ if (demo) {
     if (t.closest('.js-vote-cook')) startCheck(v.picks[v.winner]);
   });
   voteBox.addEventListener('input', (e) => {
-    if (e.target.matches('input[data-p]')) state.vote.names[Number(e.target.dataset.p)] = e.target.value;
+    if (e.target.matches('input[data-p]')) { prefs.names[Number(e.target.dataset.p)] = e.target.value; savePrefs(); }
   });
+
+  /* Start: put back the last pick, the outfit and the tab */
+  (function restore() {
+    const last = prefs.last || {};
+    state.meal = MEALS[last.meal] ? last.meal : '';
+    state.energy = Number(last.energy) || 0;
+    state.time = Number(last.time) || 0;
+    state.have = Array.isArray(last.have) ? last.have.slice(0, 3) : [];
+    state.haveDone = !!last.haveDone;
+    checkRadios();
+    renderDietBar();
+    syncBanner();
+    dress();
+    if (state.meal && state.energy && state.time) {
+      if (state.haveDone) { rank(); suggest(false); } else renderHave(false);
+    }
+    showTab(['cook', 'me', 'house'].includes(prefs.tab) ? prefs.tab : 'cook');
+  })();
 }

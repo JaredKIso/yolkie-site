@@ -7,7 +7,7 @@ A two-page static site for Yolkie, a cooking app for every meal that gets you fr
 | File | What it is |
 |---|---|
 | `index.html` | Landing page: hero, the problem, how it works, features, the ad, FAQ, early access |
-| `try.html` | The working demo: pick a meal, check, cook, done, plus Yolkie's picks (the house vote). Runs fully in the browser |
+| `try.html` | The working demo, in three tabs. **Cook:** diet chip, check-in preview, pick a meal, "what do you already have?", check, cook, done, plus Yolkie's picks (the house vote). **Me:** weekly goal, takeout dodged, fridge rescues, dishes dodged, passport, challenges, Yolkie's closet and Yolkie Wrapped. **House:** members, house goal, house takeout dodged, kudos. The gear opens Preferences (diets, never-show-me, allergies, hide nutrition, reminders, takeout cost, sample data). Runs fully in the browser |
 | `404.html` | Not-found page. Links are root-relative (`/`); change them to `/repo/` if hosted at `username.github.io/repo/` |
 | `styles.css` | One stylesheet for every page. Section 1 is the design tokens, section 3b is the demo |
 | `main.js` | One script for every page. The Yolkie section starts with `WAITLIST_URL`, then the demo recipes (`RECIPES`) |
@@ -26,8 +26,15 @@ A two-page static site for Yolkie, a cooking app for every meal that gets you fr
   - or a `mailto:` link: the visitor's email app opens with the sign-up written out, ready to send.
 
   **Right now it's set to `'preview'`:** the form runs end to end (checks, Yolkie, confetti) but sends nothing, and the success message says "Preview mode: sign-ups aren't saved yet." Replace it with a real endpoint or `mailto:` before launch. If it's empty instead, the form says the list isn't open yet. Every "Get early access" button scrolls to the card. A hidden `company` field catches simple spam bots; submissions that fill it are dropped.
-- **Recipes:** edit `RECIPES` in `main.js`. Each recipe has a `meal` (`breakfast`, `lunch`, `dinner` or `snack`), a `time` in minutes and an `effort` from 1 to 3; the demo suggests recipes for the chosen meal that fit the time and energy. Keep at least one quick, effort-1 recipe per meal so every combination has an answer. Each ingredient's `step` is the smallest amount it can be rounded to when the servings change (`1` keeps eggs whole, `0.5` gives half cans). Calories and protein are rough per-serving estimates.
-- **Stored on the device only:** the demo keeps the cooking log (`yolkie-log`), the calories-and-protein switch (`yolkie-nutrition`) and the theme (`theme`) in `localStorage`. Nothing is sent anywhere.
+- **Recipes:** edit `RECIPES` in `main.js` (27 of them). Each recipe has a `meal` (`breakfast`, `lunch`, `dinner` or `snack`), a `cuisine` (the passport stamps), `diet` tags (`vegetarian`, `vegan`, `pescatarian`, `gluten-free`, `dairy-free`; vegan implies vegetarian and dairy-free), `allergens`, and `nut` (carbs, fiber, fat, sugar in grams, sodium in mg). Keto (≤10 g net carbs), low-carb (≤25 g carbs) and high-protein (≥25 g protein) are worked out from the numbers. Keep at least two recipes per meal under each single diet. Each recipe also has a `time` in minutes and an `effort` from 1 to 3; the demo suggests recipes for the chosen meal that fit the time and energy. Keep at least one quick, effort-1 recipe per meal so every combination has an answer. Each ingredient's `step` is the smallest amount it can be rounded to when the servings change (`1` keeps eggs whole, `0.5` gives half cans). Calories and protein are rough per-serving estimates.
+- **Stored on the device only** (`localStorage`, nothing is sent anywhere):
+  - `yolkie-prefs`: every choice (diets, dislikes, allergies, household names and allergies, goals, takeout cost, outfit, reminders, the open tab and the last pick);
+  - `yolkie-activity`: real activity, meaning each meal finished in cook mode, plus badges and the current challenge. Every stat is worked out from this;
+  - `yolkie-sample`: the tester's sample week from Preferences → "Load sample week". While it exists, every stat reads and writes it instead, with a banner on screen; "Clear sample data" removes it and the real stats come back untouched;
+  - `yolkie-nutrition` (the hide-nutrition switch, shared with the home page) and `theme`.
+  - "Clear all demo data" at the bottom of Preferences removes all of these.
+- **Ground rules the demo follows:** it rewards cooking and never punishes skipping (no streaks, no sad Yolkie; a missed week just starts fresh). Nutrition is information only, never a goal, and "Hide nutrition" removes every number. Takeout dodged is an estimate: meals × your usual takeout cost.
+- **Yolkie's closet:** the accessories are drawn in `CLOSET` in `main.js`, in the mascot's own viewBox, and laid over the unchanged mascot SVGs. They unlock at 1, 3, 5, 8, 12 and 20 meals.
 
 ## Run it locally
 

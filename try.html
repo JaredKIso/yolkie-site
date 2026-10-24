@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Try the demo · Yolkie</title>
-  <meta name="description" content="Try the Yolkie demo: pick a meal, your energy and your time, get one thing to make, check what you're missing, cook it step by step, or let the house vote. Runs entirely in your browser.">
+  <meta name="description" content="Try the Yolkie demo: set your diet and allergies, say what you already have, get one meal for your energy and time, cook it step by step, and watch your progress and Yolkie's closet fill up. Runs entirely in your browser.">
   <meta property="og:title" content="Try the demo · Yolkie">
   <meta property="og:description" content="Breakfast, lunch, dinner or a snack: pick your energy and time, get one meal, and cook it step by step. Runs entirely in your browser.">
   <meta property="og:type" content="website">
@@ -58,13 +58,33 @@
     <section class="page-hero">
       <p class="eyebrow">Demo</p>
       <h1>What are we eating?</h1>
-      <p class="lede">A few simple recipes for breakfast, lunch, dinner and snacks, one decision at a time. Pick, check, cook, done.</p>
+      <p class="lede">Simple recipes for breakfast, lunch, dinner and snacks, filtered to how you eat, one decision at a time. Pick, check, cook, done.</p>
     </section>
 
     <section class="demo" id="demo" aria-label="Yolkie demo">
-      <p class="demo-badge"><span class="icon" aria-hidden="true">lock</span>Runs in your browser. Nothing you tap is sent anywhere.</p>
+      <p class="demo-badge"><span class="icon" aria-hidden="true">lock</span>Runs in your browser. Everything is saved on this device only.</p>
       <noscript><p class="panel">The demo needs JavaScript. The <a href="./#how">landing page</a> explains how Yolkie works.</p></noscript>
+      <div class="sample-banner js-sample-banner" role="status" hidden>
+        <span class="icon" aria-hidden="true">science</span>
+        <p><strong>Sample data.</strong> You're looking at a made-up week. Anything you cook now goes into the sample, not your real stats.</p>
+        <button type="button" class="btn btn--secondary btn--small js-clear-sample">Clear sample data</button>
+      </div>
 
+      <div class="demo-bar">
+        <div class="demo-tabs" role="tablist" aria-label="Demo sections">
+          <button type="button" role="tab" id="tab-cook" data-tab="cook" aria-controls="panel-cook" aria-selected="true"><span class="icon" aria-hidden="true">skillet</span>Cook</button>
+          <button type="button" role="tab" id="tab-me" data-tab="me" aria-controls="panel-me" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">person</span>Me</button>
+          <button type="button" role="tab" id="tab-house" data-tab="house" aria-controls="panel-house" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">home</span>House</button>
+        </div>
+        <button type="button" class="icon-btn js-open-prefs" aria-label="Preferences"><span class="icon" aria-hidden="true">settings</span></button>
+      </div>
+
+      <div class="yolk-bar">
+        <span class="yolk-wear js-yolk-wear"><img class="yolk-face" src="assets/mascots/yolk-default.svg" alt="" width="220" height="220"><svg class="yolk-acc" viewBox="-110 -200 220 220" aria-hidden="true" focusable="false"></svg></span>
+        <p class="yolk-says" aria-live="polite">Hey, I'm Yolkie. What are we eating?</p>
+      </div>
+
+      <div role="tabpanel" id="panel-cook" data-panel="cook" aria-labelledby="tab-cook">
       <ol class="demo-track" aria-label="Progress">
         <li data-track="pick" aria-current="step">Pick</li>
         <li data-track="check">Check</li>
@@ -72,15 +92,18 @@
         <li data-track="done">Done</li>
       </ol>
 
-      <div class="yolk-bar">
-        <img class="yolk-face" src="assets/mascots/yolk-default.svg" alt="" width="220" height="220">
-        <p class="yolk-says" aria-live="polite">Hey, I'm Yolkie. What are we eating?</p>
-      </div>
-
       <!-- 1. Pick -->
       <div class="stage" data-stage="pick">
         <h2 class="stage__title" tabindex="-1">What are we eating?</h2>
         <p class="stage__sub">Three taps and you'll have one meal.</p>
+        <div class="js-diet-bar">
+          <div class="pick-top">
+            <button type="button" class="diet-chip js-diet-chip" aria-haspopup="dialog"><span class="icon" aria-hidden="true">tune</span><span class="diet-chip__label">Diet:</span><span class="diet-chip__text js-diet-summary">No preferences</span><span class="icon" aria-hidden="true">expand_more</span></button>
+            <button type="button" class="btn btn--ghost btn--small js-open-checkin" aria-haspopup="dialog"><span class="icon" aria-hidden="true">notifications</span>Preview Yolkie's check-in</button>
+          </div>
+          <p class="diet-temp js-diet-temp"></p>
+          <div class="js-diet-ask"></div>
+        </div>
         <fieldset class="choice-group">
           <legend>Meal</legend>
           <div class="choices choices--4">
@@ -128,7 +151,10 @@
           <ul class="checklist js-checklist"></ul>
           <div class="check-tools">
             <span class="fine js-check-count"></span>
-            <button type="button" class="btn btn--ghost btn--small js-have-all">I've got all of it</button>
+            <span class="check-tools__btns">
+              <button type="button" class="btn btn--ghost btn--small nutri js-nutri-open" aria-haspopup="dialog">Nutrition</button>
+              <button type="button" class="btn btn--ghost btn--small js-have-all">I've got all of it</button>
+            </span>
           </div>
         </div>
 
@@ -178,20 +204,15 @@
           <div class="confetti js-confetti" aria-hidden="true"></div>
           <h2 class="stage__title js-done-title" tabindex="-1">Done.</h2>
           <p class="done-card__meal js-done-meal"></p>
+          <p class="goal-hit js-goal-hit" hidden><span class="icon" aria-hidden="true">trophy</span>Weekly goal hit!</p>
         </div>
         <dl class="done-stats js-done-stats"></dl>
-        <p class="fine nutri" style="margin-top:8px">Calories and protein are rough estimates per serving.</p>
-        <div class="panel" style="margin-top:16px">
-          <h3>Log it?</h3>
-          <p class="fine">Saved in this browser only. Nothing is sent anywhere.</p>
-          <div class="actions" style="margin-top:14px">
-            <button type="button" class="btn btn--primary js-log"><span class="icon" aria-hidden="true">bookmark_add</span>Log it</button>
-          </div>
-          <ul class="log-list js-log-list"></ul>
-          <button type="button" class="btn btn--ghost btn--small js-clear-log" hidden>Clear this device's log</button>
-        </div>
+        <p class="fine nutri done-note">Calories and protein are rough estimates per serving.</p>
+        <div class="panel done-panel js-gains"></div>
+        <div class="panel js-who"></div>
         <div class="stage-actions">
           <button type="button" class="btn btn--secondary js-again">Pick another meal</button>
+          <button type="button" class="btn btn--secondary js-see-me"><span class="icon" aria-hidden="true">person</span>See my progress</button>
           <a class="btn btn--primary" href="./#early-access"><span class="btn__dot" aria-hidden="true"></span>Get early access</a>
         </div>
       </div>
@@ -202,6 +223,31 @@
         <p class="vote-label"><span class="icon" aria-hidden="true">smartphone</span><span><strong>Single-device demo.</strong> Pass this phone around and vote one at a time. In the app, everyone would vote from their own phone.</span></p>
         <div class="js-vote"></div>
       </div>
+      </div>
+
+      <div role="tabpanel" id="panel-me" data-panel="me" aria-labelledby="tab-me" hidden><div class="tab-stack js-me"></div></div>
+      <div role="tabpanel" id="panel-house" data-panel="house" aria-labelledby="tab-house" hidden><div class="tab-stack js-house"></div></div>
+
+      <!-- Sheets -->
+      <dialog class="sheet js-prefs-sheet" aria-labelledby="prefs-title">
+        <div class="sheet__head"><h2 id="prefs-title">Preferences</h2><button type="button" class="icon-btn js-close" aria-label="Close preferences"><span class="icon" aria-hidden="true">close</span></button></div>
+        <div class="sheet__body js-prefs-body"></div>
+      </dialog>
+      <dialog class="sheet js-quick-sheet" aria-labelledby="quick-title">
+        <div class="sheet__head"><h2 id="quick-title">Change the diet</h2><button type="button" class="icon-btn js-close" aria-label="Close"><span class="icon" aria-hidden="true">close</span></button></div>
+        <div class="sheet__body js-quick-body"></div>
+      </dialog>
+      <dialog class="sheet js-nutri-sheet" aria-labelledby="nutri-title">
+        <div class="sheet__head"><h2 id="nutri-title">Nutrition</h2><button type="button" class="icon-btn js-close" aria-label="Close nutrition"><span class="icon" aria-hidden="true">close</span></button></div>
+        <div class="sheet__body js-nutri-body"></div>
+      </dialog>
+      <dialog class="sheet sheet--phone js-checkin" aria-label="Preview of Yolkie's check-in notification">
+        <div class="js-checkin-body"></div>
+      </dialog>
+      <dialog class="sheet sheet--story js-wrapped" aria-labelledby="wrapped-sheet-title">
+        <div class="sheet__head"><h2 id="wrapped-sheet-title">Yolkie Wrapped</h2><button type="button" class="icon-btn js-close" aria-label="Close Wrapped"><span class="icon" aria-hidden="true">close</span></button></div>
+        <div class="sheet__body js-wrapped-body"></div>
+      </dialog>
     </section>
   </main>
 
