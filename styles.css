@@ -1088,7 +1088,7 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 .ring--sm .ring__num { font-size: 17px; }
 .ring--sm .ring__num small { font-size: 11px; }
 .gain--ring { gap: 12px; }
-.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .tile { padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); }
 .tile dt { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); }
 .tile dt .icon { color: var(--accent); }
