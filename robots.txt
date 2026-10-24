@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://yolkie.isolatedideas.dev/sitemap.xml

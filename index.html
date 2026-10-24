@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yolkie · From hungry to fed</title>
+  <meta name="description" content="Yolkie is a pre-launch cooking app for every meal. It picks one meal for your energy and time, checks what you're missing, and runs one do-this-now timeline so everything finishes together.">
+  <meta property="og:title" content="Yolkie · From hungry to fed">
+  <meta property="og:description" content="A pre-launch cooking app for breakfast, lunch, dinner and snacks. It picks one meal for your energy and time, then walks you through it, one step at a time.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yolkie.isolatedideas.dev/">
+  <meta property="og:image" content="https://yolkie.isolatedideas.dev/og-image.png">
+  <link rel="canonical" href="https://yolkie.isolatedideas.dev/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F6F4FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1740" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
+      r.classList.add('js');
+      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
+      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
+      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
+    })();
+  </script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Yolkie, home">
+        <span class="brand__mark"><img src="assets/app-icon.svg" alt="" width="34" height="34"></span>
+        <span class="brand__name">Yolkie</span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="./#problem">Why</a>
+        <a href="./#how">How it works</a>
+        <a href="./#features">Features</a>
+        <a href="./#faq">FAQ</a>
+        <a class="site-nav__try" href="try.html">Try the demo</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Switch colour theme">
+        <span class="icon" aria-hidden="true">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero">
+      <div class="hero__copy">
+        <p class="eyebrow">A cooking app · pre-launch</p>
+        <h1><span>From hungry</span> <span>to fed<span class="h1-dot">.</span></span></h1>
+        <p class="lede">Breakfast, lunch, dinner or a snack. Tell Yolkie your energy and your time, and it picks one meal and tells you exactly what to do next.</p>
+        <div class="actions">
+          <a class="btn btn--primary" href="#early-access" data-yolk="happy"><span class="btn__dot" aria-hidden="true"></span>Get early access</a>
+          <a class="btn btn--secondary" href="try.html" data-yolk="surprised">Try the demo</a>
+        </div>
+        <p class="hero__note">Free to start. The demo runs right in your browser.</p>
+      </div>
+
+      <div class="hero-art">
+        <div class="hero-art__grid" aria-hidden="true"></div>
+        <div class="hero-art__sun" aria-hidden="true"></div>
+        <div class="hero-art__clock" aria-hidden="true"></div>
+        <span class="hero-art__time" aria-hidden="true">7:48 pm</span>
+        <svg class="hero-art__path" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"><path d="M2 58 C 30 -10, 70 -10, 98 40"/></svg>
+        <div class="hero-art__couch" aria-hidden="true">
+          <span class="couch-back"></span><span class="couch-arm couch-arm--l"></span><span class="couch-arm couch-arm--r"></span>
+          <span class="couch-seat"></span><span class="couch-leg couch-leg--l"></span><span class="couch-leg couch-leg--r"></span>
+        </div>
+        <div class="hero-art__plate" aria-hidden="true"></div>
+        <button class="hero-yolk" type="button" aria-label="Poke Yolkie">
+          <img class="js-hero-yolk" src="assets/mascots/yolk-sleepy.svg" alt="" width="220" height="220">
+        </button>
+        <span class="hero-art__label" aria-hidden="true">hungry → fed</span>
+      </div>
+    </section>
+
+    <section class="section" id="problem">
+      <header class="section__head reveal">
+        <p class="section__index">01</p>
+        <div>
+          <h2>Cooking isn't hard. Deciding is.</h2>
+          <p class="section__sub">It's worst at dinnertime, but breakfast and lunch have their moments too.</p>
+        </div>
+      </header>
+      <div class="problem-grid">
+        <article class="problem-card reveal">
+          <p class="problem-card__big">7:48 pm</p>
+          <h3>The couch has you.</h3>
+          <p>You're hungry. You've opened four apps and closed all of them. Getting up feels like a group project with no group.</p>
+          <img class="problem-card__mascot" src="assets/mascots/yolk-sleepy.svg" alt="" width="220" height="220">
+        </article>
+        <article class="problem-card reveal">
+          <p class="problem-card__big">1 lemon<span class="problem-card__lemon" aria-hidden="true"></span></p>
+          <h3>The fridge has a vibe.</h3>
+          <p>One lemon, half a jar of something, and a lot of potential. None of it is dinner yet, and you can't tell what's missing.</p>
+          <img class="problem-card__mascot" src="assets/mascots/yolk-meh.svg" alt="" width="220" height="220">
+        </article>
+        <article class="problem-card reveal">
+          <p class="problem-card__big">Ch. 1</p>
+          <h3>The recipe is a novel.</h3>
+          <p>You search for dinner and get someone's summer abroad, their grandmother, a pop-up, and then, eventually, the ingredients.</p>
+          <img class="problem-card__mascot" src="assets/mascots/yolk-surprised.svg" alt="" width="220" height="220">
+        </article>
+      </div>
+      <p class="problem-close reveal">Same story at breakfast, lunch and the 3 pm snack slump. Yolkie skips all of it. <mark>One meal. One next step.</mark></p>
+    </section>
+
+    <section class="section" id="how">
+      <header class="section__head reveal">
+        <p class="section__index">02</p>
+        <div>
+          <h2>Four steps. One meal.</h2>
+          <p class="section__sub">No meal plans, no pantry spreadsheets, no twenty open tabs.</p>
+        </div>
+      </header>
+      <ol class="steps">
+        <li class="step reveal">
+          <span class="step__num" aria-hidden="true">1</span>
+          <h3>Say how you feel</h3>
+          <p>Pick the meal, your energy (wiped, okay or good) and your time (15, 30 or 60 minutes). That's the whole questionnaire.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__num" aria-hidden="true">2</span>
+          <h3>It picks one meal</h3>
+          <p>Not a list of forty. One meal that fits right now. Not feeling it? Ask for another one.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__num" aria-hidden="true">3</span>
+          <h3>It checks what's missing</h3>
+          <p>Tap what you've got. The rest becomes a shopping list sorted by store section, so you're not crossing the store three times.</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__num" aria-hidden="true">4</span>
+          <h3>It runs the kitchen</h3>
+          <p>One "do this now" timeline, with timers side by side, so the toast and the eggs (or the rice and the chicken) finish together.</p>
+        </li>
+      </ol>
+    </section>
+
+    <section class="section" id="features">
+      <header class="section__head reveal">
+        <p class="section__index">03</p>
+        <div>
+          <h2>Built for the day you actually have.</h2>
+          <p class="section__sub">Small things that make a tired morning, lunch break or evening easier.</p>
+        </div>
+      </header>
+      <div class="features">
+        <article class="feature feature--yolk reveal">
+          <span class="feature__shape" aria-hidden="true"></span>
+          <h3>Know the dishes up front</h3>
+          <p>Every recipe shows how many pots, pans and boards it'll use before you start. No surprise sink.</p>
+          <div class="feature__visual"><span class="dish-badge"><span class="icon" aria-hidden="true">skillet</span>Dishes: 3</span></div>
+        </article>
+        <article class="feature feature--plum reveal">
+          <span class="feature__shape" aria-hidden="true"></span>
+          <h3>Clean as you go</h3>
+          <p>While something simmers, Yolkie hands you one tiny tidy-up. You sit down to eat with most of the kitchen already done.</p>
+          <div class="feature__visual">
+            <div class="clean-chip"><span class="icon" aria-hidden="true">timer</span><p><strong>Rice: 8 min left</strong><span>Rinse the cutting board?</span></p></div>
+          </div>
+        </article>
+        <article class="feature feature--paper reveal">
+          <h3>Calories and protein, if you want them</h3>
+          <p>Rough estimates per serving, for people who like to know. One switch hides them everywhere. Nobody's grading your plate.</p>
+          <div class="feature__visual">
+            <div class="nutri-demo">
+              <span class="nutri-demo__meal">Lemon garlic chicken</span>
+              <span class="nutri-demo__nums nutri"><span class="nutri-pill">~610 kcal</span><span class="nutri-pill">~42 g protein</span></span>
+              <label class="switch"><input type="checkbox" class="js-nutri-toggle" checked><span class="switch__track" aria-hidden="true"></span>Show nutrition</label>
+            </div>
+          </div>
+        </article>
+        <article class="feature feature--night reveal">
+          <h3>Yolkie's picks</h3>
+          <p>Yolkie offers three picks, the house passes the phone and taps a favorite. Majority wins. Scramble sulks.</p>
+          <div class="feature__visual avatar-row">
+            <img src="assets/mascots/boyd-default.svg" alt="Boyd, the hard-boiled egg" width="220" height="220">
+            <img src="assets/mascots/yolk-happy.svg" alt="Yolkie, the sunny-side-up egg" width="220" height="220">
+            <img src="assets/mascots/scramble-pout.svg" alt="Scramble, pouting" width="220" height="220">
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="ad">
+      <div class="ad">
+        <figure class="ad__frame reveal">
+          <video controls muted playsinline preload="metadata" poster="assets/yolkie-ad-poster.jpg" width="1080" height="1920" aria-describedby="ad-beats">
+            <source src="assets/yolkie-ad.mp4" type="video/mp4">
+            <a href="assets/yolkie-ad.mp4">Watch the Yolkie ad (MP4)</a>
+          </video>
+        </figure>
+        <div class="ad__copy reveal">
+          <p class="section__index">04</p>
+          <h2>The 30-second version.</h2>
+          <p>Couch, fridge, plan, dinner. The ad has no sound, so play it anywhere.</p>
+          <ol class="ad__beats" id="ad-beats" aria-label="What happens in the ad">
+            <li><b>0:00</b><span>Me at 7:48 pm. Starving, zero plan.</span></li>
+            <li><b>0:04</b><span>The fridge: one lemon and a vibe. Recipe sites: a whole novel first.</span></li>
+            <li><b>0:10</b><span>Meet Yolkie, your kitchen sidekick. Tell it how you feel.</span></li>
+            <li><b>0:16</b><span>It knows the aisle. It runs the kitchen.</span></li>
+            <li><b>0:24</b><span>Got roommates? Vote on dinner.</span></li>
+            <li><b>0:27</b><span>Dinner. Done.</span></li>
+            <li><b>0:30</b><span>Yolkie. From hungry to fed.</span></li>
+          </ol>
+          <div class="actions">
+            <a class="btn btn--secondary" href="try.html">Try the demo</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <header class="section__head reveal">
+        <p class="section__index">05</p>
+        <div>
+          <h2>Fair questions.</h2>
+        </div>
+      </header>
+      <div class="faq reveal">
+        <details class="faq__item">
+          <summary>Is it only for people with ADHD?</summary>
+          <p>No. It's for anyone who hates deciding what to eat. It was built by someone with ADHD, so it's designed for low energy, short attention and tired brains, which describes a lot of people at 7:48 pm.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Is it just for dinner?</summary>
+          <p>No. Breakfast, lunch, dinner and snacks all work the same way: pick the meal, say how you feel, get one thing to make. The demo has a few of each.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Does it track my pantry?</summary>
+          <p>No. There's no inventory to keep up to date. Before you cook, it asks what you've got. You tap, it makes the list.</p>
+        </details>
+        <details class="faq__item">
+          <summary>What will it cost?</summary>
+          <p>It'll be free to start. Paid plans are planned for later, and we'll share details when there's an app to pay for.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Do I have to count calories?</summary>
+          <p>Never. Calories and protein are optional estimates, and one switch hides them.</p>
+        </details>
+        <details class="faq__item">
+          <summary>Can I try it now?</summary>
+          <p>The demo on this site runs the whole flow (pick, shop, cook, vote) in your browser. Nothing you tap is sent anywhere. The real app isn't out yet.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="section" id="early-access">
+      <div class="cta reveal">
+        <div class="cta__copy">
+          <p class="eyebrow">Early access</p>
+          <h2>Less deciding. More eating.</h2>
+          <p>Yolkie is still being built. Leave your email and we'll let you know when there's something to tap.</p>
+          <div class="actions">
+            <a class="btn btn--secondary" href="try.html">Try the demo first</a>
+          </div>
+        </div>
+
+        <form class="signup js-signup" novalidate>
+          <div class="signup__yolk" aria-hidden="true"><img class="js-signup-yolk" src="assets/mascots/yolk-default.svg" alt="" width="220" height="220"></div>
+          <div class="confetti js-signup-confetti" aria-hidden="true"></div>
+          <div class="signup__fields">
+            <h3 class="signup__title">Save me a seat</h3>
+            <div class="field">
+              <label for="signup-email">Your email</label>
+              <input id="signup-email" type="email" name="email" autocomplete="email" inputmode="email" required placeholder="So Yolkie knows where to find you" aria-describedby="signup-status">
+            </div>
+            <fieldset class="field">
+              <legend>Your usual mealtime energy <span class="field__opt">(optional)</span></legend>
+              <div class="chips">
+                <label class="chip"><input type="radio" name="energy" value="Wiped"><span>Wiped</span></label>
+                <label class="chip"><input type="radio" name="energy" value="Okay"><span>Okay</span></label>
+                <label class="chip"><input type="radio" name="energy" value="Good"><span>Good</span></label>
+              </div>
+            </fieldset>
+            <div class="field">
+              <label for="signup-note">Anything else? <span class="field__opt">(optional)</span></label>
+              <textarea id="signup-note" name="note" rows="3" maxlength="500" placeholder="Your 7:48 pm nemesis, a feature you'd love…"></textarea>
+            </div>
+            <!-- Spam trap: people never see or fill this; bots often do. -->
+            <div class="signup__trap" aria-hidden="true"><label>Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
+            <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Get early access</button>
+            <p class="signup__status js-signup-status" id="signup-status" role="status"></p>
+            <p class="fine">We'll only email you about Yolkie.</p>
+          </div>
+          <div class="signup__done js-signup-done" hidden>
+            <h3 class="signup__title js-signup-done-title" tabindex="-1">You're on the list!</h3>
+            <p class="js-signup-done-text">We'll email you when Yolkie has something to tap. Until then, the demo's open.</p>
+            <a class="btn btn--secondary" href="try.html">Try the demo</a>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Pre-launch concept.</strong> Trademark clearance pending.</p>
+    <div class="site-footer__links">
+      <a href="try.html">Try the demo</a>
+      <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>

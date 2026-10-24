@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Try the demo · Yolkie</title>
+  <meta name="description" content="Try the Yolkie demo: pick a meal, your energy and your time, get one thing to make, check what you're missing, cook it step by step, or let the house vote. Runs entirely in your browser.">
+  <meta property="og:title" content="Try the demo · Yolkie">
+  <meta property="og:description" content="Breakfast, lunch, dinner or a snack: pick your energy and time, get one meal, and cook it step by step. Runs entirely in your browser.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yolkie.isolatedideas.dev/try.html">
+  <meta property="og:image" content="https://yolkie.isolatedideas.dev/og-image.png">
+  <link rel="canonical" href="https://yolkie.isolatedideas.dev/try.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F6F4FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1740" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
+      r.classList.add('js');
+      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
+      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
+      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
+    })();
+  </script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Yolkie, home">
+        <span class="brand__mark"><img src="assets/app-icon.svg" alt="" width="34" height="34"></span>
+        <span class="brand__name">Yolkie</span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="./#problem">Why</a>
+        <a href="./#how">How it works</a>
+        <a href="./#features">Features</a>
+        <a href="./#faq">FAQ</a>
+        <a class="site-nav__try" href="try.html" aria-current="page">Try the demo</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Switch colour theme">
+        <span class="icon" aria-hidden="true">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero">
+      <p class="eyebrow">Demo</p>
+      <h1>What are we eating?</h1>
+      <p class="lede">A few simple recipes for breakfast, lunch, dinner and snacks, one decision at a time. Pick, check, cook, done.</p>
+    </section>
+
+    <section class="demo" id="demo" aria-label="Yolkie demo">
+      <p class="demo-badge"><span class="icon" aria-hidden="true">lock</span>Runs in your browser. Nothing you tap is sent anywhere.</p>
+      <noscript><p class="panel">The demo needs JavaScript. The <a href="./#how">landing page</a> explains how Yolkie works.</p></noscript>
+
+      <ol class="demo-track" aria-label="Progress">
+        <li data-track="pick" aria-current="step">Pick</li>
+        <li data-track="check">Check</li>
+        <li data-track="cook">Cook</li>
+        <li data-track="done">Done</li>
+      </ol>
+
+      <div class="yolk-bar">
+        <img class="yolk-face" src="assets/mascots/yolk-default.svg" alt="" width="220" height="220">
+        <p class="yolk-says" aria-live="polite">Hey, I'm Yolkie. What are we eating?</p>
+      </div>
+
+      <!-- 1. Pick -->
+      <div class="stage" data-stage="pick">
+        <h2 class="stage__title" tabindex="-1">What are we eating?</h2>
+        <p class="stage__sub">Three taps and you'll have one meal.</p>
+        <fieldset class="choice-group">
+          <legend>Meal</legend>
+          <div class="choices choices--4">
+            <label class="choice"><input type="radio" name="meal" value="breakfast"><span class="choice__face"><span class="icon" aria-hidden="true">egg_alt</span>Breakfast</span></label>
+            <label class="choice"><input type="radio" name="meal" value="lunch"><span class="choice__face"><span class="icon" aria-hidden="true">lunch_dining</span>Lunch</span></label>
+            <label class="choice"><input type="radio" name="meal" value="dinner"><span class="choice__face"><span class="icon" aria-hidden="true">dinner_dining</span>Dinner</span></label>
+            <label class="choice"><input type="radio" name="meal" value="snack"><span class="choice__face"><span class="icon" aria-hidden="true">cookie</span>Snack</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="choice-group">
+          <legend>Energy</legend>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="energy" value="1"><span class="choice__face"><span class="icon" aria-hidden="true">battery_1_bar</span>Wiped</span></label>
+            <label class="choice"><input type="radio" name="energy" value="2"><span class="choice__face"><span class="icon" aria-hidden="true">battery_4_bar</span>Okay</span></label>
+            <label class="choice"><input type="radio" name="energy" value="3"><span class="choice__face"><span class="icon" aria-hidden="true">battery_full</span>Good</span></label>
+          </div>
+        </fieldset>
+        <fieldset class="choice-group">
+          <legend>Time</legend>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="time" value="15"><span class="choice__face">15 min<small>quick</small></span></label>
+            <label class="choice"><input type="radio" name="time" value="30"><span class="choice__face">30 min<small>normal</small></span></label>
+            <label class="choice"><input type="radio" name="time" value="60"><span class="choice__face">60 min<small>no rush</small></span></label>
+          </div>
+        </fieldset>
+
+        <p class="choice-hint js-pick-hint">Pick all three and Yolkie suggests one meal.</p>
+        <div class="js-meal-slot"></div>
+      </div>
+
+      <!-- 2. Check: servings, have/need, spice rack, shopping list -->
+      <div class="stage" data-stage="check" hidden>
+        <h2 class="stage__title" tabindex="-1">Got everything?</h2>
+        <p class="stage__sub js-check-meal"></p>
+
+        <div class="panel">
+          <div class="servings">
+            <span class="servings__label" id="servings-label">Cooking for</span>
+            <div class="stepper" role="group" aria-labelledby="servings-label">
+              <button type="button" class="js-serv-minus" aria-label="Fewer servings"><span class="icon" aria-hidden="true">remove</span></button>
+              <output class="js-serv-count" aria-live="polite">2</output>
+              <button type="button" class="js-serv-plus" aria-label="More servings"><span class="icon" aria-hidden="true">add</span></button>
+            </div>
+          </div>
+          <ul class="checklist js-checklist"></ul>
+          <div class="check-tools">
+            <span class="fine js-check-count"></span>
+            <button type="button" class="btn btn--ghost btn--small js-have-all">I've got all of it</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Spice rack</h3>
+          <p class="fine">Tap any you're out of. Most have an easy swap.</p>
+          <div class="spice-rack js-spice-rack" role="group" aria-label="Spices. Press the ones you are out of."></div>
+          <ul class="swap-list js-swaps"></ul>
+        </div>
+
+        <div class="panel">
+          <h3>Shopping list</h3>
+          <p class="fine">Grouped by store section. Just the general section, not real store or aisle data.</p>
+          <div class="shop-list js-shop-list" aria-live="polite"></div>
+          <div class="check-tools">
+            <span></span>
+            <button type="button" class="btn btn--ghost btn--small js-copy-list" hidden>Copy list</button>
+          </div>
+        </div>
+
+        <div class="stage-actions">
+          <button type="button" class="btn btn--secondary js-go" data-go="pick">Back</button>
+          <button type="button" class="btn btn--primary js-start-cook"><span class="btn__dot" aria-hidden="true"></span>Start cooking</button>
+        </div>
+      </div>
+
+      <!-- 3. Cook -->
+      <div class="stage" data-stage="cook" hidden>
+        <div class="cook-head">
+          <h2 class="stage__title js-cook-title" tabindex="-1">Cook mode</h2>
+          <label class="switch"><input type="checkbox" class="js-demo-speed"><span class="switch__track" aria-hidden="true"></span>Demo speed (10×)</label>
+        </div>
+        <div class="timers js-timers" role="group" aria-label="Running timers"></div>
+        <div class="now-card js-now"></div>
+        <p class="up-next js-up-next"></p>
+        <p class="sr-only js-timer-announce" aria-live="assertive"></p>
+        <p class="sr-only js-step-announce" aria-live="polite"></p>
+        <div class="cook-foot">
+          <button type="button" class="btn btn--ghost btn--small js-quit-cook">Stop cooking</button>
+          <span class="fine">Timers keep running while you scroll.</span>
+        </div>
+      </div>
+
+      <!-- 4. Done -->
+      <div class="stage" data-stage="done" hidden>
+        <div class="done-card">
+          <div class="confetti js-confetti" aria-hidden="true"></div>
+          <h2 class="stage__title js-done-title" tabindex="-1">Done.</h2>
+          <p class="done-card__meal js-done-meal"></p>
+        </div>
+        <dl class="done-stats js-done-stats"></dl>
+        <p class="fine nutri" style="margin-top:8px">Calories and protein are rough estimates per serving.</p>
+        <div class="panel" style="margin-top:16px">
+          <h3>Log it?</h3>
+          <p class="fine">Saved in this browser only. Nothing is sent anywhere.</p>
+          <div class="actions" style="margin-top:14px">
+            <button type="button" class="btn btn--primary js-log"><span class="icon" aria-hidden="true">bookmark_add</span>Log it</button>
+          </div>
+          <ul class="log-list js-log-list"></ul>
+          <button type="button" class="btn btn--ghost btn--small js-clear-log" hidden>Clear this device's log</button>
+        </div>
+        <div class="stage-actions">
+          <button type="button" class="btn btn--secondary js-again">Pick another meal</button>
+          <a class="btn btn--primary" href="./#early-access"><span class="btn__dot" aria-hidden="true"></span>Get early access</a>
+        </div>
+      </div>
+
+      <!-- Yolkie's picks: the house vote (a side trip from Pick) -->
+      <div class="stage" data-stage="vote" hidden>
+        <h2 class="stage__title" tabindex="-1">Yolkie's picks</h2>
+        <p class="vote-label"><span class="icon" aria-hidden="true">smartphone</span><span><strong>Single-device demo.</strong> Pass this phone around and vote one at a time. In the app, everyone would vote from their own phone.</span></p>
+        <div class="js-vote"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Pre-launch concept.</strong> Trademark clearance pending.</p>
+    <div class="site-footer__links">
+      <a href="./">Home</a>
+      <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>

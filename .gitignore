@@ -1,0 +1,12 @@
+# Source material, not used by the pages
+tonight-brand-kit/
+yolkie-brand-kit/
+
+# Local tooling
+.claude/
+.playwright-mcp/
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
