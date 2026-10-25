@@ -1239,7 +1239,7 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
        who's eating, linking a household. Same tokens; circles for anything earned.
    ========================================================================== */
 
-/* Pick: "still got them?", who's eating, the cold-day switch */
+/* Pick: "still got them?" and who's eating */
 .remember-card {
   display: flex; gap: 14px; align-items: flex-start; margin: 0 0 22px; padding: 16px 18px; border-radius: var(--radius-l);
   background: var(--yolk-soft); border: 2px solid var(--text);
@@ -1257,13 +1257,11 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 .eating__note { margin-top: 8px; }
 .tag--person { padding-left: 6px; }
 .tag--person .avatar { margin-right: 2px; }
-.cold-switch .icon { font-size: 20px; color: var(--accent); }
 .pick-badge {
   display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px;
   background: var(--yolk); color: var(--ink); font-size: 14px; font-weight: 800;
 }
 .pick-badge .icon { font-size: 18px; }
-.pick-badge--cold { background: #CFE8FF; }
 .fan-note { display: flex; gap: 8px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); font-size: 15px; max-width: 46ch; }
 .fan-note .icon { font-size: 18px; color: var(--accent); margin-top: 2px; }
 .shop-check { display: inline-flex; align-items: center; gap: 10px; min-height: 36px; cursor: pointer; }

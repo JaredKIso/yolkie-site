@@ -1428,17 +1428,17 @@ const STICKERS = [
   { id: 'early', name: 'Early bird', how: 'Cook a breakfast', art: `<path d="M16,64 H84" stroke="${INK}" stroke-width="5" stroke-linecap="round"/><path d="M28,64 A22 22 0 0 1 72,64 Z" fill="#FFC83D" stroke="${INK}" stroke-width="4"/><path d="M50,30 V22 M30,40 L24,34 M70,40 L76,34 M20,56 H12 M80,56 H88" stroke="#F09A12" stroke-width="5" stroke-linecap="round"/><circle cx="43" cy="54" r="3" fill="${INK}"/><circle cx="57" cy="54" r="3" fill="${INK}"/><path d="M44,74 H56 M38,80 H62" stroke="#B9A8FF" stroke-width="4" stroke-linecap="round"/>` },
   { id: 'rescue', name: 'Fridge hero', how: 'Cook with something you already had', art: `<rect x="31" y="14" width="38" height="70" rx="8" fill="#EEF0F8" stroke="${INK}" stroke-width="4"/><path d="M31,40 H69" stroke="${INK}" stroke-width="4"/><path d="M60,22 V32 M60,48 V62" stroke="${INK}" stroke-width="4" stroke-linecap="round"/><path d="M50,74 C40,66 38,58 44,55 C48,53 50,57 50,58 C50,57 52,53 56,55 C62,58 60,66 50,74 Z" fill="#FF7D6B" stroke="${INK}" stroke-width="3"/>` },
   { id: 'owl', name: 'Night owl', how: 'Cook after 11 PM', art: `<circle cx="50" cy="50" r="38" fill="#1E1740"/><path d="M58,26 A24 24 0 1 0 74,62 A19 19 0 1 1 58,26 Z" fill="#FFE27A"/><path d="M28,30 l2,5 5,2 -5,2 -2,5 -2,-5 -5,-2 5,-2z M72,74 l1.5,4 4,1.5 -4,1.5 -1.5,4 -1.5,-4 -4,-1.5 4,-1.5z" fill="#fff"/><text x="66" y="40" font-family="DM Sans, sans-serif" font-weight="800" font-size="14" fill="#B9A8FF">z</text>` },
-  { id: 'cozy', name: 'Cozy bowl', how: 'Make a soup on a cold day', art: `<path d="M18,48 Q20,82 50,82 Q80,82 82,48 Z" fill="#6B4DE6" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><ellipse cx="50" cy="48" rx="32" ry="8" fill="#E8553E" stroke="${INK}" stroke-width="4"/><path d="M38,36 q-6,-7 0,-14 q6,-7 0,-14 M50,36 q-6,-7 0,-14 M62,36 q-6,-7 0,-14 q6,-7 0,-14" stroke="#B9A8FF" stroke-width="4" fill="none" stroke-linecap="round"/>` },
+  { id: 'cozy', name: 'Cozy bowl', how: 'Cook a soup in Soup Season (October to March)', art: `<path d="M18,48 Q20,82 50,82 Q80,82 82,48 Z" fill="#6B4DE6" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><ellipse cx="50" cy="48" rx="32" ry="8" fill="#E8553E" stroke="${INK}" stroke-width="4"/><path d="M38,36 q-6,-7 0,-14 q6,-7 0,-14 M50,36 q-6,-7 0,-14 M62,36 q-6,-7 0,-14 q6,-7 0,-14" stroke="#B9A8FF" stroke-width="4" fill="none" stroke-linecap="round"/>` },
   { id: 'goal', name: 'Goal getter', how: 'Hit your weekly goal', art: `<circle cx="50" cy="50" r="32" fill="none" stroke="#E6E0FB" stroke-width="12"/><path d="M50,18 A32 32 0 1 1 18,50" fill="none" stroke="#2E9E6A" stroke-width="12" stroke-linecap="round"/><path d="M36,50 L46,60 L66,40" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` },
   { id: 'team', name: 'Team kitchen', how: 'Everyone in the house cooks in one week', art: `<path d="M18,48 L50,20 L82,48 V82 H18 Z" fill="#6B4DE6" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><circle cx="34" cy="62" r="9" fill="#FFC83D" stroke="${INK}" stroke-width="3"/><ellipse cx="50" cy="60" rx="8" ry="11" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="66" cy="62" r="9" fill="#FFDD6E" stroke="${INK}" stroke-width="3"/>` },
   { id: 'foil', name: 'Shiny!', how: 'Master your first card', art: `<defs><linearGradient id="holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB3D9"/><stop offset=".5" stop-color="#B9A8FF"/><stop offset="1" stop-color="#9FE0BC"/></linearGradient></defs><path d="M50,14 L60,38 L86,40 L66,57 L72,83 L50,69 L28,83 L34,57 L14,40 L40,38 Z" fill="url(#holo)" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M78,16 l2,6 6,2 -6,2 -2,6 -2,-6 -6,-2 6,-2z" fill="#FFC83D"/>` },
   { id: 'hydro', name: 'Hydration station', how: 'Reach your water goal for the first time', art: `<path d="M50,12 C62,32 76,46 76,62 A26 26 0 0 1 24,62 C24,46 38,32 50,12 Z" fill="#7CC4FF" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M38,58 Q38,72 50,76" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="44" cy="54" r="3" fill="${INK}"/><circle cx="58" cy="54" r="3" fill="${INK}"/><path d="M45,64 Q51,69 57,64" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M80,18 l2,6 6,2 -6,2 -2,6 -2,-6 -6,-2 6,-2z" fill="#FFC83D"/>` },
 ];
 const SEASONS = [
-  { id: 'soup', name: 'Soup Season', months: [9, 10, 11, 0, 1], back: 'Back every October', stickers: [
+  { id: 'soup', name: 'Soup Season', months: [9, 10, 11, 0, 1, 2], back: 'Back every October', stickers: [
     { id: 'leaf', name: 'Falling leaf', how: 'Cook anything in Soup Season', art: `<path d="M50,16 C72,26 84,46 76,70 C66,82 40,84 26,74 C16,52 26,28 50,16 Z" fill="#F08A3C" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M30,80 L66,30 M44,62 L36,46 M54,48 L66,48 M40,70 L56,68" stroke="${INK}" stroke-width="3" stroke-linecap="round" fill="none"/>` },
     { id: 'mug', name: 'Warm mug', how: 'Cook three times in one week of Soup Season', art: `<rect x="24" y="36" width="42" height="44" rx="8" fill="#6B4DE6" stroke="${INK}" stroke-width="4"/><path d="M66,46 Q82,46 80,58 Q78,70 66,68" fill="none" stroke="${INK}" stroke-width="4"/><path d="M36,28 q-5,-6 0,-12 M48,28 q-5,-6 0,-12" stroke="#B9A8FF" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="45" cy="58" r="7" fill="#FFC83D"/>` },
-    { id: 'mitten', name: 'Mittens', how: 'Cook on a cold day', art: `<path d="M34,70 L32,40 C32,24 56,20 60,36 L62,44 L70,38 C76,34 82,40 78,46 L66,64 L66,70 Z" fill="#5BB3F0" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><rect x="30" y="68" width="40" height="14" rx="5" fill="#fff" stroke="${INK}" stroke-width="4"/><path d="M40,50 h14 M40,58 h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/>` },
+    { id: 'mitten', name: 'Mittens', how: 'Cook a breakfast in Soup Season', art: `<path d="M34,70 L32,40 C32,24 56,20 60,36 L62,44 L70,38 C76,34 82,40 78,46 L66,64 L66,70 Z" fill="#5BB3F0" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><rect x="30" y="68" width="40" height="14" rx="5" fill="#fff" stroke="${INK}" stroke-width="4"/><path d="M40,50 h14 M40,58 h14" stroke="#fff" stroke-width="3" stroke-linecap="round"/>` },
   ] },
   { id: 'summer', name: 'Summer Snacks', months: [5, 6, 7], back: 'Back every June', stickers: [
     { id: 'pop', name: 'Ice pop', how: 'Make a snack in summer', art: `<rect x="34" y="14" width="32" height="54" rx="14" fill="#FF8FB1" stroke="${INK}" stroke-width="4"/><path d="M34,40 H66" stroke="#FFC83D" stroke-width="10"/><rect x="45" y="66" width="10" height="20" rx="4" fill="#E9C27A" stroke="${INK}" stroke-width="3"/>` },
@@ -1755,13 +1755,14 @@ if (demo) {
       m.kudos = [...new Set((m.kudos || []).map(toId))].filter((x) => x !== m.cook);
       if (!m.eaters) m.eaters = [m.cook, ...m.kudos];
       if (!m.ratings) m.ratings = {};
+      delete m.cold; // left over from the cold-day switch, which is gone
     });
     return a;
   }
   const saveActivity = (a) => store.set(sampleOn() ? SAMPLE_KEY : ACTIVITY_KEY, a);
 
   const state = {
-    meal: '', energy: 0, time: 0, have: [], haveDone: false, fromCheckin: false, temp: null, shown: false, cold: false,
+    meal: '', energy: 0, time: 0, have: [], haveDone: false, fromCheckin: false, temp: null, shown: false,
     fits: [], pool: [], fallback: false, idx: 0, another: 0, recipe: null, servings: Number(prefs.last.servings) || 2,
     marks: {}, out: {}, buy: {}, bought: {}, cook: null, vote: null, done: null, askDiet: null,
     eaters: ['you'], memAsked: false, memEdit: false, editing: null,
@@ -2098,7 +2099,7 @@ if (demo) {
   }
 
   // Recipes for the chosen meal that work for everyone eating and fit the time and energy. Order: fewer
-  // dislikes and fewer 😕 first; on a Wiped day, favorites (a Comfort pick); on a cold day, soups; then the
+  // dislikes and fewer 😕 first; on a Wiped day, favorites (a Comfort pick); then the
   // most of what you already have; then effort close to your energy, using most of the time you have.
   // If nothing fits the time and energy, the quickest one that works.
   function rank() {
@@ -2109,7 +2110,7 @@ if (demo) {
     const low = (r) => { const f = faces(r); return f.length > 0 && f.every((v) => v === 1); };
     state.group = g;
     state.comfort = (r) => state.energy === 1 && faces(r).includes(3);
-    const key = (r) => [softHits(r, g).length, low(r) ? 1 : 0, state.comfort(r) ? 0 : 1, state.cold && tagged(r, 'soup') ? 0 : 1,
+    const key = (r) => [softHits(r, g).length, low(r) ? 1 : 0, state.comfort(r) ? 0 : 1,
       -usesHave(r, state.have).length, (state.energy - r.effort) * 2 + (state.time - r.time) / 15];
     const cmp = (a, b) => { const ka = key(a), kb = key(b); const k = ka.findIndex((x, i) => x !== kb[i]); return k < 0 ? 0 : ka[k] - kb[k]; };
     state.pool = RECIPES.filter((r) => r.meal === state.meal && passesGroup(r, g));
@@ -2139,7 +2140,7 @@ if (demo) {
       <article class="meal-card${reduceMotion ? '' : ' is-new'}">
         <div class="meal-card__top"><p class="eyebrow">Yolkie's pick · ${cap(mealOf(r).label)} · ${r.cuisine}</p>
           ${state.comfort(r) ? '<span class="pick-badge"><span class="icon" aria-hidden="true">favorite</span>Comfort pick</span>' : ''}
-          ${state.cold && tagged(r, 'soup') ? '<span class="pick-badge pick-badge--cold"><span class="icon" aria-hidden="true">ac_unit</span>Cold-day soup</span>' : ''}${haveBadge(r)}</div>
+          ${haveBadge(r)}</div>
         <h3 class="meal-card__name">${r.name}</h3>
         <p class="meal-card__blurb">${r.blurb}</p>
         ${fans.length ? `<p class="fan-note"><span class="icon" aria-hidden="true">info</span><span>${esc(listText(fans))}, so this one sits lower in the picks.</span></p>` : ''}
@@ -2352,7 +2353,7 @@ if (demo) {
     }
   });
 
-  /* Who's eating, and the cold-day switch: right above the suggestion. Selections never carry over. */
+  /* Who's eating: right above the suggestion. Selections never carry over. */
   function eatingNote() {
     const ids = eaters();
     const outside = active().filter((m) => !ids.includes(m.id) && m.status === 'active')
@@ -2375,8 +2376,7 @@ if (demo) {
           const on = ids.includes(m.id);
           return `<button type="button" class="tag tag--person${on ? ' is-on' : ''}" data-eat="${m.id}" aria-pressed="${on}">${avatar(m.id, 'idle', 'avatar--xs')}${memberName(m.id)}</button>`;
         }).join('')}</div>
-        <p class="fine eating__note">${esc(eatingNote())}</p></div>` : ''}
-      <label class="switch cold-switch"><input type="checkbox" class="js-cold"${state.cold ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span><span class="icon" aria-hidden="true">ac_unit</span>It’s a cold day</label>`;
+        <p class="fine eating__note">${esc(eatingNote())}</p></div>` : ''}`;
   }
   $('.js-pick-extras').addEventListener('click', (e) => {
     const b = e.target.closest('[data-eat]');
@@ -2387,12 +2387,6 @@ if (demo) {
     state.eaters = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
     refilter(['default', eaters().length === 1 ? `Just ${eaters()[0] === 'you' ? 'you' : rawName(eaters()[0])}. Got it.` : `Cooking for ${eaters().length}. I’ll keep everyone happy.`]);
     $(`[data-eat="${id}"]`).focus();
-  });
-  $('.js-pick-extras').addEventListener('change', (e) => {
-    if (!e.target.matches('.js-cold')) return;
-    state.cold = e.target.checked;
-    refilter(state.cold ? ['sleepy', 'Brr. Soups go to the top of the pile.'] : ['default', 'Warmer already.']);
-    $('.js-cold').focus();
   });
 
   const nextQuestion = () => (!state.meal ? 'Which meal is it?' : !state.energy ? 'And how’s your energy?' : 'And how much time have you got?');
@@ -2887,11 +2881,11 @@ if (demo) {
     if (r.meal === 'breakfast') add('early', 'week');
     if (meal.have.length) add('rescue', 'week');
     if (h >= 23 || h < 4) add('owl');
-    if (tagged(r, 'soup') && meal.cold) add('cozy');
+    if (tagged(r, 'soup') && season && season.id === 'soup') add('cozy', 'never'); // any soup in Soup Season, every time
     if (ctx.goalHit) add('goal', 'never');
     if (team) add('team', 'never');
     if ((collectionFor(a).cards[r.id] || {}).n === MASTER_AT) add('foil', 'never');
-    if (season && season.id === 'soup') { add('leaf', 'week'); if (third) add('mug', 'never'); if (meal.cold) add('mitten'); }
+    if (season && season.id === 'soup') { add('leaf', 'week'); if (third) add('mug', 'never'); if (r.meal === 'breakfast') add('mitten', 'week'); }
     if (season && season.id === 'summer') { if (r.meal === 'snack') add('pop'); if (third) add('melon', 'never'); if (r.meal === 'breakfast') add('sun'); }
     got.forEach((id) => { a.stickers[id] = (a.stickers[id] || 0) + 1; });
     return got;
@@ -2915,7 +2909,7 @@ if (demo) {
     const meal = {
       id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, r: r.id, at: Date.now(), servings: state.servings,
       have: usesHave(r, state.have), rinsed: c.rinsed.size, tidies: c.tidies, cook: 'you', kudos: [],
-      eaters: ids, ratings: {}, cold: state.cold, everyone: active().length > 1 && active().every((m) => ids.includes(m.id)), stickers: [],
+      eaters: ids, ratings: {}, everyone: active().length > 1 && active().every((m) => ids.includes(m.id)), stickers: [],
     };
     a.meals.push(meal);
     useUp(a, r);
@@ -5381,14 +5375,14 @@ if (demo) {
       while (t > now) t -= DAY;
       return t;
     };
-    // [recipe, days ago, time, who cooked, what they had, kudos from, ratings, everyone ate, cold day]
+    // [recipe, days ago, time, who cooked, what they had, kudos from, ratings, everyone ate]
     const plan = [
       ['omelette', 18, '08:15', 'you', ['eggs', 'spinach'], [], { you: 3 }],
       ['scrambled', 17, '08:00', 'you', ['eggs'], [], { you: 2 }],
       ['omelette', 16, '08:30', 'you', ['eggs', 'cheese'], [], {}],
       ['salmon-eggs', 15, '09:10', 'you', ['eggs', 'lemon'], [], { you: 3 }],
       ['omelette', 14, '08:05', 'you', ['eggs'], [], {}],
-      ['soup', 13, '12:30', 'you', [], ['boyd'], { you: 3, boyd: 2 }, false, true],
+      ['soup', 13, '12:30', 'you', [], ['boyd'], { you: 3, boyd: 2 }],
       ['tofu-tacos', 12, '09:30', 'you', ['tortillas', 'beans'], [], { you: 2 }],
       ['omelette', 11, '08:20', 'you', ['eggs', 'spinach'], [], { you: 3 }],
       ['salmon', 10, '19:15', 'you', ['lemon'], ['scramble'], { you: 2, scramble: 2 }],
@@ -5406,12 +5400,12 @@ if (demo) {
     ];
     const a = { meals: [], badges: [{ id: 'rescue', at: now - 4 * DAY }], challenge: { id: 'speed', start: now - 2.5 * DAY }, stickers: {}, stickerFrom: {}, crumbs: 2, fridge: [], gifts: [], remembered: [] };
     // Stickers come from the same rules as real meals, replayed in order.
-    plan.map((p, k) => ({ p, t: at(p[1], p[2]), k })).sort((x, y) => x.t - y.t).forEach(({ p: [id, , , cook, have, kudos, ratings, everyone, cold], t, k }) => {
+    plan.map((p, k) => ({ p, t: at(p[1], p[2]), k })).sort((x, y) => x.t - y.t).forEach(({ p: [id, , , cook, have, kudos, ratings, everyone], t, k }) => {
       const r = byId(id);
       const cleans = r.steps.filter((s) => s.clean);
       const before = statsFor(a);
       const meal = { id: `sample${k}`, r: id, at: t, servings: 2, have: usesHave(r, have), rinsed: cleans.filter((s) => s.clean.dish).length, tidies: cleans.length, cook, kudos,
-        eaters: [cook, ...kudos], ratings, everyone: !!everyone, cold: !!cold, stickers: [] };
+        eaters: [cook, ...kudos], ratings, everyone: !!everyone, stickers: [] };
       a.meals.push(meal);
       const after = statsFor(a);
       meal.stickers = earnStickers(a, meal, { before, after, goalHit: before.week < prefs.goal && after.week >= prefs.goal });
