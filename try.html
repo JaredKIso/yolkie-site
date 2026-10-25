@@ -225,7 +225,56 @@
       </div>
       </div>
 
-      <div role="tabpanel" id="panel-me" data-panel="me" aria-labelledby="tab-me" hidden><div class="tab-stack js-me"></div></div>
+      <div role="tabpanel" id="panel-me" data-panel="me" aria-labelledby="tab-me" hidden>
+        <div class="seg" role="group" aria-label="Me views">
+          <button type="button" data-me-view="progress" aria-pressed="true"><span class="icon" aria-hidden="true">insights</span>Progress</button>
+          <button type="button" data-me-view="kitchen" aria-pressed="false"><span class="icon" aria-hidden="true">countertops</span>Kitchen</button>
+        </div>
+        <div class="tab-stack js-me"></div>
+        <div class="tab-stack js-kitchen" hidden>
+          <div class="tab-head"><h2 class="stage__title" tabindex="-1">Yolkie's Kitchen</h2>
+            <p class="stage__sub">Tap the floor to walk Yolkie around. Tap anyone to say hi. Everyone else lives their own life in here.</p></div>
+          <div class="kitchen-stage">
+            <svg id="k-scene" class="kitchen-scene" viewBox="92 18 616 526" role="img" aria-label="An isometric kitchen where Yolkie and the house cook, eat and hang out">
+              <defs>
+                <linearGradient id="k-skyDay" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FCBFF"/><stop offset="1" stop-color="#E6F5FF"/></linearGradient>
+                <linearGradient id="k-skyNight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#151C45"/><stop offset="1" stop-color="#3B3F7E"/></linearGradient>
+                <radialGradient id="k-glow"><stop offset="0" stop-color="#FFE7A3" stop-opacity=".9"/><stop offset="1" stop-color="#FFE7A3" stop-opacity="0"/></radialGradient>
+                <radialGradient id="k-cone" cx="50%" cy="0%" r="100%"><stop offset="0" stop-color="#FFE7A3" stop-opacity=".55"/><stop offset="1" stop-color="#FFE7A3" stop-opacity="0"/></radialGradient>
+              </defs>
+              <g id="k-walls"></g><g id="k-floor"></g><g id="k-rug"></g><g id="k-objs"></g><g id="k-over"></g>
+              <polygon id="k-nightTint" points="" fill="#140F2E" opacity="0" pointer-events="none"/>
+              <g id="k-glows" pointer-events="none"></g>
+              <g id="k-fx" pointer-events="none"></g>
+              <g id="k-labels"></g>
+            </svg>
+            <p class="kitchen-toast" id="k-toast" role="status" aria-live="polite"></p>
+          </div>
+          <section class="panel" aria-labelledby="k-house-title">
+            <h3 id="k-house-title">Who's home</h3>
+            <p class="fine">The same people as the House tab. You steer Yolkie.</p>
+            <div class="tags js-k-sizes" role="group" aria-label="Household size"></div>
+            <div class="kitchen-names">
+              <label>Yolkie's name tag<input class="text-input" type="text" data-k-name="1" maxlength="16" autocomplete="off"></label>
+              <label>Boyd's name tag<input class="text-input" type="text" data-k-name="2" maxlength="16" autocomplete="off"></label>
+              <label>Scramble's name tag<input class="text-input" type="text" data-k-name="3" maxlength="16" autocomplete="off"></label>
+            </div>
+          </section>
+          <section class="panel" aria-labelledby="k-meals-label">
+            <div class="kitchen-count"><span class="js-k-count-label" id="k-meals-label">Meals cooked</span><strong class="js-k-count">0</strong></div>
+            <div class="js-k-slider-row" hidden><input class="kitchen-slider js-k-slider" type="range" min="0" max="20" step="1" value="0" aria-labelledby="k-meals-label"></div>
+            <p class="fine js-k-hint"></p>
+            <ul class="decor js-k-decor"></ul>
+          </section>
+          <section class="panel" aria-label="Kitchen options">
+            <div class="tags">
+              <button type="button" class="tag js-k-night" aria-pressed="false"><span class="icon" aria-hidden="true">dark_mode</span>Night</button>
+              <button type="button" class="tag js-k-auto" aria-pressed="true"><span class="icon" aria-hidden="true">directions_walk</span>Everyone does their own thing</button>
+            </div>
+            <p class="fine kitchen-outfit">Yolkie wears whatever's picked in <button type="button" class="link-btn js-k-closet">Yolkie's closet</button>.</p>
+          </section>
+        </div>
+      </div>
       <div role="tabpanel" id="panel-house" data-panel="house" aria-labelledby="tab-house" hidden><div class="tab-stack js-house"></div></div>
 
       <!-- Sheets -->

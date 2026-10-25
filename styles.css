@@ -1191,6 +1191,39 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 .js-story-status { margin-top: 8px; text-align: center; }
 .story:focus-visible { outline-offset: 2px; }
 
+/* Me: the Progress / Kitchen switch */
+.seg { display: inline-flex; gap: 4px; padding: 4px; margin-bottom: 18px; border-radius: 999px; border: 2px solid var(--line); }
+.seg button {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px;
+  background: none; color: var(--text-dim); cursor: pointer; font: 700 15px var(--font-body);
+}
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--yolk); color: var(--ink); }
+.seg .icon { font-size: 18px; }
+
+/* Yolkie's Kitchen: the isometric scene keeps its own palette in both themes */
+.kitchen-stage { position: relative; overflow: hidden; border-radius: var(--radius-l); border: 2px solid var(--text); background: #F6F4FB; touch-action: manipulation; }
+.kitchen-scene { display: block; width: 100%; height: auto; cursor: pointer; user-select: none; -webkit-user-select: none; }
+.kitchen-toast {
+  position: absolute; left: 50%; top: 14px; padding: 8px 16px; border-radius: 999px; background: var(--ink); color: var(--paper);
+  font-weight: 700; font-size: 15px; white-space: nowrap; pointer-events: none; opacity: 0;
+  transform: translate(-50%, -16px); transition: opacity .3s var(--ease), transform .3s var(--spring);
+}
+.kitchen-toast.is-on { opacity: 1; transform: translate(-50%, 0); }
+.kitchen-names { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-top: 14px; }
+.kitchen-names label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.kitchen-names .text-input { width: 100%; font-weight: 700; }
+.kitchen-count { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-weight: 700; }
+.kitchen-count strong { font: 800 34px/1 var(--font-display); color: var(--accent); }
+.kitchen-slider { width: 100%; margin: 12px 0 4px; accent-color: var(--plum); }
+.decor { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.decor-item { padding: 12px 14px; border-radius: 12px; border: 2px dashed var(--line); color: var(--text-dim); }
+.decor-item strong { display: block; font-size: 15px; }
+.decor-item small { display: block; margin-top: 2px; font-size: 13px; }
+.decor-item.is-open { border-style: solid; border-color: var(--accent-soft); background: var(--accent-soft); color: var(--text); }
+.decor-item.is-open small { color: var(--done-text); font-weight: 700; }
+.kitchen-outfit { margin-top: 12px; }
+
 /* The landing page's short feature lines */
 .feature-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 16px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
 .feature-list li { display: grid; gap: 12px; align-content: start; padding: 22px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
@@ -1283,5 +1316,7 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
   .closet { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .feature-list { grid-template-columns: 1fr; }
   .feature-list li { padding: 20px 16px; }
+  .kitchen-toast { font-size: 13px; }
+  .decor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .story-card { min-height: 420px; }
 }

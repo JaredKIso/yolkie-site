@@ -1314,7 +1314,7 @@ if (demo) {
     });
     $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== name; });
     if (prefs.tab !== name) { prefs.tab = name; savePrefs(); }
-    if (name === 'me') renderMe();
+    if (name === 'me') showMeView(prefs.meView === 'kitchen' ? 'kitchen' : 'progress');
     if (name === 'house') renderHouse();
   }
   tabs.forEach((t, k) => {
@@ -2384,6 +2384,658 @@ if (demo) {
   });
   houseBox.addEventListener('change', (e) => { if (e.target.matches('[data-house-name]')) renderHouse(); });
 
+  /* Yolkie's Kitchen: an isometric kitchen in the Me tab. You steer Yolkie; the other house
+     members cook, wash up, raid the fridge, eat, chat and water the plant on their own.
+     Decor unlocks as you cook. Ported from the Yolkies-Kitchen.html prototype. */
+  const kitchen = (() => {
+    const kBox = $('.js-kitchen');
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (id) => document.getElementById(`k-${id}`);
+    const svg = el('scene');
+    const RM = reduceMotion;
+    const DECOR = [
+      { id: 'plant', name: 'Plant', at: 1 }, { id: 'rug', name: 'Cozy rug', at: 3 }, { id: 'herbs', name: 'Herb pots', at: 5 },
+      { id: 'magnets', name: 'Fridge magnets', at: 7 }, { id: 'lights', name: 'String lights', at: 10 }, { id: 'poster', name: 'Yolkie poster', at: 13 },
+      { id: 'clock', name: 'Wall clock', at: 16 }, { id: 'lamp', name: 'Pendant lamp', at: 20 },
+    ];
+    const TYPES = ['yolk', 'boiled', 'scramble'];
+    const opts = Object.assign({ night: false, auto: true, seen: -1 }, prefs.kitchen);
+    const saveOpts = () => { prefs.kitchen = opts; savePrefs(); };
+    let size = 1;       // characters in the kitchen: Yolkie, then Boyd, then Scramble
+    let meals = 0;      // meals cooked, or the slider's value while the sample week is loaded
+    let preview = null;
+    let outfit = {};
+    const has = (id) => meals >= DECOR.find((d) => d.id === id).at;
+    const kName = (a) => rawName(a + 1); // kitchen character a is house member a + 1
+
+    /* Geometry: tile (u, v) at height h, projected onto the SVG */
+    const TW = 48, TH = 24, WALL = 200, ox = 400, oy = 236;
+    let N = 6;
+    const P = (u, v, h = 0) => [ox + (u - v) * TW, oy + (u + v) * TH - h];
+    const pts = (a) => a.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+    const poly = (a, f, x = '') => `<polygon points="${pts(a)}" fill="${f}" ${x}/>`;
+    function box(u, v, w, d, h, c, z = 0) {
+      const A = P(u, v, z), B = P(u + w, v, z), C = P(u + w, v + d, z), D = P(u, v + d, z);
+      const At = P(u, v, z + h), Bt = P(u + w, v, z + h), Ct = P(u + w, v + d, z + h), Dt = P(u, v + d, z + h);
+      return poly([B, C, Ct, Bt], c[2]) + poly([D, C, Ct, Dt], c[1]) + poly([At, Bt, Ct, Dt], c[0]);
+    }
+    const onRight = (u, z) => { const p = P(u, 0, z); return `matrix(0.894,0.447,0,1,${p[0]},${p[1]})`; };
+    const onLeft = (v, z) => { const p = P(0, v, z); return `matrix(-0.894,0.447,0,1,${p[0]},${p[1]})`; };
+
+    /* Characters, in the mascots' own coordinates; Yolkie wears the closet outfit */
+    function bodyOf(id, type) {
+      if (type === 'boiled') return { base: '', body: `<path d="M0,-188 C52,-188 80,-112 80,-62 C80,-14 44,8 0,8 C-44,8 -80,-14 -80,-62 C-80,-112 -52,-188 0,-188Z" fill="url(#wg_${id})"/><ellipse cx="-28" cy="-138" rx="16" ry="26" fill="#fff" opacity=".9" transform="rotate(20 -28 -138)"/>`, arm: '#CFC6E2' };
+      if (type === 'scramble') {
+        const C = [[-50, -66, 40], [0, -104, 50], [50, -70, 42], [-22, -36, 40], [28, -34, 40], [-64, -26, 28], [64, -26, 28], [-30, -108, 34], [34, -112, 32]];
+        return { base: '', body: C.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#FFDD6E"/>`).join('') + C.map(([x, y, r]) => `<circle cx="${x + r * 0.3}" cy="${y + r * 0.35}" r="${r * 0.5}" fill="#F7C94B" opacity=".55"/>`).join('') + '<circle cx="-52" cy="-128" r="5" fill="#3E9B5C"/><circle cx="40" cy="-140" r="4" fill="#3E9B5C"/><circle cx="66" cy="-60" r="4.5" fill="#3E9B5C"/><ellipse cx="-24" cy="-136" rx="16" ry="9" fill="#fff" opacity=".55"/>', arm: '#EDB22A' };
+      }
+      return { base: '<path d="M-104,-6 C-112,-30 -74,-38 -42,-32 C-22,-48 30,-46 52,-32 C84,-40 114,-24 100,-6 C92,12 50,14 0,12 C-52,14 -96,12 -104,-6Z" fill="#fff"/>', body: `<circle cx="0" cy="-84" r="70" fill="url(#yg_${id})"/><ellipse cx="-26" cy="-120" rx="22" ry="12" fill="#fff" opacity=".6" transform="rotate(-25 -26 -120)"/>`, arm: '#EE9D1C' };
+    }
+    function charSVG(id, type, acc) {
+      const B = bodyOf(id, type);
+      return `<defs><radialGradient id="yg_${id}" cx="35%" cy="28%" r="78%"><stop offset="0" stop-color="#FFE68A"/><stop offset=".55" stop-color="#FFC531"/><stop offset="1" stop-color="#F09A12"/></radialGradient><radialGradient id="wg_${id}" cx="35%" cy="25%" r="85%"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".6" stop-color="#F6F3FB"/><stop offset="1" stop-color="#DCD5EA"/></radialGradient></defs>
+        <ellipse cx="0" cy="8" rx="80" ry="12" fill="rgba(30,20,60,.18)"/>
+        <g id="${id}_all">${B.base}
+        <g id="${id}_aL"><path d="M-60,-72 Q-80,-66 -86,-50" stroke="${B.arm}" stroke-width="11" fill="none" stroke-linecap="round"/></g>
+        <g id="${id}_aR"><path d="M60,-72 Q80,-66 86,-50" stroke="${B.arm}" stroke-width="11" fill="none" stroke-linecap="round"/></g>
+        ${B.body}
+        <ellipse cx="-44" cy="-66" rx="11" ry="6" fill="#FF7D6B" opacity=".5"/><ellipse cx="44" cy="-66" rx="11" ry="6" fill="#FF7D6B" opacity=".5"/>
+        <g id="${id}_eO"><ellipse cx="-24" cy="-90" rx="8" ry="11" fill="${INK}"/><ellipse cx="24" cy="-90" rx="8" ry="11" fill="${INK}"/><circle cx="-21" cy="-94" r="3" fill="#fff"/><circle cx="27" cy="-94" r="3" fill="#fff"/></g>
+        <g id="${id}_eH" stroke="${INK}" stroke-width="5.5" fill="none" stroke-linecap="round" style="display:none"><path d="M-35,-86 Q-24,-100 -13,-86"/><path d="M13,-86 Q24,-100 35,-86"/></g>
+        <path id="${id}_mS" d="M-12,-64 Q0,-52 12,-64" stroke="${INK}" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <path id="${id}_mB" d="M-19,-67 Q0,-36 19,-67 Z" fill="#7A2E2E" style="display:none"/>
+        <ellipse id="${id}_mO" cx="0" cy="-60" rx="8" ry="10" fill="#7A2E2E" style="display:none"/>
+        ${acc}</g>`;
+    }
+
+    /* World */
+    let objects = [], seats = [], spots = {}, agents = [], tablePos = null, fridgeDoor = null, lightsGlow = '';
+    const blocked = new Set();
+    const reserved = {};
+    const tileKey = (i, j) => `${i},${j}`;
+    function footprint(u, v, w, d) {
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) { const cu = i + 0.5, cv = j + 0.5; if (cu > u && cu < u + w && cv > v && cv < v + d) blocked.add(tileKey(i, j)); }
+    }
+    const addObj = (key, html, id) => objects.push({ key, html, el: null, id: id || null });
+
+    function build() {
+      N = size > 1 ? 8 : 6;
+      svg.setAttribute('viewBox', `${ox - N * TW - 20} 18 ${N * TW * 2 + 40} ${oy + N * TH * 2}`);
+      objects = []; blocked.clear(); seats = []; spots = {};
+      Object.keys(reserved).forEach((k) => delete reserved[k]);
+      // Walls, tiles, window, shelf
+      let w = poly([P(0, 0), P(0, N), P(0, N, WALL), P(0, 0, WALL)], '#EEE8FA') + poly([P(0, 0), P(N, 0), P(N, 0, WALL), P(0, 0, WALL)], '#E2D9F5')
+        + poly([P(0, 0), P(0, N), P(0, N, 12), P(0, 0, 12)], '#D9CFF0') + poly([P(0, 0), P(N, 0), P(N, 0, 12), P(0, 0, 12)], '#CBBFE8');
+      const cEnd = N > 6 ? 6 : 5;
+      for (let i = 1; i < cEnd; i++) for (let r = 0; r < 3; r++) { const z = 56 + r * 12; w += poly([P(i, 0, z), P(i + 1, 0, z), P(i + 1, 0, z + 12), P(i, 0, z + 12)], (i + r) % 2 ? '#F7F3FF' : '#EFE8FF', 'stroke="#E2D9F5" stroke-width=".8"'); }
+      w += poly([P(2, 0, 96), P(4.4, 0, 96), P(4.4, 0, 178), P(2, 0, 178)], '#fff') + `<polygon id="k-sky" points="${pts([P(2.12, 0, 104), P(4.28, 0, 104), P(4.28, 0, 170), P(2.12, 0, 170)])}" fill="url(#k-skyDay)"/>`;
+      w += `<g transform="${onRight(2.12, 104)}"><circle id="k-sun" cx="78" cy="-30" r="12" fill="#FFE27A"/><circle id="k-moonA" cx="78" cy="-30" r="11" fill="#FFF3C4" opacity="0"/><circle id="k-moonB" cx="84" cy="-35" r="10" fill="#2A2F66" opacity="0"/><g id="k-stars" opacity="0" fill="#fff"><circle cx="20" cy="-50" r="1.6"/><circle cx="44" cy="-20" r="1.2"/><circle cx="104" cy="-52" r="1.4"/><circle cx="96" cy="-12" r="1"/></g><path id="k-cloud" d="M14 -22 a8 8 0 0 1 14 -4 a7 7 0 0 1 12 4 z" fill="#fff" opacity=".9"/></g>`;
+      const m1 = P(3.2, 0, 104), m2 = P(3.2, 0, 170);
+      w += `<line x1="${m1[0]}" y1="${m1[1]}" x2="${m2[0]}" y2="${m2[1]}" stroke="#fff" stroke-width="4"/>` + poly([P(2, 0, 96), P(4.4, 0, 96), P(4.4, 0, 90), P(2, 0, 90)], '#F2ECFF');
+      w += box(0, 1.6, 0.28, 1.7, 6, ['#E9C79A', '#D6B07F', '#C79E6C'], 118);
+      [['#FF8A7A', 1.75, 24], ['#FFC83D', 2.15, 30], ['#9FE0BC', 2.55, 20], ['#B9A8FF', 2.9, 26]].forEach(([c, v, h]) => { w += box(0.04, v, 0.18, 0.25, h, [c, c, c], 124) + box(0.04, v, 0.18, 0.25, 4, ['#fff', '#eee', '#ddd'], 124 + h); });
+      if (has('poster')) w += `<g transform="${onLeft(N - 2.25, 58)} scale(-1,1) translate(-58,0)"><rect x="0" y="-92" width="58" height="80" rx="4" fill="#6B4DE6"/><circle cx="29" cy="-58" r="17" fill="#FFC83D"/><circle cx="23" cy="-61" r="2.6" fill="${INK}"/><circle cx="35" cy="-61" r="2.6" fill="${INK}"/><path d="M23 -52 Q29 -46 35 -52" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/><text x="29" y="-22" text-anchor="middle" font-family="Bricolage Grotesque, DM Sans, sans-serif" font-weight="800" font-size="11" fill="#fff">YOLKIE</text></g>`;
+      if (has('clock')) w += `<g transform="${onLeft(N - 0.85, 150)}"><circle r="17" fill="#fff" stroke="#6B4DE6" stroke-width="3"/><line id="k-hh" x2="0" y2="-9" stroke="#1E1A2E" stroke-width="2.6" stroke-linecap="round"/><line id="k-mh" x2="0" y2="-13" stroke="#FF8A7A" stroke-width="2" stroke-linecap="round"/></g>`;
+      el('walls').innerHTML = w;
+      el('nightTint').setAttribute('points', pts([P(0, N, WALL), P(0, 0, WALL), P(N, 0, WALL), P(N, 0), P(N, N), P(0, N)]));
+      let f = '';
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) f += poly([P(i, j), P(i + 1, j), P(i + 1, j + 1), P(i, j + 1)], (i + j) % 2 ? '#E7E1F3' : '#F1ECF9', 'stroke="#DDD5EE" stroke-width=".6"');
+      el('floor').innerHTML = f;
+
+      // Fridge, with a door that opens while someone's at it
+      footprint(0, 0, 1, 1);
+      addObj(1, box(0, 0, 1, 1, 160, ['#FFFFFF', '#F1EEF8', '#E3DEEF']) + `<line x1="${P(0, 1, 100)[0]}" y1="${P(0, 1, 100)[1]}" x2="${P(1, 1, 100)[0]}" y2="${P(1, 1, 100)[1]}" stroke="#D5CFE4" stroke-width="2"/>`
+        + [112, 60].map((z) => `<line x1="${P(0.82, 1, z)[0]}" y1="${P(0.82, 1, z)[1]}" x2="${P(0.82, 1, z + 28)[0]}" y2="${P(0.82, 1, z + 28)[1]}" stroke="#B8B0CC" stroke-width="4" stroke-linecap="round"/>`).join('')
+        + (has('magnets') ? (() => { const a = P(0.25, 1, 118), b = P(0.55, 1, 132), c = P(0.4, 1, 74); return `<circle cx="${a[0]}" cy="${a[1]}" r="6" fill="#FF8A7A"/><rect x="${b[0] - 6}" y="${b[1] - 6}" width="12" height="12" fill="#1D5FC4" transform="rotate(-27 ${b[0]} ${b[1]})"/><path d="M${c[0]} ${c[1] - 8} L${c[0] + 7} ${c[1] + 4} L${c[0] - 7} ${c[1] + 4} Z" fill="#2E9E6A"/>`; })() : ''));
+      addObj(1.9, poly([P(0.04, 1, 12), P(0.96, 1, 12), P(0.96, 1, 98), P(0.04, 1, 98)], '#FFF3C9') + poly([P(1, 1, 10), P(1, 1.85, 10), P(1, 1.85, 98), P(1, 1, 98)], '#F7F5FC', 'stroke="#DCD6EA" stroke-width="1.5"'), 'fridgeOpen');
+      spots.fridge = { t: [0, 1], o: [0.5, 0.5], icon: '🥛' };
+      // Counter: stove, sink, coffee machine
+      const CAB = ['#FFF6E6', '#6B4DE6', '#5A3DD0'], TOP = ['#E9C79A', '#D9B585', '#C9A06E'];
+      for (let i = 1; i < cEnd; i++) {
+        footprint(i, 0, 1, 1);
+        let h = box(i, 0, 1, 1, 50, CAB) + box(i, 0, 1, 1.06, 6, TOP, 50);
+        const k = P(i + 0.5, 1, 30);
+        h += `<rect x="${k[0] - 8}" y="${k[1] - 2}" width="16" height="4" rx="2" fill="#FFC83D"/>`;
+        if (i === 2) {
+          h += poly([P(2.1, 0.1, 56), P(2.9, 0.1, 56), P(2.9, 0.9, 56), P(2.1, 0.9, 56)], '#2A2440');
+          [[2.32, 0.32], [2.68, 0.32], [2.32, 0.68], [2.68, 0.68]].forEach(([u, v]) => { const c = P(u, v, 56); h += `<ellipse cx="${c[0]}" cy="${c[1]}" rx="11" ry="5.5" fill="none" stroke="#5B547A" stroke-width="2"/>`; });
+          const pc = P(2.32, 0.68, 56);
+          h += `<ellipse cx="${pc[0]}" cy="${pc[1] - 3}" rx="13" ry="6.5" fill="#3B3550"/><ellipse cx="${pc[0]}" cy="${pc[1] - 4}" rx="10" ry="4.5" fill="#FFE08A"/><circle cx="${pc[0]}" cy="${pc[1] - 4.5}" r="3" fill="#F5A623"/><line x1="${pc[0] + 12}" y1="${pc[1] - 3}" x2="${pc[0] + 30}" y2="${pc[1] + 5}" stroke="#3B3550" stroke-width="4" stroke-linecap="round"/><ellipse id="k-burner" cx="${pc[0]}" cy="${pc[1] + 1}" rx="14" ry="6" fill="#FF7A3D" opacity="0"/>`;
+        }
+        if (i === 4) {
+          h += poly([P(4.18, 0.2, 56), P(4.82, 0.2, 56), P(4.82, 0.8, 56), P(4.18, 0.8, 56)], '#C7CCDA') + poly([P(4.25, 0.27, 56), P(4.75, 0.27, 56), P(4.75, 0.73, 56), P(4.25, 0.73, 56)], '#9EA5B8');
+          const f1 = P(4.5, 0.12, 56), f2 = P(4.5, 0.12, 80), f3 = P(4.5, 0.38, 80);
+          h += `<path d="M${f1[0]} ${f1[1]} L${f2[0]} ${f2[1]} L${f3[0]} ${f3[1]}" stroke="#AEB4C6" stroke-width="4" fill="none" stroke-linecap="round"/><line id="k-water" x1="${f3[0]}" y1="${f3[1]}" x2="${f3[0]}" y2="${f3[1] + 20}" stroke="#8FCBFF" stroke-width="3" opacity="0"/>`;
+        }
+        if (i === 5) { const c = P(5.5, 0.45, 56); h += box(5.3, 0.25, 0.4, 0.4, 30, ['#3B3550', '#2A2440', '#221D36'], 56) + `<rect x="${c[0] - 6}" y="${c[1] - 8}" width="12" height="10" rx="2" fill="#fff"/>`; }
+        addObj(i + 1, h);
+      }
+      spots.stove = { t: [2, 1], o: [2.5, 0.5], icon: '🍳' };
+      spots.sink = { t: [4, 1], o: [4.5, 0.5], icon: '🧽' };
+      if (cEnd > 5) spots.coffee = { t: [5, 1], o: [5.5, 0.5], icon: '☕' };
+      if (has('herbs')) {
+        let hb = '';
+        [[2.95, '#3E9B5C'], [3.35, '#4CAF6B'], [3.75, '#2E8A52']].forEach(([u, c]) => { hb += box(u, 0.2, 0.28, 0.28, 16, ['#F2B08E', '#E09A76', '#CC8763'], 56); const t = P(u + 0.14, 0.34, 80); hb += `<circle cx="${t[0] - 5}" cy="${t[1]}" r="7" fill="${c}"/><circle cx="${t[0] + 5}" cy="${t[1] - 2}" r="7" fill="${c}"/><circle cx="${t[0]}" cy="${t[1] - 8}" r="7" fill="${c}"/>`; });
+        addObj(3.6, hb);
+      }
+      // Table and stools (the seats)
+      const T = size > 1 ? { u: 3.1, v: 3.1, w: 2.8, d: 1.8, seats: [[3, 2], [5, 2], [3, 5], [5, 5]] } : { u: 2.9, v: 2.9, w: 1.2, d: 1.2, seats: [[2, 3], [3, 4]] };
+      tablePos = [T.u + T.w / 2, T.v + T.d / 2];
+      footprint(T.u, T.v, T.w, T.d);
+      const TBL = ['#F7F3FF', '#E3DAF7', '#D2C6F0'], LEG = ['#BFB2E6', '#AFA0DE', '#9C8CD3'];
+      let th = '';
+      const legs = size > 1 ? [[T.u + 0.25, T.v + 0.25], [T.u + T.w - 0.4, T.v + 0.25], [T.u + 0.25, T.v + T.d - 0.4], [T.u + T.w - 0.4, T.v + T.d - 0.4]] : [[T.u + 0.45, T.v + 0.45]];
+      legs.forEach(([u, v]) => { th += box(u, v, size > 1 ? 0.15 : 0.3, size > 1 ? 0.15 : 0.3, 34, LEG); });
+      th += box(T.u, T.v, T.w, T.d, 8, TBL, 34);
+      const fc = P(tablePos[0], tablePos[1], 42);
+      th += `<ellipse cx="${fc[0]}" cy="${fc[1]}" rx="18" ry="9" fill="#fff" stroke="#E3DAF7"/><circle cx="${fc[0] - 6}" cy="${fc[1] - 3}" r="6" fill="#FF8A7A"/><circle cx="${fc[0] + 5}" cy="${fc[1] - 4}" r="6" fill="#FFC83D"/><circle cx="${fc[0]}" cy="${fc[1] + 1}" r="5.5" fill="#9FE0BC"/>`;
+      addObj(tablePos[0] + tablePos[1], th);
+      const STL = ['#FFC83D', '#F2B520', '#E0A511'], SL = ['#9C8CD3', '#8A79C8', '#7766BD'];
+      T.seats.forEach(([i, j]) => { seats.push([i, j]); addObj(i + j + 0.9, box(i + 0.44, j + 0.44, 0.12, 0.12, 22, SL) + box(i + 0.22, j + 0.22, 0.56, 0.56, 6, STL, 22)); });
+      if (has('plant')) {
+        footprint(N - 0.8, 1.2, 0.5, 0.5);
+        const t = P(N - 0.55, 1.45, 30);
+        addObj(N - 0.55 + 1.45, box(N - 0.8, 1.2, 0.5, 0.5, 30, ['#F2B08E', '#E09A76', '#CC8763']) + `<g transform="translate(${t[0]},${t[1]})"><ellipse cx="-14" cy="-22" rx="7" ry="20" fill="#3E9B5C" transform="rotate(-30 -14 -22)"/><ellipse cx="14" cy="-24" rx="7" ry="20" fill="#2E8A52" transform="rotate(28 14 -24)"/><ellipse cx="0" cy="-34" rx="7" ry="24" fill="#4CAF6B"/><ellipse cx="-6" cy="-14" rx="6" ry="14" fill="#2E8A52" transform="rotate(-60 -6 -14)"/></g>`);
+        spots.plant = { t: [N - 1, 2], o: [N - 0.55, 1.45], icon: '💧' };
+      }
+      el('rug').innerHTML = has('rug') ? (() => {
+        const e = 0.65;
+        const a = [P(T.u - e, T.v - e), P(T.u + T.w + e, T.v - e), P(T.u + T.w + e, T.v + T.d + e), P(T.u - e, T.v + T.d + e)];
+        const b = [P(T.u - e + 0.25, T.v - e + 0.25), P(T.u + T.w + e - 0.25, T.v - e + 0.25), P(T.u + T.w + e - 0.25, T.v + T.d + e - 0.25), P(T.u - e + 0.25, T.v + T.d + e - 0.25)];
+        return poly(a, '#FF8A7A') + poly(b, '#FFE3D8');
+      })() : '';
+      // String lights and the pendant lamp
+      let ov = '';
+      lightsGlow = '';
+      if (has('lights')) {
+        const cols = ['#FFC83D', '#FF8A7A', '#9FE0BC', '#B9A8FF'], bulbs = [];
+        const run = (fn) => {
+          let d = '';
+          const K = N * 4;
+          for (let k = 0; k <= K; k++) { const t = k / K, seg = ((t * N) / 1.5) % 1, sag = Math.sin(Math.PI * seg) * 12, p = fn(t * N, WALL - 14 - sag); d += (k ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); if (k % 2) bulbs.push(p); }
+          ov += `<path d="${d}" stroke="#7A6E99" stroke-width="1.4" fill="none"/>`;
+        };
+        run((x, z) => P(0, x, z));
+        run((x, z) => P(x, 0, z));
+        bulbs.forEach((p, i) => { ov += `<circle cx="${p[0]}" cy="${p[1] + 4}" r="4" fill="${cols[i % 4]}"/>`; });
+        lightsGlow = bulbs.map((p) => `<circle cx="${p[0]}" cy="${p[1] + 4}" r="16" fill="url(#k-glow)"/>`).join('');
+      }
+      if (has('lamp')) { const c = P(tablePos[0], tablePos[1], 150); ov += `<line x1="${c[0]}" y1="${c[1] - 170}" x2="${c[0]}" y2="${c[1] - 26}" stroke="#7A6E99" stroke-width="2"/><path d="M${c[0] - 22} ${c[1]} L${c[0] - 10} ${c[1] - 26} L${c[0] + 10} ${c[1] - 26} L${c[0] + 22} ${c[1]} Z" fill="#FFC83D" stroke="#E0A511" stroke-width="1.5"/><ellipse cx="${c[0]}" cy="${c[1]}" rx="22" ry="5" fill="#FFF3C4"/>`; }
+      el('over').innerHTML = ov;
+      // The characters
+      const og = el('objs');
+      og.innerHTML = '';
+      el('labels').innerHTML = '';
+      fridgeDoor = null;
+      objects.forEach((o) => { const g = document.createElementNS(NS, 'g'); g.innerHTML = o.html; o.el = g; if (o.id === 'fridgeOpen') { g.style.display = 'none'; fridgeDoor = g; } og.appendChild(g); });
+      const start = size > 1 ? [[2, 2], [5, 6], [1, 4]] : [[2, 2]];
+      agents = [];
+      for (let a = 0; a < size; a++) {
+        const id = `kag${a}`;
+        const g = document.createElementNS(NS, 'g');
+        g.innerHTML = charSVG(id, TYPES[a], a === 0 ? accLayers(outfit) : '');
+        g.dataset.agent = a;
+        og.appendChild(g);
+        const lb = document.createElementNS(NS, 'g');
+        lb.dataset.agent = a;
+        el('labels').appendChild(lb);
+        const s = start[a];
+        agents.push({ i: a, id, type: TYPES[a], el: g, lb, u: s[0] + 0.5, v: s[1] + 0.5, path: [], step: null, face: 1, act: null, actT: 0, wait: 1 + a * 1.3, happy: 0, jump: 0, say: '', sayT: 0, seat: false, partner: null, manual: 0 });
+      }
+      applyNight();
+      drawLabels();
+    }
+
+    /* Paths: breadth-first over free tiles; seats only as a destination */
+    const isSeat = (i, j) => seats.some((s) => s[0] === i && s[1] === j);
+    const occupied = (i, j, except) => agents.some((a) => a !== except && ((Math.floor(a.u) === i && Math.floor(a.v) === j && !a.step) || (a.path.length && a.path[a.path.length - 1][0] === i && a.path[a.path.length - 1][1] === j)));
+    function bfs(s, t) {
+      const K = (a) => `${a[0]},${a[1]}`;
+      const q = [s], prev = { [K(s)]: null };
+      while (q.length) {
+        const c = q.shift();
+        if (c[0] === t[0] && c[1] === t[1]) break;
+        for (const [du, dv] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const n = [c[0] + du, c[1] + dv], k = K(n);
+          if (n[0] < 0 || n[1] < 0 || n[0] >= N || n[1] >= N || k in prev) continue;
+          const isT = n[0] === t[0] && n[1] === t[1];
+          if (blocked.has(k) || (isSeat(n[0], n[1]) && !isT)) continue;
+          prev[k] = c;
+          q.push(n);
+        }
+      }
+      if (!(K(t) in prev)) return null;
+      const p = [];
+      let c = t;
+      while (c) { p.unshift(c); c = prev[K(c)]; }
+      return p.slice(1);
+    }
+    function walkTo(a, t) {
+      const s = [Math.floor(a.u), Math.floor(a.v)];
+      if (s[0] === t[0] && s[1] === t[1]) { a.path = []; return true; }
+      const p = bfs(s, t);
+      if (!p) return false;
+      a.path = p;
+      a.seat = false;
+      return true;
+    }
+    function freeTiles() {
+      const f = [];
+      for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) if (!blocked.has(tileKey(i, j)) && !isSeat(i, j)) f.push([i, j]);
+      return f;
+    }
+
+    /* What everyone does on their own */
+    function pickActivity(a) {
+      const choices = [];
+      const add = (n, w) => choices.push([n, w]);
+      if (spots.stove && !reserved.stove) add('stove', 3);
+      if (spots.sink && !reserved.sink) add('sink', 2);
+      if (spots.fridge && !reserved.fridge) add('fridge', 2);
+      if (spots.coffee && !reserved.coffee) add('coffee', 1.5);
+      if (spots.plant && !reserved.plant) add('plant', 1.2);
+      if (seats.some((s) => !reserved[`seat${s}`])) add('eat', 3);
+      if (agents.length > 1 && agents.some((b) => b !== a && !b.act && !b.path.length && !b.partner)) add('chat', 2.5);
+      if (has('lights') && opts.night) add('dance', 1.5);
+      add('wander', 2);
+      let r = Math.random() * choices.reduce((s, o) => s + o[1], 0);
+      for (const [n, w] of choices) if ((r -= w) <= 0) return n;
+      return 'wander';
+    }
+    const release = (a) => Object.keys(reserved).forEach((k) => { if (reserved[k] === a) delete reserved[k]; });
+    function startPlan(a) {
+      release(a);
+      const kind = pickActivity(a);
+      a.plan = null;
+      if (['stove', 'sink', 'fridge', 'coffee', 'plant'].includes(kind)) {
+        const sp = spots[kind];
+        if (occupied(sp.t[0], sp.t[1], a)) return;
+        reserved[kind] = a;
+        if (walkTo(a, sp.t)) a.plan = { kind, obj: sp.o }; else release(a);
+        return;
+      }
+      if (kind === 'eat') {
+        const free = seats.filter((s) => !reserved[`seat${s}`] && !occupied(s[0], s[1], a));
+        if (!free.length) return;
+        const s = free[Math.floor(Math.random() * free.length)];
+        reserved[`seat${s}`] = a;
+        if (walkTo(a, s)) a.plan = { kind: 'eat', obj: tablePos, seat: true }; else release(a);
+        return;
+      }
+      if (kind === 'chat') {
+        const others = agents.filter((b) => b !== a && !b.act && !b.path.length && !b.partner && b.manual <= 0);
+        if (!others.length) return;
+        const b = others[Math.floor(Math.random() * others.length)];
+        const bt = [Math.floor(b.u), Math.floor(b.v)];
+        const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([x, y]) => [bt[0] + x, bt[1] + y]).filter(([i, j]) => i >= 0 && j >= 0 && i < N && j < N && !blocked.has(tileKey(i, j)) && !isSeat(i, j) && !occupied(i, j, a));
+        if (!nb.length) return;
+        if (walkTo(a, nb[0])) { a.plan = { kind: 'chat', partner: b }; b.partner = a; b.wait = 99; }
+        return;
+      }
+      if (kind === 'dance') {
+        const f = freeTiles().filter(([i, j]) => Math.abs(i + 0.5 - tablePos[0]) < 3 && Math.abs(j + 0.5 - tablePos[1]) < 3 && !occupied(i, j, a));
+        if (f.length && walkTo(a, f[Math.floor(Math.random() * f.length)])) a.plan = { kind: 'dance' };
+        return;
+      }
+      const f = freeTiles().filter(([i, j]) => !occupied(i, j, a));
+      if (f.length) walkTo(a, f[Math.floor(Math.random() * f.length)]);
+      a.plan = { kind: 'wander' };
+    }
+    const LINES = { chat: ['haha', '…', 'no way!', '♥', 'same', 'lol'], tap: ['Hi!', 'Hungry?', 'Let’s cook!', 'Egg-cellent.'] };
+    function beginAct(a) {
+      const p = a.plan;
+      a.plan = null;
+      if (!p) return;
+      if (p.kind === 'wander') { a.wait = 1.5 + Math.random() * 3; return; }
+      a.act = p.kind;
+      a.actT = 0;
+      a.actDur = p.kind === 'chat' ? 5 : p.kind === 'eat' ? 6 : 4.5 + Math.random() * 2;
+      if (p.obj) { const ax = P(a.u, a.v)[0], bx = P(p.obj[0], p.obj[1])[0]; if (Math.abs(bx - ax) > 2) a.face = bx > ax ? 1 : -1; }
+      a.seat = !!p.seat;
+      if (p.kind === 'chat') {
+        const b = p.partner;
+        a.partner = b; b.partner = a; b.act = 'chat'; b.actT = 0; b.actDur = a.actDur; b.path = [];
+        const ax = P(a.u, a.v)[0], bx = P(b.u, b.v)[0];
+        a.face = bx > ax ? 1 : -1;
+        b.face = -a.face;
+        a.say = LINES.chat[0];
+        a.sayT = 1.2;
+      }
+      if (p.kind === 'stove') { a.say = 'sizzle'; a.sayT = 1.4; }
+    }
+    function endAct(a) {
+      if (a.act === 'chat' && a.partner) { const b = a.partner; b.act = null; b.partner = null; b.wait = 1 + Math.random() * 2; a.partner = null; }
+      a.act = null;
+      a.wait = 1.5 + Math.random() * 3;
+      release(a);
+      if (a.seat) {
+        a.seat = false;
+        const f = freeTiles().filter(([i, j]) => !occupied(i, j, a)).sort((x, y) => Math.hypot(x[0] - a.u, x[1] - a.v) - Math.hypot(y[0] - a.u, y[1] - a.v));
+        if (f.length) walkTo(a, f[0]);
+      }
+    }
+
+    /* Steam, bubbles, hearts and notes */
+    let parts = [];
+    function emit(kind, x, y) {
+      if (RM && Math.random() < 0.7) return;
+      if (kind === 'steam') parts.push({ k: 'c', x: x + (Math.random() - 0.5) * 10, y, vx: (Math.random() - 0.5) * 6, vy: -22, life: 1.6, t: 0, r: 4, c: '#FFFFFF', grow: 6, op: 0.75 });
+      if (kind === 'bubble') parts.push({ k: 'o', x: x + (Math.random() - 0.5) * 16, y, vx: (Math.random() - 0.5) * 8, vy: -18, life: 1.4, t: 0, r: 2.5 + Math.random() * 3, c: '#8FCBFF', grow: 1, op: 0.9 });
+      if (kind === 'cold') parts.push({ k: 'c', x: x + (Math.random() - 0.5) * 30, y: y + (Math.random() - 0.5) * 40, vx: 0, vy: -6, life: 1, t: 0, r: 2, c: '#BFE6FF', grow: 0, op: 0.9 });
+      if (kind === 'heart') parts.push({ k: 't', s: '♥', x: x + (Math.random() - 0.5) * 12, y, vx: (Math.random() - 0.5) * 10, vy: -24, life: 1.4, t: 0, c: '#FF7D6B', fs: 12, op: 1 });
+      if (kind === 'note') parts.push({ k: 't', s: Math.random() < 0.5 ? '♪' : '♫', x: x + (Math.random() - 0.5) * 20, y, vx: (Math.random() - 0.5) * 14, vy: -26, life: 1.5, t: 0, c: '#6B4DE6', fs: 14, op: 1 });
+      if (kind === 'drop') parts.push({ k: 'd', x: x + (Math.random() - 0.5) * 6, y, vx: 4, vy: 30, life: 0.7, t: 0, c: '#5BB3F0', op: 1 });
+      if (kind === 'crumb') parts.push({ k: 'c', x: x + (Math.random() - 0.5) * 8, y, vx: (Math.random() - 0.5) * 20, vy: -10, life: 0.6, t: 0, r: 1.6, c: '#E9A44C', grow: 0, op: 1, g: 60 });
+      if (kind === 'spark') for (let i = 0; i < 14; i++) { const an = (i / 14) * Math.PI * 2; parts.push({ k: 'c', x, y, vx: Math.cos(an) * 110, vy: Math.sin(an) * 70 - 30, life: 0.9, t: 0, r: 4, c: ['#FFC83D', '#6B4DE6', '#2E9E6A', '#FF8A7A'][i % 4], grow: 0, op: 1 }); }
+    }
+    function drawParts(dt) {
+      let s = '';
+      parts = parts.filter((p) => (p.t += dt) < p.life);
+      parts.forEach((p) => {
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        if (p.g) p.vy += p.g * dt;
+        const k = p.t / p.life, o = (p.op * (1 - k)).toFixed(2);
+        if (p.k === 'c') s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(p.r + p.grow * k).toFixed(1)}" fill="${p.c}" opacity="${o}"/>`;
+        else if (p.k === 'o') s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}" fill="none" stroke="${p.c}" stroke-width="1.4" opacity="${o}"/>`;
+        else if (p.k === 'd') s += `<ellipse cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" rx="1.8" ry="3" fill="${p.c}" opacity="${o}"/>`;
+        else s += `<text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" font-size="${p.fs}" font-weight="700" fill="${p.c}" opacity="${o}" text-anchor="middle">${p.s}</text>`;
+      });
+      el('fx').innerHTML = s;
+    }
+
+    /* Name tags: the house members' names. Yolkie's tag is plum, because you steer Yolkie. */
+    function drawLabels() {
+      agents.forEach((a) => {
+        const name = kName(a.i);
+        const mine = a.i === 0;
+        const w = Math.max(44, name.length * 7.2 + 24);
+        a.lb.innerHTML = `<g><rect x="${-w / 2}" y="-11" width="${w}" height="22" rx="11" fill="${mine ? '#6B4DE6' : '#FFFFFF'}" stroke="${mine ? '#6B4DE6' : '#E3DEEF'}" stroke-width="1.5"/><text y="4.5" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="12" font-weight="700" fill="${mine ? '#fff' : '#1E1A2E'}">${esc(name)}</text></g>
+          <g class="ic" style="display:none"><circle cx="${w / 2 + 14}" cy="0" r="13" fill="#fff" stroke="#E3DEEF" stroke-width="1.5"/><text class="ict" x="${w / 2 + 14}" y="5" text-anchor="middle" font-size="14"></text></g>
+          <g class="say" style="display:none"><rect class="sr" x="-30" y="-46" width="60" height="24" rx="12" fill="#fff" stroke="#E3DEEF" stroke-width="1.5"/><path d="M-5 -23 L0 -15 L5 -23 Z" fill="#fff"/><text class="st" y="-29.5" text-anchor="middle" font-family="DM Sans, system-ui, sans-serif" font-size="12" font-weight="700" fill="#1E1A2E"></text></g>`;
+      });
+    }
+
+    /* Controls under the scene */
+    let toastT;
+    function toast(m) {
+      const t = el('toast');
+      t.textContent = m;
+      t.classList.add('is-on');
+      clearTimeout(toastT);
+      toastT = setTimeout(() => t.classList.remove('is-on'), 2200);
+    }
+    function applyNight() {
+      const night = opts.night;
+      $('.js-k-night').setAttribute('aria-pressed', String(night));
+      el('nightTint').setAttribute('opacity', night ? 0.36 : 0);
+      el('sky').setAttribute('fill', night ? 'url(#k-skyNight)' : 'url(#k-skyDay)');
+      ['sun', 'cloud'].forEach((i) => el(i).setAttribute('opacity', night ? 0 : i === 'cloud' ? 0.9 : 1));
+      ['moonA', 'moonB', 'stars'].forEach((i) => el(i).setAttribute('opacity', night ? 1 : 0));
+      let gl = '';
+      if (night) {
+        gl += lightsGlow;
+        if (has('lamp')) { const c = P(tablePos[0], tablePos[1], 150); gl += `<ellipse cx="${c[0]}" cy="${c[1] + 70}" rx="120" ry="84" fill="url(#k-cone)"/>`; }
+        const w = P(3.2, 0, 135);
+        gl += `<ellipse cx="${w[0]}" cy="${w[1]}" rx="70" ry="50" fill="url(#k-glow)" opacity=".25"/>`;
+      }
+      el('glows').innerHTML = gl;
+    }
+    function renderControls() {
+      const sizes = [[2, `${rawName(0)} & ${kName(0)}`], [3, `+ ${kName(1)}`], [4, `+ ${kName(1)} & ${kName(2)}`]];
+      $('.js-k-sizes').innerHTML = sizes.map(([n, label]) => `<button type="button" class="tag${prefs.houseSize === n ? ' is-on' : ''}" data-k-size="${n}" aria-pressed="${prefs.houseSize === n}">${esc(label)}</button>`).join('');
+      $$('[data-k-name]').forEach((inp) => {
+        const i = Number(inp.dataset.kName);
+        if (document.activeElement !== inp) inp.value = rawName(i);
+        inp.closest('label').hidden = i > size;
+      });
+      const sample = sampleOn();
+      $('.js-k-count').textContent = meals;
+      $('.js-k-count-label').textContent = sample ? 'Meals cooked (sample preview)' : 'Meals cooked';
+      $('.js-k-slider-row').hidden = !sample;
+      if (sample) $('.js-k-slider').value = Math.min(20, meals);
+      $('.js-k-hint').textContent = sample
+        ? 'Sample data is on, so you can slide to preview how the kitchen fills in.'
+        : 'The kitchen fills in as you cook. Every meal you finish in cook mode counts.';
+      $('.js-k-decor').innerHTML = DECOR.map((d) => {
+        const open = meals >= d.at;
+        return `<li class="decor-item${open ? ' is-open' : ''}"><strong>${d.name}</strong><small>${open ? 'Unlocked' : `Cook ${plural(d.at - meals, 'more meal')}`}</small></li>`;
+      }).join('');
+      $('.js-k-auto').setAttribute('aria-pressed', String(opts.auto));
+      $('.js-k-night').setAttribute('aria-pressed', String(opts.night));
+    }
+
+    // Who's in the kitchen, how many meals, and what Yolkie is wearing, all from the rest of the demo.
+    function sync() {
+      const real = statsFor(activity()).cooked;
+      if (!sampleOn()) preview = null;
+      meals = preview == null ? real : preview;
+      size = Math.min(3, Math.max(1, prefs.houseSize - 1));
+      outfit = worn();
+      return real;
+    }
+    function celebrate(nw) {
+      toast(`New for the kitchen: ${nw[nw.length - 1].name}!`);
+      agents.forEach((a) => { a.happy = 1.6; a.jump = RM ? 0 : 0.45; });
+      const c = P(agents[0].u, agents[0].v, 60);
+      emit('spark', c[0], c[1]);
+    }
+
+    /* Tap the floor to walk Yolkie; tap anyone to say hi */
+    function toSvg(e) { const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }
+    svg.addEventListener('pointerdown', (e) => {
+      const hit = e.target.closest && e.target.closest('[data-agent]');
+      if (hit) {
+        const a = agents[Number(hit.dataset.agent)];
+        if (a) { a.happy = 1.4; a.jump = RM ? 0 : 0.45; a.say = LINES.tap[Math.floor(Math.random() * 4)]; a.sayT = 1.6; }
+        return;
+      }
+      const p = toSvg(e), A = (p.x - ox) / TW, B = (p.y - oy) / TH, u = Math.floor((A + B) / 2), v = Math.floor((B - A) / 2);
+      if (u < 0 || v < 0 || u >= N || v >= N) return;
+      const me = agents[0];
+      if (blocked.has(tileKey(u, v))) { toast(`${kName(0)} can’t stand there`); return; }
+      if (me.act) endAct(me);
+      release(me);
+      me.plan = null;
+      if (isSeat(u, v)) { reserved[`seat${[u, v]}`] = me; if (walkTo(me, [u, v])) me.plan = { kind: 'eat', obj: tablePos, seat: true }; me.manual = 8; return; }
+      if (!walkTo(me, [u, v])) toast('No path there');
+      me.manual = 8;
+    });
+    kBox.addEventListener('click', (e) => {
+      const s = e.target.closest('[data-k-size]');
+      if (s) {
+        prefs.houseSize = Number(s.dataset.kSize);
+        savePrefs();
+        sync();
+        build();
+        renderControls();
+        $(`[data-k-size="${prefs.houseSize}"]`).focus();
+        toast(size > 1 ? 'The kitchen got bigger!' : `Just you and ${kName(0)}`);
+      }
+      if (e.target.closest('.js-k-night')) { opts.night = !opts.night; saveOpts(); applyNight(); }
+      if (e.target.closest('.js-k-auto')) { opts.auto = !opts.auto; saveOpts(); renderControls(); }
+      if (e.target.closest('.js-k-closet')) { showMeView('progress'); const c = document.getElementById('closet'); c.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); }
+    });
+    kBox.addEventListener('input', (e) => {
+      if (e.target.matches('[data-k-name]')) {
+        prefs.names[Number(e.target.dataset.kName)] = e.target.value;
+        savePrefs();
+        drawLabels();
+        renderControls();
+      }
+      if (e.target.matches('.js-k-slider')) {
+        const prev = meals;
+        preview = Number(e.target.value);
+        meals = preview;
+        const nw = DECOR.filter((d) => d.at > prev && d.at <= meals);
+        const keep = agents.map((a) => [a.u, a.v]);
+        build();
+        agents.forEach((a, i) => { const t = [Math.floor(keep[i][0]), Math.floor(keep[i][1])]; if (!blocked.has(tileKey(t[0], t[1])) && !isSeat(t[0], t[1])) { a.u = keep[i][0]; a.v = keep[i][1]; } });
+        renderControls();
+        if (nw.length) celebrate(nw);
+      }
+    });
+
+    /* Animation loop: runs only while the kitchen is on screen */
+    let running = false, last = 0, clock = 0;
+    const onScreen = () => !kBox.hidden && !kBox.closest('[role="tabpanel"]').hidden;
+    function frame(now) {
+      if (!onScreen()) { running = false; return; }
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      clock += dt;
+      let cooking = false, washing = false, fridgeOn = false;
+      agents.forEach((a) => {
+        if (a.manual > 0) a.manual -= dt;
+        if (!a.step && a.path.length) {
+          const n = a.path.shift();
+          a.step = { fu: a.u, fv: a.v, tu: n[0] + 0.5, tv: n[1] + 0.5, t: 0 };
+          const sx = P(n[0] + 0.5, n[1] + 0.5)[0] - P(a.u, a.v)[0];
+          if (Math.abs(sx) > 1) a.face = sx > 0 ? 1 : -1;
+        }
+        a.hop = 0;
+        a.sq = 0;
+        if (a.step) {
+          const s = a.step;
+          s.t += dt / (RM ? 0.2 : 0.3);
+          const p = Math.min(1, s.t);
+          a.u = s.fu + (s.tu - s.fu) * p;
+          a.v = s.fv + (s.tv - s.fv) * p;
+          a.hop = RM ? 0 : Math.sin(Math.PI * p) * 8;
+          a.sq = Math.sin(Math.PI * p);
+          if (p >= 1) { a.step = null; if (!a.path.length && a.plan) beginAct(a); }
+        }
+        if (a.act) {
+          a.actT += dt;
+          const c = P(a.u, a.v, 40);
+          if (a.act === 'stove') { cooking = true; if (Math.random() < dt * 7) { const pc = P(2.32, 0.68, 64); emit('steam', pc[0], pc[1]); } }
+          if (a.act === 'sink') { washing = true; if (Math.random() < dt * 8) { const sc = P(4.5, 0.5, 60); emit('bubble', sc[0], sc[1]); } }
+          if (a.act === 'fridge') { fridgeOn = true; if (Math.random() < dt * 6) { const fc = P(0.5, 1, 70); emit('cold', fc[0], fc[1]); } }
+          if (a.act === 'eat') { if (Math.random() < dt * 1.6) emit('heart', c[0], c[1] - 50); if (Math.random() < dt * 3) emit('crumb', c[0] + a.face * 14, c[1] - 10); }
+          if (a.act === 'dance' && Math.random() < dt * 2.5) emit('note', c[0], c[1] - 60);
+          if (a.act === 'plant' && Math.random() < dt * 10) emit('drop', c[0] + a.face * 26, c[1] - 6);
+          if (a.act === 'coffee' && Math.random() < dt * 4) { const cc = P(5.5, 0.45, 94); emit('steam', cc[0], cc[1]); }
+          if (a.act === 'chat' && a.partner && a.sayT <= 0 && a.i < a.partner.i) {
+            const talker = Math.random() < 0.5 ? a : a.partner;
+            talker.say = LINES.chat[Math.floor(Math.random() * LINES.chat.length)];
+            talker.sayT = 1.1;
+            (talker === a ? a.partner : a).sayT = 0;
+            a.sayT = a.sayT || 0.01;
+          }
+          if (a.actT >= a.actDur && !(a.act === 'chat' && a.partner && a.i > a.partner.i)) endAct(a);
+        } else if (!a.step && !a.path.length && !a.partner && opts.auto && a.manual <= 0) {
+          a.wait -= dt;
+          if (a.wait <= 0) { a.wait = 2; startPlan(a); }
+        }
+        if (a.jump > 0) a.jump -= dt;
+        if (a.happy > 0) a.happy -= dt;
+        if (a.sayT > 0) a.sayT -= dt;
+      });
+      if (fridgeDoor) fridgeDoor.style.display = fridgeOn ? '' : 'none';
+      const burner = el('burner');
+      if (burner) burner.setAttribute('opacity', cooking ? 0.55 + Math.sin(clock * 20) * 0.2 : 0);
+      const water = el('water');
+      if (water) water.setAttribute('opacity', washing ? 0.9 : 0);
+      const headWorn = !!outfit.head;
+      agents.forEach((a) => {
+        const id = a.id;
+        const part = (n) => document.getElementById(`${id}_${n}`);
+        const isHappy = a.happy > 0 || a.act === 'dance' || (a.act === 'eat' && Math.sin(clock * 2 + a.i) > 0.6);
+        let jy = 0;
+        if (a.jump > 0) { const p = 1 - a.jump / 0.45; jy = Math.sin(Math.PI * Math.max(0, Math.min(1, p))) * 24; }
+        const ph = (clock + a.i * 1.1) % 3.1, bl = ph < 0.12 ? Math.abs(Math.cos((ph / 0.12) * Math.PI)) : 1;
+        part('eO').style.display = isHappy ? 'none' : '';
+        part('eH').style.display = isHappy ? '' : 'none';
+        part('eO').setAttribute('transform', `translate(0,-90) scale(1,${bl}) translate(0,90)`);
+        const talking = a.sayT > 0 && a.act === 'chat';
+        const open = talking && Math.sin(clock * 18) > 0;
+        part('mS').style.display = !isHappy && !open ? '' : 'none';
+        part('mB').style.display = isHappy && !open ? '' : 'none';
+        part('mO').style.display = open ? '' : 'none';
+        let aL = 0, aR = 0, rot = 0, bob = 0;
+        const t = clock;
+        if (a.step) { aL = Math.sin(t * 18) * 18; aR = -aL; }
+        if (a.happy > 0) aL = -120 + Math.sin(t * 14) * 20;
+        switch (a.act) {
+          case 'stove': aR = -40 + Math.sin(t * 9) * 28; break;
+          case 'sink': aL = -30 + Math.sin(t * 12) * 22; aR = -30 - Math.sin(t * 12) * 22; break;
+          case 'fridge': aR = -105; break;
+          case 'eat': aR = -50 + Math.max(0, Math.sin(t * 4)) * -40; bob = Math.abs(Math.sin(t * 4)) * 2; break;
+          case 'chat': aL = Math.sin(t * 6 + a.i) * 25; aR = Math.sin(t * 5 + a.i) * -20; break;
+          case 'dance': rot = Math.sin(t * 6 + a.i) * 9; bob = Math.abs(Math.sin(t * 6 + a.i)) * 10; aL = -120 + Math.sin(t * 12) * 30; aR = -120 - Math.sin(t * 12) * 30; break;
+          case 'plant': aR = -70; break;
+          case 'coffee': aR = -60 + Math.sin(t * 2) * 10; break;
+          default: break;
+        }
+        if (RM) { rot = 0; bob = 0; }
+        part('aL').setAttribute('transform', `rotate(${aL} -60 -72)`);
+        part('aR').setAttribute('transform', `rotate(${aR} 60 -72)`);
+        const br = RM ? 0 : Math.sin(t * 2.4 + a.i) * 0.02;
+        part('all').setAttribute('transform', `scale(${1 + a.sq * 0.05},${1 - a.sq * 0.06 + br})`);
+        const seatZ = a.seat && !a.step ? 26 : 0;
+        const p = P(a.u, a.v, seatZ);
+        const s = size > 1 ? 0.38 : 0.36;
+        a.sx = p[0];
+        a.sy = p[1] - a.hop - jy - bob;
+        a.el.setAttribute('transform', `translate(${a.sx.toFixed(1)},${a.sy.toFixed(1)}) rotate(${rot}) scale(${s * a.face},${s})`);
+        a.key = a.u + a.v + (seatZ ? 1 : 0.02);
+        const topY = a.sy + (a.type === 'boiled' ? -200 : a.type === 'scramble' ? -170 : -160) * s - (a.i === 0 && headWorn ? 46 * s : 0) - 14;
+        a.lb.setAttribute('transform', `translate(${a.sx.toFixed(1)},${topY.toFixed(1)})`);
+        const ic = a.lb.querySelector('.ic');
+        const icon = a.act && spots[a.act] ? spots[a.act].icon : a.act === 'eat' ? '😋' : a.act === 'dance' ? '🎵' : null;
+        if (ic) { ic.style.display = icon ? '' : 'none'; if (icon) a.lb.querySelector('.ict').textContent = icon; }
+        const say = a.lb.querySelector('.say');
+        if (say) {
+          const on = a.sayT > 0 && a.say;
+          say.style.display = on ? '' : 'none';
+          if (on) {
+            const st = a.lb.querySelector('.st');
+            if (st.textContent !== a.say) { st.textContent = a.say; const w = Math.max(40, a.say.length * 7 + 20); const r = a.lb.querySelector('.sr'); r.setAttribute('x', -w / 2); r.setAttribute('width', w); }
+          }
+        }
+      });
+      // Back to front, so whoever is nearer covers whoever is behind
+      const og = el('objs');
+      objects.map((o) => ({ k: o.key, el: o.el })).concat(agents.map((a) => ({ k: a.key, el: a.el }))).sort((x, y) => x.k - y.k).forEach((x) => og.appendChild(x.el));
+      const mh = el('mh'), hh = el('hh');
+      if (mh) { const d = new Date(); mh.setAttribute('transform', `rotate(${d.getMinutes() * 6})`); hh.setAttribute('transform', `rotate(${(d.getHours() % 12) * 30 + d.getMinutes() / 2})`); }
+      drawParts(dt);
+      requestAnimationFrame(frame);
+    }
+
+    return {
+      // Called whenever the Kitchen view appears, or the data behind it changes while it's open.
+      show() {
+        const real = sync();
+        build();
+        renderControls();
+        if (!running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
+        // New decor since you last looked: celebrate it once (real meals only, not the sample).
+        if (!sampleOn()) {
+          const nw = DECOR.filter((d) => d.at > opts.seen && d.at <= real);
+          if (opts.seen >= 0 && nw.length) setTimeout(() => celebrate(nw), 400);
+          if (opts.seen !== real) { opts.seen = real; saveOpts(); }
+        }
+      },
+      isOpen: onScreen,
+    };
+  })();
+
+  // Me has two views: Progress and the Kitchen.
+  function showMeView(view, focus = false) {
+    prefs.meView = view;
+    savePrefs();
+    $$('[data-me-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.meView === view)));
+    meBox.hidden = view !== 'progress';
+    $('.js-kitchen').hidden = view !== 'kitchen';
+    if (view === 'kitchen') kitchen.show(); else renderMe();
+    if (focus) $(view === 'kitchen' ? '.js-kitchen .stage__title' : '.js-me .stage__title').focus({ preventScroll: true });
+  }
+  $$('[data-me-view]').forEach((b) => b.addEventListener('click', () => {
+    showMeView(b.dataset.meView);
+    yolk('happy', b.dataset.meView === 'kitchen' ? 'Welcome to the kitchen. Tap the floor and I’ll walk there.' : 'Your progress. It only goes up from here.');
+  }));
+
   /* Preferences sheet: diets, dislikes, allergies, nutrition, reminders, takeout, sample data */
   const prefsSheet = $('.js-prefs-sheet');
   const prefsBody = $('.js-prefs-body');
@@ -2731,6 +3383,7 @@ if (demo) {
   function dataChanged() {
     syncBanner();
     dress();
+    if (kitchen.isOpen()) kitchen.show();
     if (prefs.tab === 'me') renderMe();
     if (prefs.tab === 'house') renderHouse();
   }

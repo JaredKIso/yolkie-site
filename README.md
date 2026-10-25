@@ -34,6 +34,7 @@ A two-page static site for Yolkie, a cooking app for every meal that gets you fr
   - `yolkie-nutrition` (the hide-nutrition switch, shared with the home page) and `theme`.
   - "Clear all demo data" at the bottom of Preferences removes all of these.
 - **Ground rules the demo follows:** it rewards cooking and never punishes skipping (no streaks, no sad Yolkie; a missed week just starts fresh). Nutrition is information only, never a goal, and "Hide nutrition" removes every number. Takeout dodged is an estimate: meals × your usual takeout cost.
+- **Yolkie's Kitchen** (Me tab → Kitchen): ported from the `Yolkies-Kitchen.html` prototype, which stays in the folder but isn't published. You steer Yolkie (tap the floor); the other house members cook, wash up, use the fridge, eat at the table, chat, make coffee, water the plant and dance at night on their own. The people and name tags are the House tab's: house size 2 is the solo 6×6 kitchen, 3 and 4 add Boyd and Scramble in an 8×8 one. Decor unlocks at 1, 3, 5, 7, 10, 13, 16 and 20 meals cooked, from the real count; the preview slider only shows while the sample week is loaded. Yolkie wears the closet outfit. Night mode and "everyone does their own thing" are saved in `yolkie-prefs`. The animation only runs while the kitchen is on screen.
 - **Yolkie's closet:** the accessories are drawn in `CLOSET` in `main.js`, in the mascot's own viewBox, and laid over the unchanged mascot SVGs. They unlock at 1, 3, 5, 8, 12 and 20 meals.
 
 ## Run it locally
