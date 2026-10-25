@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Try the demo · Yolkie</title>
-  <meta name="description" content="Try the Yolkie demo: set your diet and allergies, say what you already have, get one meal for your energy and time, cook it step by step, and watch your progress and Yolkie's closet fill up. Runs entirely in your browser.">
+  <meta name="description" content="Try the Yolkie demo: say who's eating and what you already have, get one meal for your energy and time, cook it step by step, and collect recipe cards, fridge stickers and friends as you go. Runs entirely in your browser.">
   <meta property="og:title" content="Try the demo · Yolkie">
   <meta property="og:description" content="Breakfast, lunch, dinner or a snack: pick your energy and time, get one meal, and cook it step by step. Runs entirely in your browser.">
   <meta property="og:type" content="website">
@@ -75,6 +75,7 @@
           <button type="button" role="tab" id="tab-cook" data-tab="cook" aria-controls="panel-cook" aria-selected="true"><span class="icon" aria-hidden="true">skillet</span>Cook</button>
           <button type="button" role="tab" id="tab-me" data-tab="me" aria-controls="panel-me" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">person</span>Me</button>
           <button type="button" role="tab" id="tab-house" data-tab="house" aria-controls="panel-house" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">home</span>House</button>
+          <button type="button" role="tab" id="tab-collection" data-tab="collection" aria-controls="panel-collection" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">style</span>Collection</button>
         </div>
         <button type="button" class="icon-btn js-open-prefs" aria-label="Preferences"><span class="icon" aria-hidden="true">settings</span></button>
       </div>
@@ -104,6 +105,7 @@
           <p class="diet-temp js-diet-temp"></p>
           <div class="js-diet-ask"></div>
         </div>
+        <div class="js-remember"></div>
         <fieldset class="choice-group">
           <legend>Meal</legend>
           <div class="choices choices--4">
@@ -130,6 +132,7 @@
           </div>
         </fieldset>
 
+        <div class="pick-extras js-pick-extras"></div>
         <p class="choice-hint js-pick-hint">Pick all three and Yolkie suggests one meal.</p>
         <div class="js-meal-slot"></div>
       </div>
@@ -208,7 +211,9 @@
         </div>
         <dl class="done-stats js-done-stats"></dl>
         <p class="fine nutri done-note">Calories and protein are rough estimates per serving.</p>
+        <div class="panel card-drop js-card-drop" hidden></div>
         <div class="panel done-panel js-gains"></div>
+        <div class="panel js-rate"></div>
         <div class="panel js-who"></div>
         <div class="stage-actions">
           <button type="button" class="btn btn--secondary js-again">Pick another meal</button>
@@ -233,7 +238,7 @@
         <div class="tab-stack js-me"></div>
         <div class="tab-stack js-kitchen" hidden>
           <div class="tab-head"><h2 class="stage__title" tabindex="-1">Yolkie's Kitchen</h2>
-            <p class="stage__sub">Tap the floor to walk Yolkie around. Tap anyone to say hi. Everyone else lives their own life in here.</p></div>
+            <p class="stage__sub">Tap the floor to walk Yolkie around. Tap anyone to say hi. Everyone else lives their own life in here, and friends you’ve met drop by.</p></div>
           <div class="kitchen-stage">
             <svg id="k-scene" class="kitchen-scene" viewBox="92 18 616 526" role="img" aria-label="An isometric kitchen where Yolkie and the house cook, eat and hang out">
               <defs>
@@ -252,13 +257,14 @@
           </div>
           <section class="panel" aria-labelledby="k-house-title">
             <h3 id="k-house-title">Who's home</h3>
-            <p class="fine">The same people as the House tab. You steer Yolkie.</p>
-            <div class="tags js-k-sizes" role="group" aria-label="Household size"></div>
-            <div class="kitchen-names">
-              <label>Yolkie's name tag<input class="text-input" type="text" data-k-name="1" maxlength="16" autocomplete="off"></label>
-              <label>Boyd's name tag<input class="text-input" type="text" data-k-name="2" maxlength="16" autocomplete="off"></label>
-              <label>Scramble's name tag<input class="text-input" type="text" data-k-name="3" maxlength="16" autocomplete="off"></label>
-            </div>
+            <p class="fine">The same people as the House tab: just you is a small room, and with roommates it grows. You steer Yolkie.</p>
+            <div class="tags js-k-sizes" role="group" aria-label="Who's home"></div>
+            <div class="kitchen-names js-k-names"></div>
+          </section>
+          <section class="panel" aria-labelledby="k-stickers-title">
+            <h3 id="k-stickers-title">Fridge stickers</h3>
+            <p class="fine">Drag a sticker onto the fridge door, or tap it to stick it on. Drag them around on the fridge.</p>
+            <div class="js-k-tray"></div>
           </section>
           <section class="panel" aria-labelledby="k-meals-label">
             <div class="kitchen-count"><span class="js-k-count-label" id="k-meals-label">Meals cooked</span><strong class="js-k-count">0</strong></div>
@@ -273,10 +279,14 @@
               <button type="button" class="tag js-k-auto" aria-pressed="true"><span class="icon" aria-hidden="true">directions_walk</span>Everyone does their own thing</button>
             </div>
             <p class="fine kitchen-outfit">Yolkie wears whatever's picked in <button type="button" class="link-btn js-k-closet">Yolkie's closet</button>.</p>
+            <p class="fine js-k-friends"></p>
+            <button type="button" class="btn btn--secondary btn--small js-k-visit" hidden><span class="icon" aria-hidden="true">waving_hand</span>Invite a friend over</button>
           </section>
         </div>
       </div>
       <div role="tabpanel" id="panel-house" data-panel="house" aria-labelledby="tab-house" hidden><div class="tab-stack js-house"></div></div>
+      <div role="tabpanel" id="panel-collection" data-panel="collection" aria-labelledby="tab-collection" hidden><div class="tab-stack js-collection"></div></div>
+      <p class="demo-toast js-toast" role="status" aria-live="polite"></p>
 
       <!-- Sheets -->
       <dialog class="sheet js-prefs-sheet" aria-labelledby="prefs-title">
@@ -293,6 +303,10 @@
       </dialog>
       <dialog class="sheet sheet--phone js-checkin" aria-label="Preview of Yolkie's check-in notification">
         <div class="js-checkin-body"></div>
+      </dialog>
+      <dialog class="sheet js-gift" aria-labelledby="gift-sheet-title">
+        <div class="sheet__head"><h2 id="gift-sheet-title">A gift</h2><button type="button" class="icon-btn js-close" aria-label="Close"><span class="icon" aria-hidden="true">close</span></button></div>
+        <div class="sheet__body js-gift-body"></div>
       </dialog>
       <dialog class="sheet sheet--story js-wrapped" aria-labelledby="wrapped-sheet-title">
         <div class="sheet__head"><h2 id="wrapped-sheet-title">Yolkie Wrapped</h2><button type="button" class="icon-btn js-close" aria-label="Close Wrapped"><span class="icon" aria-hidden="true">close</span></button></div>
