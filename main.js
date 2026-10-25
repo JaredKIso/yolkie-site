@@ -2790,13 +2790,17 @@ if (demo) {
         inp.closest('label').hidden = i > size;
       });
       const sample = sampleOn();
+      const sliding = sample || opts.tester;
       $('.js-k-count').textContent = meals;
-      $('.js-k-count-label').textContent = sample ? 'Meals cooked (sample preview)' : 'Meals cooked';
-      $('.js-k-slider-row').hidden = !sample;
-      if (sample) $('.js-k-slider').value = Math.min(20, meals);
+      $('.js-k-count-label').textContent = sample ? 'Meals cooked (sample preview)' : opts.tester ? 'Meals cooked (tester preview)' : 'Meals cooked';
+      $('.js-k-tester').checked = !!opts.tester;
+      $('.js-k-slider-row').hidden = !sliding;
+      if (sliding) $('.js-k-slider').value = Math.min(20, meals);
       $('.js-k-hint').textContent = sample
         ? 'Sample data is on, so you can slide to preview how the kitchen fills in.'
-        : 'The kitchen fills in as you cook. Every meal you finish in cook mode counts.';
+        : opts.tester
+          ? 'Slide to preview the kitchen at any number of meals. It’s only a preview: your real stats don’t change.'
+          : 'The kitchen fills in as you cook. Every meal you finish in cook mode counts.';
       $('.js-k-decor').innerHTML = DECOR.map((d) => {
         const open = meals >= d.at;
         return `<li class="decor-item${open ? ' is-open' : ''}"><strong>${d.name}</strong><small>${open ? 'Unlocked' : `Cook ${plural(d.at - meals, 'more meal')}`}</small></li>`;
@@ -2808,7 +2812,7 @@ if (demo) {
     // Who's in the kitchen, how many meals, and what Yolkie is wearing, all from the rest of the demo.
     function sync() {
       const real = statsFor(activity()).cooked;
-      if (!sampleOn()) preview = null;
+      if (!sampleOn() && !opts.tester) preview = null;
       meals = preview == null ? real : preview;
       size = Math.min(3, Math.max(1, prefs.houseSize - 1));
       outfit = worn();
@@ -2855,6 +2859,16 @@ if (demo) {
       if (e.target.closest('.js-k-night')) { opts.night = !opts.night; saveOpts(); applyNight(); }
       if (e.target.closest('.js-k-auto')) { opts.auto = !opts.auto; saveOpts(); renderControls(); }
       if (e.target.closest('.js-k-closet')) { showMeView('progress'); const c = document.getElementById('closet'); c.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); }
+    });
+    // Tester preview: the slider without loading the sample week. Turning it off goes back to the real count.
+    kBox.addEventListener('change', (e) => {
+      if (!e.target.matches('.js-k-tester')) return;
+      opts.tester = e.target.checked;
+      if (!opts.tester) preview = null;
+      saveOpts();
+      sync();
+      build();
+      renderControls();
     });
     kBox.addEventListener('input', (e) => {
       if (e.target.matches('[data-k-name]')) {

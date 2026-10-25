@@ -898,7 +898,7 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 }
 .tag:hover:not([disabled]) { border-color: var(--text-dim); }
 .tag .icon { font-size: 18px; margin-left: -4px; }
-.tag.is-on { background: var(--yolk); border-color: var(--text); color: var(--ink); }
+.tag.is-on, .tag[aria-pressed="true"] { background: var(--yolk); border-color: var(--text); color: var(--ink); }
 .tag[disabled] { opacity: .45; cursor: not-allowed; }
 .tag--add { border-style: dashed; color: var(--text-dim); }
 .tag--add:hover:not([disabled]) { color: var(--text); }
@@ -1223,6 +1223,7 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 .decor-item.is-open { border-style: solid; border-color: var(--accent-soft); background: var(--accent-soft); color: var(--text); }
 .decor-item.is-open small { color: var(--done-text); font-weight: 700; }
 .kitchen-outfit { margin-top: 12px; }
+.kitchen-tester { margin-top: 8px; font-size: 14px; }
 
 /* The landing page's short feature lines */
 .feature-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 16px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
