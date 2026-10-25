@@ -3562,7 +3562,7 @@ if (demo) {
       { id: 'magnets', name: 'Fridge magnets', at: 7 }, { id: 'lights', name: 'String lights', at: 10 }, { id: 'poster', name: 'Yolkie poster', at: 13 },
       { id: 'clock', name: 'Wall clock', at: 16 }, { id: 'lamp', name: 'Pendant lamp', at: 20 },
     ];
-    const opts = Object.assign({ night: false, auto: true, seen: -1, away: [], seenBonus: null }, prefs.kitchen);
+    const opts = Object.assign({ night: false, auto: true, visits: true, seen: -1, away: [], seenBonus: null }, prefs.kitchen);
     const saveOpts = () => { prefs.kitchen = opts; savePrefs(); };
     let people = [];    // the members at home, you first
     let size = 1;
@@ -4043,6 +4043,8 @@ if (demo) {
       }).join('') + BONUS_DECOR.map(([id, name, set]) => `<li class="decor-item decor-item--bonus${bonus(id) ? ' is-open' : ''}"><strong>${name}</strong><small>${bonus(id) ? `Bonus: ${set}` : `Finish ${set} in your binder`}</small></li>`).join('')
         + `<li class="decor-item decor-item--bonus${postcards ? ' is-open' : ''}"><strong>Postcards</strong><small>${postcards ? `${postcards} of ${CUISINES.length} cuisines` : 'Finish a cuisine set'}</small></li>`;
       $('.js-k-auto').setAttribute('aria-pressed', String(opts.auto));
+      $('.js-k-visits').setAttribute('aria-pressed', String(opts.visits));
+      $('.js-k-visits').hidden = !metFriends().length;
       $('.js-k-night').setAttribute('aria-pressed', String(opts.night));
       const met = metFriends();
       $('.js-k-visit').hidden = !met.length;
@@ -4208,6 +4210,15 @@ if (demo) {
       }
       if (e.target.closest('.js-k-night')) { opts.night = !opts.night; saveOpts(); applyNight(); }
       if (e.target.closest('.js-k-auto')) { opts.auto = !opts.auto; saveOpts(); renderControls(); }
+      // Friends dropping by on their own. Off sends anyone visiting home; "Invite a friend over" still works.
+      if (e.target.closest('.js-k-visits')) {
+        opts.visits = !opts.visits;
+        saveOpts();
+        renderControls();
+        if (!opts.visits && visit) { visit.until = clock; toast(`${visit.f.name} is heading home`); }
+        else toast(opts.visits ? 'Friends will drop by now and then' : 'No surprise visits. Invite a friend whenever you like');
+        if (opts.visits) nextVisit = clock + 20;
+      }
       if (e.target.closest('.js-k-closet')) { showMeView('progress'); const c = document.getElementById('closet'); c.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); }
     });
     // Tester preview: the slider without loading the sample week. Turning it off goes back to the real count.
@@ -4249,7 +4260,7 @@ if (demo) {
       clock += dt;
       let cooking = false, washing = false, fridgeOn = false;
       // A friend drops by now and then, if you've met any and everyone's doing their own thing.
-      if (!visit && opts.auto && clock > nextVisit) {
+      if (!visit && opts.auto && opts.visits && clock > nextVisit) {
         const met = metFriends();
         if (met.length) startVisit(met[Math.floor(Math.random() * met.length)]); else nextVisit = clock + 10;
       }
