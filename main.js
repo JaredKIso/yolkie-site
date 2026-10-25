@@ -1432,6 +1432,7 @@ const STICKERS = [
   { id: 'goal', name: 'Goal getter', how: 'Hit your weekly goal', art: `<circle cx="50" cy="50" r="32" fill="none" stroke="#E6E0FB" stroke-width="12"/><path d="M50,18 A32 32 0 1 1 18,50" fill="none" stroke="#2E9E6A" stroke-width="12" stroke-linecap="round"/><path d="M36,50 L46,60 L66,40" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` },
   { id: 'team', name: 'Team kitchen', how: 'Everyone in the house cooks in one week', art: `<path d="M18,48 L50,20 L82,48 V82 H18 Z" fill="#6B4DE6" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><circle cx="34" cy="62" r="9" fill="#FFC83D" stroke="${INK}" stroke-width="3"/><ellipse cx="50" cy="60" rx="8" ry="11" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="66" cy="62" r="9" fill="#FFDD6E" stroke="${INK}" stroke-width="3"/>` },
   { id: 'foil', name: 'Shiny!', how: 'Master your first card', art: `<defs><linearGradient id="holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB3D9"/><stop offset=".5" stop-color="#B9A8FF"/><stop offset="1" stop-color="#9FE0BC"/></linearGradient></defs><path d="M50,14 L60,38 L86,40 L66,57 L72,83 L50,69 L28,83 L34,57 L14,40 L40,38 Z" fill="url(#holo)" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M78,16 l2,6 6,2 -6,2 -2,6 -2,-6 -6,-2 6,-2z" fill="#FFC83D"/>` },
+  { id: 'hydro', name: 'Hydration station', how: 'Reach your water goal for the first time', art: `<path d="M50,12 C62,32 76,46 76,62 A26 26 0 0 1 24,62 C24,46 38,32 50,12 Z" fill="#7CC4FF" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M38,58 Q38,72 50,76" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="44" cy="54" r="3" fill="${INK}"/><circle cx="58" cy="54" r="3" fill="${INK}"/><path d="M45,64 Q51,69 57,64" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M80,18 l2,6 6,2 -6,2 -2,6 -2,-6 -6,-2 6,-2z" fill="#FFC83D"/>` },
 ];
 const SEASONS = [
   { id: 'soup', name: 'Soup Season', months: [9, 10, 11, 0, 1], back: 'Back every October', stickers: [
@@ -3296,7 +3297,7 @@ if (demo) {
   const JOINERS = ['Sunny', 'Poppy', 'Basil', 'Clementine', 'Maple', 'Pip', 'Juniper', 'Nori', 'Olive', 'Dash', 'Mochi'];
   const ROLE = { owner: 'Owner', member: 'Member', guest: 'Guest · no app yet' };
   const SHARED = ['Who’s in the house', 'Restrictions needed for cooking', 'The shopping list', 'Votes', 'The house goal', 'The kitchen', 'Kudos', 'Gifts', 'House favorites'];
-  const PRIVATE = ['Personal stats', 'Nutrition', 'Check-in times', 'Your sticker book'];
+  const PRIVATE = ['Personal stats', 'Nutrition', 'Water', 'Check-in times', 'Your sticker book'];
   const houseBox = $('.js-house');
   const house = { view: '', confirm: '', guest: false, joinCode: '', joinMsg: '', joinErr: false, recent: 'recent' };
   // Anything that changes who's in the house updates the chips, the kitchen and this tab.
@@ -3571,6 +3572,9 @@ if (demo) {
     let col = collectionFor(activity());
     let fridge = [];    // stickers on the fridge door
     let picked = -1;    // the sticker last tapped on the fridge
+    let water = { on: false, frac: 0, bloom: false }; // today's water: it waters the plant, and the goal makes it bloom
+    let sway = 0;
+    let pendingWater = 0;
     const has = (id) => meals >= DECOR.find((d) => d.id === id).at;
     const bonus = (id) => col.done.some((s) => s.bonus === id);
     const metFriends = () => FRIENDS.filter((f) => col.friends[f.id]);
@@ -3596,6 +3600,20 @@ if (demo) {
     const toDoor = (p) => { const o = doorOrigin(); const x = p.x - o[0]; return { x, y: p.y - o[1] - x * 0.5 }; };
     const fridgeSticker = (f, k) => `<g class="k-sticker${k === picked ? ' is-picked' : ''}" data-fs="${k}" transform="translate(${f.x.toFixed(1)},${f.y.toFixed(1)}) rotate(${f.r})"><circle r="10" fill="transparent"/><g transform="scale(.16) translate(-50,-50)">${STICKER_BASE}${stickerById(f.s).art}</g>${k === picked ? '<circle r="9.5" fill="none" stroke="#6B4DE6" stroke-width="1.4" stroke-dasharray="3 2"/>' : ''}</g>`;
     const drawFridge = () => { const g = el('fridgeStickers'); if (g) g.innerHTML = fridge.map(fridgeSticker).join(''); };
+    // The plant sways when it's watered, and wears a flower for the rest of the day once the water goal is hit.
+    function plantHtml() {
+      const t = P(N - 0.55, 1.45, 30);
+      const flower = water.bloom ? `<g transform="translate(9,-58)"><path d="M-9,26 Q-4,10 0,4" stroke="#2E8A52" stroke-width="2.5" fill="none"/>${[0, 72, 144, 216, 288].map((r) => `<ellipse cx="0" cy="-7" rx="5" ry="8" fill="#FF8FB1" transform="rotate(${r})"/>`).join('')}<circle r="4.5" fill="#FFC83D"/></g>` : '';
+      return box(N - 0.8, 1.2, 0.5, 0.5, 30, ['#F2B08E', '#E09A76', '#CC8763']) + `<g transform="translate(${t[0]},${t[1]})"><g class="k-plant-sway"><ellipse cx="-14" cy="-22" rx="7" ry="20" fill="#3E9B5C" transform="rotate(-30 -14 -22)"/><ellipse cx="14" cy="-24" rx="7" ry="20" fill="#2E8A52" transform="rotate(28 14 -24)"/><ellipse cx="0" cy="-34" rx="7" ry="24" fill="#4CAF6B"/><ellipse cx="-6" cy="-14" rx="6" ry="14" fill="#2E8A52" transform="rotate(-60 -6 -14)"/>${flower}</g></g>`;
+    }
+    // No plant yet: a water bottle on the counter fills up instead.
+    function bottleHtml() {
+      const h = 34;
+      const f = Math.min(1, water.frac) * (h - 4);
+      return box(3.38, 0.3, 0.24, 0.24, h, ['#EAF4FF', '#D3E4F5', '#BED3EA'], 56) + (f > 0 ? box(3.4, 0.32, 0.2, 0.2, f, ['#9FD3FF', '#7CC4FF', '#5BB3F0'], 57) : '')
+        + box(3.42, 0.34, 0.16, 0.16, 7, ['#8E74F2', '#6B4DE6', '#5A3DD0'], 56 + h) + (water.bloom ? (() => { const c = P(3.5, 0.42, 56 + h + 14); return `<text x="${c[0]}" y="${c[1]}" text-anchor="middle" font-size="12" fill="#FFC83D">✦</text>`; })() : '');
+    }
+    const objById = (id) => objects.find((o) => o.id === id);
 
     /* World */
     let objects = [], seats = [], spots = {}, agents = [], tablePos = null, fridgeDoor = null, lightsGlow = '';
@@ -3708,10 +3726,9 @@ if (demo) {
       T.seats.forEach(([i, j]) => { seats.push([i, j]); addObj(i + j + 0.9, box(i + 0.44, j + 0.44, 0.12, 0.12, 22, SL) + box(i + 0.22, j + 0.22, 0.56, 0.56, 6, STL, 22)); });
       if (has('plant')) {
         footprint(N - 0.8, 1.2, 0.5, 0.5);
-        const t = P(N - 0.55, 1.45, 30);
-        addObj(N - 0.55 + 1.45, box(N - 0.8, 1.2, 0.5, 0.5, 30, ['#F2B08E', '#E09A76', '#CC8763']) + `<g transform="translate(${t[0]},${t[1]})"><ellipse cx="-14" cy="-22" rx="7" ry="20" fill="#3E9B5C" transform="rotate(-30 -14 -22)"/><ellipse cx="14" cy="-24" rx="7" ry="20" fill="#2E8A52" transform="rotate(28 14 -24)"/><ellipse cx="0" cy="-34" rx="7" ry="24" fill="#4CAF6B"/><ellipse cx="-6" cy="-14" rx="6" ry="14" fill="#2E8A52" transform="rotate(-60 -6 -14)"/></g>`);
+        addObj(N - 0.55 + 1.45, plantHtml(), 'plant');
         spots.plant = { t: [N - 1, 2], o: [N - 0.55, 1.45], icon: '💧' };
-      }
+      } else if (water.on) addObj(3.6, bottleHtml(), 'bottle');
       el('rug').innerHTML = has('rug') ? (() => {
         const e = 0.65;
         const a = [P(T.u - e, T.v - e), P(T.u + T.w + e, T.v - e), P(T.u + T.w + e, T.v + T.d + e), P(T.u - e, T.v + T.d + e)];
@@ -4060,6 +4077,7 @@ if (demo) {
       col = collectionFor(a);
       fridge = a.fridge;
       if (picked >= fridge.length) picked = -1;
+      water = { on: W().on, frac: W().on ? waterToday(a) / W().goal : 0, bloom: waterHit(a) };
       return real;
     }
     function celebrate(names) {
@@ -4296,6 +4314,13 @@ if (demo) {
         if (a.happy > 0) a.happy -= dt;
         if (a.sayT > 0) a.sayT -= dt;
       });
+      if (sway > 0) {
+        sway = Math.max(0, sway - dt);
+        const pl = objById('plant');
+        const g = pl && pl.el.querySelector('.k-plant-sway');
+        if (g) g.setAttribute('transform', RM ? '' : `rotate(${(Math.sin(clock * 9) * 7 * sway).toFixed(2)} 0 0)`);
+        if (Math.random() < dt * 14) { const c = has('plant') ? P(N - 0.55, 1.45, 96) : P(3.5, 0.42, 104); emit('drop', c[0] + (Math.random() - 0.5) * 14, c[1]); }
+      }
       const gone = agents.find((a) => a.visitor && a.gone >= 1);
       if (gone) endVisit(gone);
       if (fridgeDoor) fridgeDoor.style.display = fridgeOn ? '' : 'none';
@@ -4388,6 +4413,33 @@ if (demo) {
           if (opts.seen >= 0 && nw.length) setTimeout(() => celebrate(nw), 400);
           if (opts.seen !== real || String(opts.seenBonus) !== String(bonusNow)) { opts.seen = real; opts.seenBonus = bonusNow; saveOpts(); }
         }
+        // Water logged while you were elsewhere: the plant gets its drink now, and a fresh bloom gets its sparkle.
+        if (pendingWater) {
+          pendingWater = 0;
+          const fresh = water.bloom && opts.bloomDay !== dayKey();
+          setTimeout(() => {
+            sway = 1.4;
+            if (fresh) { const c = has('plant') ? P(N - 0.55, 1.45, 90) : P(3.5, 0.42, 100); emit('spark', c[0], c[1]); toast(has('plant') ? 'The plant bloomed!' : 'Bottle full!'); opts.bloomDay = dayKey(); saveOpts(); }
+          }, 500);
+        }
+      },
+      // A water tap: water the plant (or fill the counter bottle). Hitting the goal makes it bloom, with a sparkle.
+      water(hit, undo = false) {
+        if (!onScreen()) { if (!undo) pendingWater += 1; return; }
+        sync();
+        const pl = objById('plant');
+        const bt = objById('bottle');
+        if (pl) pl.el.innerHTML = plantHtml();
+        if (bt) bt.el.innerHTML = bottleHtml();
+        if (undo) return;
+        sway = 1.4;
+        if (hit) {
+          const c = has('plant') ? P(N - 0.55, 1.45, 90) : P(3.5, 0.42, 100);
+          emit('spark', c[0], c[1]);
+          toast(has('plant') ? 'The plant bloomed!' : 'Bottle full!');
+          opts.bloomDay = dayKey();
+          saveOpts();
+        }
       },
       isOpen: onScreen,
     };
@@ -4406,6 +4458,125 @@ if (demo) {
     showMeView(b.dataset.meView);
     yolk('happy', b.dataset.meView === 'kitchen' ? 'Welcome to the kitchen. Tap the floor and I’ll walk there.' : 'Your progress. It only goes up from here.');
   }));
+
+  /* Water: a small tracker on the Cook screen and in Me. Taps are kept in ml for today, so changing the
+     unit never changes what you drank. It resets every day, nothing bad happens on a day with no taps,
+     there are no streaks, and it's private: it never shows up in the House tab. */
+  const GLASS_ML = 250;
+  const OZ_ML = 29.5735;
+  const WATER_UNITS = [['glasses', 'Glasses'], ['bottles', 'Bottles'], ['oz', 'oz'], ['ml', 'ml']];
+  const freshWater = () => ({ on: true, unit: 'glasses', tap: 'glass', bottle: 500, goal: 2000, remind: { on: false, from: '08:00', to: '21:00' }, notToday: '' });
+  prefs.water = Object.assign(freshWater(), prefs.water);
+  prefs.water.remind = Object.assign(freshWater().remind, prefs.water.remind);
+  const W = () => prefs.water;
+  const waterLog = (a = activity()) => ((a.water || {})[dayKey()] || []);
+  const waterToday = (a) => waterLog(a).reduce((s, x) => s + x, 0);
+  const tapMl = () => (W().tap === 'bottle' ? W().bottle : GLASS_ML);
+  const waterHit = (a) => W().on && waterToday(a) >= W().goal;
+  // An amount in the chosen unit: whole oz, ml to the nearest 10, glasses and bottles to a tenth.
+  function inUnit(ml, unit = W().unit) {
+    const n = unit === 'glasses' ? ml / GLASS_ML : unit === 'bottles' ? ml / W().bottle : unit === 'oz' ? ml / OZ_ML : ml;
+    return unit === 'ml' ? Math.round(n / 10) * 10 : unit === 'oz' ? Math.round(n) : Math.round(n * 10) / 10;
+  }
+  const unitWord = (v, unit = W().unit) => ({ glasses: v === 1 ? 'glass' : 'glasses', bottles: v === 1 ? 'bottle' : 'bottles', oz: 'oz', ml: 'ml' }[unit]);
+  const waterText = (ml) => { const v = inUnit(ml); return `${v} ${unitWord(v)}`; };
+  const fromUnit = (v, unit = W().unit) => (unit === 'glasses' ? v * GLASS_ML : unit === 'bottles' ? v * W().bottle : unit === 'oz' ? v * OZ_ML : v);
+  const sizeUnit = () => (W().unit === 'oz' ? 'oz' : 'ml'); // bottle sizes are entered in oz or ml
+  const tapLabel = () => (W().tap === 'bottle' ? 'refill' : 'glass');
+
+  // A cute bottle in the brand style: plum cap, a face, and water that rises with a wave on top.
+  function bottleSvg(where) {
+    return `<svg class="bottle" viewBox="0 0 80 124" aria-hidden="true" focusable="false">
+      <defs><clipPath id="wclip-${where}"><path d="M22,30 L58,30 Q70,34 70,48 L70,104 Q70,118 56,118 L24,118 Q10,118 10,104 L10,48 Q10,34 22,30 Z"/></clipPath></defs>
+      <rect x="28" y="4" width="24" height="14" rx="5" fill="#6B4DE6"/><rect x="31" y="16" width="18" height="12" rx="3" fill="#DCD4F2"/>
+      <path d="M22,30 L58,30 Q70,34 70,48 L70,104 Q70,118 56,118 L24,118 Q10,118 10,104 L10,48 Q10,34 22,30 Z" fill="#F3F0FF"/>
+      <g clip-path="url(#wclip-${where})"><g class="bottle__level js-bottle-level">
+        <path class="bottle__wave" d="M-80,6 q10,-6 20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 V140 H-80 Z" fill="#7CC4FF"/>
+        <path class="bottle__wave bottle__wave--back" d="M-90,8 q10,-5 20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 t20,0 V140 H-90 Z" fill="#5BB3F0" opacity=".55"/>
+      </g></g>
+      <path d="M22,30 L58,30 Q70,34 70,48 L70,104 Q70,118 56,118 L24,118 Q10,118 10,104 L10,48 Q10,34 22,30 Z" fill="none" stroke="#B9A8FF" stroke-width="3"/>
+      <rect x="16" y="44" width="6" height="40" rx="3" fill="#fff" opacity=".7"/>
+      <ellipse cx="31" cy="68" rx="3.4" ry="4.4" fill="${INK}"/><ellipse cx="49" cy="68" rx="3.4" ry="4.4" fill="${INK}"/>
+      <circle cx="32.2" cy="66.4" r="1.2" fill="#fff"/><circle cx="50.2" cy="66.4" r="1.2" fill="#fff"/>
+      <path d="M35,76 Q40,81 45,76" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <ellipse cx="24" cy="76" rx="4" ry="2.4" fill="#FF7D6B" opacity=".5"/><ellipse cx="56" cy="76" rx="4" ry="2.4" fill="#FF7D6B" opacity=".5"/>
+    </svg>`;
+  }
+  // How high the water sits: the bottle's inside runs from y 118 (empty) to y 32 (full).
+  const levelY = (frac) => 118 - Math.min(1, frac) * 86;
+
+  function renderWater() {
+    $$('.js-water').forEach((box) => {
+      if (!W().on) { box.innerHTML = ''; box.hidden = true; return; }
+      box.hidden = false;
+      const where = box.dataset.where;
+      box.innerHTML = `
+        <section class="panel water-card" aria-labelledby="water-title-${where}">
+          <div class="water-card__art">${bottleSvg(where)}<span class="water-card__yolk">${yolkieArt('default', 'js-water-yolk')}</span><span class="water-card__sip" aria-hidden="true">sip!</span></div>
+          <div class="water-card__body">
+            <h3 id="water-title-${where}">Water</h3>
+            <p class="water-card__amount js-water-amount"></p>
+            <p class="fine js-water-note"></p>
+            <div class="water-card__btns">
+              <button type="button" class="icon-btn js-water-minus" aria-label="Undo the last ${tapLabel()}"><span class="icon" aria-hidden="true">remove</span></button>
+              <button type="button" class="btn btn--primary btn--small js-water-plus" aria-label="Log one ${tapLabel()} (${esc(waterText(tapMl()))})"><span class="icon" aria-hidden="true">water_drop</span>+1 ${tapLabel()}</button>
+            </div>
+            <p class="sr-only js-water-live" aria-live="polite"></p>
+          </div>
+        </section>`;
+    });
+    updateWater();
+  }
+  // Updates the numbers and the water level in place, so the level glides instead of jumping.
+  function updateWater(said = '') {
+    const a = activity();
+    const ml = waterToday(a);
+    const hit = waterHit(a);
+    $$('.js-water').forEach((box) => {
+      if (!box.firstElementChild) return;
+      $('.js-bottle-level', box).style.transform = `translateY(${levelY(ml / W().goal) - 6}px)`;
+      $('.js-water-amount', box).innerHTML = `<strong>${inUnit(ml)}</strong> of ${esc(waterText(W().goal))}`;
+      $('.js-water-note', box).textContent = hit ? 'Goal reached. The kitchen plant is blooming today.' : ml ? 'Every tap waters the plant in Yolkie’s Kitchen.' : 'Tap +1 when you drink. It starts fresh every morning.';
+      $('.js-water-minus', box).disabled = !waterLog(a).length;
+      box.querySelector('.water-card').classList.toggle('is-full', hit);
+      if (said) $('.js-water-live', box).textContent = said;
+    });
+  }
+  // A tap: log it, fill the bottle, Yolkie takes a sip, and the kitchen plant gets watered.
+  function logWater(d) {
+    const a = activity();
+    a.water = a.water || {};
+    const log = [...waterLog(a)];
+    const before = waterToday(a);
+    if (d > 0) log.push(tapMl()); else if (log.length) log.pop(); else return;
+    a.water[dayKey()] = log;
+    const after = log.reduce((s, x) => s + x, 0);
+    const hit = before < W().goal && after >= W().goal;
+    // The Hydration station sticker: the first day you ever reach the goal (taken back if you undo that same day).
+    let sticker = false;
+    if (hit && !a.hydro) { a.hydro = dayKey(); a.stickers.hydro = (a.stickers.hydro || 0) + 1; sticker = true; }
+    if (before >= W().goal && after < W().goal && a.hydro === dayKey()) {
+      a.stickers.hydro = Math.max(0, (a.stickers.hydro || 0) - 1);
+      if (!a.stickers.hydro) { delete a.stickers.hydro; a.fridge = a.fridge.filter((f) => f.s !== 'hydro'); }
+      delete a.hydro;
+    }
+    saveActivity(a);
+    updateWater(d > 0 ? `${waterText(after)} today.` : `Undone. ${waterText(after)} today.`);
+    if (d > 0) {
+      $$('.js-water .water-card').forEach((c) => { replay($('.yolk-wear', c), 'is-celebrating'); replay($('.water-card__sip', c), 'is-sipping'); });
+      kitchen.water(hit);
+      if (hit) yolk('happy', `Water goal: done! The kitchen plant just bloomed.${sticker ? ' And a Hydration station sticker!' : ''}`, { celebrate: true });
+      else yolk('happy', ['Sip! Refreshing.', 'Glug glug. Nice.', 'Hydrated and thriving.', 'The plant says thanks too.'][log.length % 4]);
+    } else {
+      kitchen.water(false, true);
+      yolk('default', 'Undone. No harm, just a wobble of the bottle.');
+    }
+    if (prefs.tab === 'collection') renderCollection();
+  }
+  demo.addEventListener('click', (e) => {
+    if (e.target.closest('.js-water-plus')) { logWater(1); }
+    if (e.target.closest('.js-water-minus')) { logWater(-1); const b = e.target.closest('.js-water').querySelector('.js-water-minus'); if (b.disabled) e.target.closest('.js-water').querySelector('.js-water-plus').focus(); }
+  });
 
   /* Collection: recipe cards and the binder, fridge stickers, friend figurines, the Pantry-dex, and
      gifting duplicates. All of it is earned by cooking: nothing is sold, nothing comes in random packs,
@@ -4745,6 +4916,21 @@ if (demo) {
         ${active().map(restrCard).join('')}`, 'prefs-house')
       + sec('Nutrition', `<label class="switch"><input type="checkbox" class="js-nutri-hide"${nutritionOn() ? '' : ' checked'}><span class="switch__track" aria-hidden="true"></span>Hide nutrition</label>
         <p class="fine">Hides every calorie, protein and nutrition number, here and on the home page.</p>`)
+      + sec('Water', `<label class="switch"><input type="checkbox" class="js-water-on"${W().on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Water tracker</label>
+        <p class="allergy-note"><span class="icon" aria-hidden="true">info</span>Everyone’s needs are different. If a doctor has given you a fluid limit, follow that.</p>
+        ${W().on ? `<p class="fine">Private to you: water is never shared with the house. It starts fresh every day, with no streaks.</p>
+        <h4 class="mini-head">Show it in</h4><div class="tags">${WATER_UNITS.map(([id, label]) => tag('wunit', id, label, W().unit === id)).join('')}</div>
+        <h4 class="mini-head">One tap is</h4><div class="tags">${tag('wtap', 'glass', `A glass (${W().unit === 'oz' ? '8 oz' : '250 ml'})`, W().tap === 'glass')}${tag('wtap', 'bottle', 'A refill of my bottle', W().tap === 'bottle')}</div>
+        <div class="water-fields">
+          <label class="money-field" for="water-bottle">My bottle holds <span class="money"><input id="water-bottle" class="js-water-bottle" type="number" min="${sizeUnit() === 'oz' ? 4 : 100}" max="${sizeUnit() === 'oz' ? 68 : 2000}" step="${sizeUnit() === 'oz' ? 1 : 10}" value="${sizeUnit() === 'oz' ? Math.round(W().bottle / OZ_ML) : W().bottle}" inputmode="decimal"><span aria-hidden="true">${sizeUnit()}</span></span></label>
+          <label class="money-field" for="water-goal">Daily goal <span class="money"><input id="water-goal" class="js-water-goal" type="number" min="${inUnit(500)}" max="${inUnit(6000)}" step="${{ glasses: 0.5, bottles: 0.5, oz: 1, ml: 50 }[W().unit]}" value="${inUnit(W().goal)}" inputmode="decimal"><span aria-hidden="true">${unitWord(2)}</span></span></label>
+        </div>
+        <p class="fine">Today so far: ${esc(waterText(waterToday()))}. <button type="button" class="link-btn js-water-reset">Reset the goal to 8 glasses</button></p>
+        <h4 class="mini-head">Water reminders</h4>
+        <div class="remind-row"><label class="switch"><input type="checkbox" class="js-water-remind"${W().remind.on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Gentle reminders, at most every 3 hours</label></div>
+        <div class="remind-row"><span>Only while I’m awake</span><span class="time-pair"><input class="time-input" type="time" data-wake="from" value="${W().remind.from}" aria-label="Awake from"> to <input class="time-input" type="time" data-wake="to" value="${W().remind.to}" aria-label="Awake until"></span></div>
+        <div class="remind-row"><span>${W().notToday === dayKey() ? 'No water reminders today.' : 'Need a break from them?'}</span><button type="button" class="btn btn--secondary btn--small js-water-nottoday" aria-pressed="${W().notToday === dayKey()}">${W().notToday === dayKey() ? 'Undo' : 'Not today'}</button></div>
+        <p class="fine"><button type="button" class="link-btn js-water-preview">Preview a water reminder</button></p>` : '<p class="fine">Off. The water cards are hidden and the kitchen plant just does its own thing.</p>'}`, 'prefs-water')
       + sec('Check-in reminders', `<p class="fine">Preview: real reminders arrive in the app. Your check-in times are private to you.</p>
         ${['breakfast', 'lunch', 'dinner'].map((k) => `<div class="remind-row"><label class="switch"><input type="checkbox" data-remind="${k}"${prefs.reminders[k].on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Remind me before ${k}</label>
           <label class="time-field"><span class="sr-only">${cap(k)} reminder time</span><input class="time-input" type="time" data-remind-time="${k}" value="${prefs.reminders[k].time}"></label></div>`).join('')}
@@ -4791,6 +4977,14 @@ if (demo) {
       if (group === 'allergy') setRestr('you', (r) => { r.allergies = flip(r.allergies, id); });
       if (group.startsWith('rd-')) setRestr(group.slice(3), (r) => { r.diets = flip(r.diets, id); });
       if (group.startsWith('ra-')) setRestr(group.slice(3), (r) => { r.allergies = flip(r.allergies, id); });
+      if (group === 'wunit' || group === 'wtap') {
+        if (group === 'wunit') W().unit = id; else W().tap = id;
+        savePrefs();
+        renderWater();
+        rerenderPrefs(`[data-group="${group}"][data-id="${id}"]`);
+        yolk('default', group === 'wunit' ? `Water in ${lower(WATER_UNITS.find((u) => u[0] === id)[1])} it is.` : id === 'bottle' ? `One tap is a full bottle now: ${waterText(tapMl())}.` : 'One tap is one glass.');
+        return;
+      }
       afterPrefs();
       rerenderPrefs(`[data-group="${group}"][data-id="${CSS.escape(id)}"]`);
     }
@@ -4809,6 +5003,9 @@ if (demo) {
     if (t.closest('.js-clear-memory')) { const a = activity(); a.remembered = []; saveActivity(a); state.memAsked = false; renderRemember(); rerenderPrefs('#prefs-memory h3'); yolk('default', 'Forgotten. Clean slate.'); }
     const un = t.closest('[data-unhide]');
     if (un) { toggleHidden(un.dataset.unhide); afterPrefs(); rerenderPrefs('#prefs-hidden button, #prefs-hidden h3'); yolk('happy', `${byId(un.dataset.unhide).name} is back on the menu.`); }
+    if (t.closest('.js-water-reset')) { W().goal = 2000; savePrefs(); renderWater(); rerenderPrefs('.js-water-goal'); yolk('default', `Back to ${waterText(2000)} a day.`); }
+    if (t.closest('.js-water-nottoday')) { W().notToday = W().notToday === dayKey() ? '' : dayKey(); savePrefs(); rerenderPrefs('.js-water-nottoday'); }
+    if (t.closest('.js-water-preview')) { closeSheet(prefsSheet); openWaterNote(); }
     if (t.closest('.js-not-today')) { prefs.notToday = prefs.notToday === dayKey() ? '' : dayKey(); savePrefs(); rerenderPrefs('.js-not-today'); }
     if (t.closest('.js-open-checkin')) { closeSheet(prefsSheet); openCheckin(); }
     if (t.closest('.js-load-sample')) {
@@ -4844,6 +5041,36 @@ if (demo) {
       yolk('default', t.checked ? `No ${allergyWord(t.dataset.a)} in any suggestion now, whoever’s eating.` : `${cap(allergyWord(t.dataset.a))} only counts when ${id === 'you' ? 'you’re' : `${rawName(id)}’s`} eating again.`);
       return;
     }
+    if (t.matches('.js-water-on')) {
+      W().on = t.checked;
+      savePrefs();
+      renderWater();
+      if (kitchen.isOpen()) kitchen.show();
+      rerenderPrefs('.js-water-on');
+      yolk('default', t.checked ? 'Water tracker on. Tap +1 when you drink.' : 'Water tracker off. No hard feelings.');
+      return;
+    }
+    if (t.matches('.js-water-bottle')) {
+      const v = Number(t.value);
+      if (v > 0) W().bottle = Math.round(Math.min(2000, Math.max(100, sizeUnit() === 'oz' ? v * OZ_ML : v)));
+      savePrefs();
+      renderWater();
+      rerenderPrefs('.js-water-bottle');
+      yolk('default', `Your bottle holds ${sizeUnit() === 'oz' ? `${Math.round(W().bottle / OZ_ML)} oz` : `${W().bottle} ml`}.`);
+      return;
+    }
+    if (t.matches('.js-water-goal')) {
+      const v = Number(t.value);
+      if (v > 0) W().goal = Math.round(Math.min(6000, Math.max(500, fromUnit(v))));
+      savePrefs();
+      renderWater();
+      if (kitchen.isOpen()) kitchen.show();
+      rerenderPrefs('.js-water-goal');
+      yolk('default', `Goal: ${waterText(W().goal)} a day. You can change it any time.`);
+      return;
+    }
+    if (t.matches('.js-water-remind')) W().remind.on = t.checked;
+    if (t.dataset.wake && t.value) W().remind[t.dataset.wake] = t.value;
     if (t.dataset.remind) prefs.reminders[t.dataset.remind].on = t.checked;
     if (t.dataset.remindTime && t.value) prefs.reminders[t.dataset.remindTime].time = t.value;
     if (t.matches('.js-quiet')) prefs.quiet.on = t.checked;
@@ -4934,6 +5161,56 @@ if (demo) {
     const btn = $('.js-cook-this');
     if (btn) btn.focus({ preventScroll: true });
     yolk(...ENERGY[state.energy], { then: state.recipe && state.fits.length ? ['happy', `${cap(MEALS[state.meal].label)}’s sorted, and your list is ready.`] : line, after: 1500 });
+  });
+
+  /* Water reminder (simulated): off by default; at most every 3 hours, only while you're awake. */
+  function nextWaterReminder() {
+    const r = W().remind;
+    const from = toMin(r.from);
+    const to = toMin(r.to) > from ? toMin(r.to) : toMin(r.to) + 1440;
+    const slots = [];
+    for (let t = from; t <= to; t += 180) slots.push(t);
+    const now = new Date();
+    const mins = now.getHours() * 60 + now.getMinutes();
+    const today = W().notToday !== dayKey() && slots.find((t) => t > mins && t < 1440);
+    return today ? { at: today, day: 0 } : { at: slots[0], day: 1 };
+  }
+  function openWaterNote() {
+    const n = nextWaterReminder();
+    const when = new Date(Date.now() + n.day * DAY);
+    const notes = [];
+    if (!W().remind.on) notes.push('Water reminders are off, so the app wouldn’t send this. Off is the default.');
+    if (W().notToday === dayKey()) notes.push('“Not today” is on, so the next one would be tomorrow.');
+    notes.push(`At most every 3 hours, and only between ${clock12(toMin(W().remind.from))} and ${clock12(toMin(W().remind.to))}.`);
+    $('.js-checkin-body').innerHTML = `
+      <div class="phone">
+        <div class="phone__bar" aria-hidden="true"><span>${clock12(n.at)}</span><span><span class="icon">signal_cellular_alt</span><span class="icon">battery_5_bar</span></span></div>
+        <p class="phone__date">${when.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+        <p class="phone__clock">${clock12(n.at).replace(/ (am|pm)$/, '')}</p>
+        <div class="notif" role="group" aria-labelledby="water-notif-text">
+          <div class="notif__head"><span class="notif__icon">${yolkieArt('happy')}</span><span class="notif__app">Yolkie</span><span class="notif__when">now</span></div>
+          <p class="notif__text" id="water-notif-text"><span class="sr-only">Yolkie: </span>Water break?</p>
+          <p class="notif__meta">${esc(waterText(waterToday()))} of ${esc(waterText(W().goal))} so far</p>
+          <div class="notif__actions notif__actions--2" role="group" aria-label="Water">
+            <button type="button" data-water-note="plus">+1 ${tapLabel()}</button><button type="button" data-water-note="off">Not today</button>
+          </div>
+        </div>
+      </div>
+      <div class="checkin-foot">
+        <p class="preview-label"><span class="icon" aria-hidden="true">visibility</span>Preview: real reminders arrive in the app.</p>
+        ${notes.map((x) => `<p class="fine">${x}</p>`).join('')}
+        <div class="checkin-foot__row"><button type="button" class="link-btn js-water-settings">Water settings</button><button type="button" class="btn btn--ghost btn--small js-close">Close</button></div>
+      </div>`;
+    openSheet(checkinSheet);
+    $('[data-water-note="plus"]', checkinSheet).focus();
+  }
+  checkinSheet.addEventListener('click', (e) => {
+    if (e.target.closest('.js-water-settings')) { closeSheet(checkinSheet); openPrefs('prefs-water'); return; }
+    const b = e.target.closest('[data-water-note]');
+    if (!b) return;
+    closeSheet(checkinSheet);
+    if (b.dataset.waterNote === 'plus') logWater(1);
+    else { W().notToday = dayKey(); savePrefs(); yolk('default', 'No more water reminders today. Sip whenever you like.'); }
   });
 
   /* Yolkie Wrapped: a swipeable story, any card saved as an image */
@@ -5138,6 +5415,11 @@ if (demo) {
       { k: 'chicken', at: now - 2 * DAY, used: false }, { k: 'rice', at: now - 2 * DAY, used: false },
       { k: 'spinach', at: now - 2 * DAY, used: true, usedAt: now - 0.2 * DAY }, { k: 'lemon', at: now - 7 * DAY, used: false },
     ];
+    // Water: a few days of glasses (the goal reached three days ago, which earned the sticker) and some today.
+    const g = (n) => Array(n).fill(GLASS_ML);
+    a.water = { [dayKey(now - 4 * DAY)]: g(6), [dayKey(now - 3 * DAY)]: g(8), [dayKey(now - 2 * DAY)]: g(4), [dayKey(now - DAY)]: g(7), [dayKey(now)]: g(5) };
+    a.hydro = dayKey(now - 3 * DAY);
+    a.stickers.hydro = 1;
     // The house's profiles while the sample is on (yours always stay your real ones).
     a.restr = {
       boyd: { diets: [], allergies: ['dairy'], dislikes: ['mushrooms'], keepOut: [] },
@@ -5151,6 +5433,7 @@ if (demo) {
     dress();
     state.memAsked = false;
     renderRemember();
+    renderWater();
     refilter();
     if (kitchen.isOpen()) kitchen.show();
     if (prefs.tab === 'me') renderMe();
@@ -5348,6 +5631,7 @@ if (demo) {
     renderDietBar();
     renderExtras();
     renderRemember();
+    renderWater();
     syncBanner();
     dress();
     if (state.meal && state.energy && state.time) {
