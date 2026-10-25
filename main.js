@@ -338,7 +338,7 @@ const RECIPES = [
     zero: 'Put the bread in the toaster. Don’t press it down yet.',
     steps: [
       { do: 'Crack the eggs into the bowl. Add the milk, pepper and a pinch of salt, and beat with a fork.', mins: 2 },
-      { do: 'Press the toaster down.', timer: { id: 'toast', label: 'Toast', mins: 4 } },
+      { do: 'Press the toaster down.', timer: { id: 'toast', label: 'Toast', mins: 4 }, uses: ['sandwich bread'] },
       { do: 'Half the butter in the pan, low heat. Pour in the eggs and stir slowly with a spatula until they’re just set and still a little glossy.', mins: 3 },
       { wait: 'toast', clean: { text: 'Rinse the egg bowl now, before it dries like glue.', dish: 'bowl' } },
       { do: 'Butter the toast, pile the eggs on top, and add the tomatoes on the side.', mins: 1 },
@@ -451,10 +451,10 @@ const RECIPES = [
     steps: [
       { do: 'Squeeze the rice pouches to break up the grains. Crack the eggs into the bowl and beat them with a fork.', mins: 2 },
       { do: 'Crush the garlic.', mins: 1 },
-      { do: 'Oil in the pan, high heat. Pour in the eggs, stir until just set, then tip them back into the bowl.', mins: 2 },
+      { do: 'Oil in the pan, high heat. Pour in the eggs, stir until just set, then tip them back into the bowl.', mins: 2, uses: ['vegetable oil'] },
       { do: 'Garlic, rice and peas into the pan. Spread it out and leave it alone.', timer: { id: 'fry', label: 'Rice', mins: 4 } },
       { wait: 'fry', clean: { text: 'Peas back in the freezer. Soy sauce and sesame oil next to the stove.' } },
-      { do: 'Eggs back in with the soy sauce and sesame oil. Snip in the green onions with scissors and toss for a minute.', mins: 1 },
+      { do: 'Eggs back in with the soy sauce and sesame oil. Snip in the green onions with scissors and toss for a minute.', mins: 1, uses: ['White pepper'] },
     ],
   },
   {
@@ -480,7 +480,7 @@ const RECIPES = [
     zero: 'Fill the kettle and switch it on.',
     steps: [
       { do: 'Rinse the rice. Put it in the saucepan with the bouillon cube and twice its volume of boiling water. Lid on, lowest heat.', timer: { id: 'rice', label: 'Rice', mins: 15 } },
-      { do: 'Pat the chicken dry. Season with oregano, pepper and a good pinch of salt.', mins: 2 },
+      { do: 'Pat the chicken dry. Season with oregano, pepper and a good pinch of salt.', mins: 2, uses: ['boneless chicken thighs'] },
       { do: 'Trim the green beans. Crush the garlic. Halve the lemon.', mins: 3 },
       { wait: 'rice', until: 11, note: 'The chicken goes in when the rice has 11 minutes left, so they finish together.', clean: { text: 'Rinse the cutting board and knife. You’re done with them.', dish: 'cutting board' } },
       { do: 'Oil in the frying pan, medium-high heat. Chicken in, smooth side down.', timer: { id: 'c1', label: 'Chicken, side 1', mins: 6 } },
@@ -557,7 +557,7 @@ const RECIPES = [
       { do: 'Flip the sandwiches and press them down gently.', timer: { id: 'g2', label: 'Side two', mins: 3 } },
       { wait: 'g2', clean: { text: 'Get the bowls and spoons out.' } },
       { wait: 'soup', clean: { text: 'Wipe the counter next to the stove.' } },
-      { do: 'Heat off. Stir the cream into the soup, and mash it with a fork if you like it smoother. Cut the sandwiches in half.', mins: 2 },
+      { do: 'Heat off. Stir the cream into the soup, and mash it with a fork if you like it smoother. Cut the sandwiches in half.', mins: 2, uses: ['Black pepper'] },
     ],
   },
   {
@@ -811,12 +811,12 @@ const RECIPES = [
     ],
     zero: 'Put the frying pan on the stove and the big bowl on the counter.',
     steps: [
-      { do: 'Slice the chicken into strips. Toss with 1 tbsp of the oil, half the oregano and a pinch of salt.', mins: 3 },
+      { do: 'Slice the chicken into strips. Toss with a third of the oil, half the oregano and a pinch of salt.', mins: 3, uses: [{ n: 'olive oil', q: 1 }, { n: 'Dried oregano', q: 0.5 }] },
       { do: 'Medium-high heat. Chicken into the pan in one layer.', timer: { id: 'c1', label: 'Chicken, side 1', mins: 4 } },
       { do: 'Chop the cucumber, halve the tomatoes and slice the onion thinly. All into the big bowl.', mins: 4 },
       { wait: 'c1', clean: { text: 'Rinse the cutting board and knife.', dish: 'cutting board' } },
       { do: 'Turn the chicken strips over.', timer: { id: 'c2', label: 'Chicken, side 2', mins: 4 } },
-      { do: 'Whisk the rest of the oil with the lemon juice, oregano and pepper. Pour it over the veg.', mins: 2 },
+      { do: 'Whisk the rest of the oil with the lemon juice, oregano and pepper. Pour it over the veg.', mins: 2, uses: [{ n: 'olive oil', q: 2 }, { n: 'Dried oregano', q: 0.5 }] },
       { wait: 'c2', clean: { text: 'Olive oil and oregano back in the cupboard.' } },
       { do: 'Add the olives, feta and chicken to the bowl and toss.', mins: 1 },
     ],
@@ -937,7 +937,7 @@ const RECIPES = [
       { wait: 'c2', clean: { text: 'Wipe the counter next to the stove.' } },
       { do: 'Chicken onto a plate. Mushrooms into the pan.', timer: { id: 'mush', label: 'Mushrooms', mins: 5 } },
       { wait: 'mush', clean: { text: 'Spices back in the cupboard.' } },
-      { do: 'Add the garlic, tomatoes, cream and parmesan. Stir in the spinach until it wilts, then put the chicken back in.', mins: 3 },
+      { do: 'Add the garlic, tomatoes, cream and parmesan. Stir in the spinach until it wilts, then put the chicken back in.', mins: 3, uses: ['Red pepper flakes'] },
     ],
   },
   {
@@ -1034,7 +1034,7 @@ const RECIPES = [
       { do: 'Spaghetti in. Stir so it doesn’t stick.', timer: { id: 'pasta', label: 'Spaghetti', mins: 9 } },
       { wait: 'pasta', note: 'Scoop out a mug of the pasta water before you drain it.', clean: { text: 'Lemon peel in the compost. Wipe the counter.' } },
       { do: 'Drain, then back into the pot off the heat with the butter, garlic, spinach and a splash of pasta water.', mins: 2 },
-      { do: 'Toss in the lemon juice, zest, parmesan and pepper until glossy.', mins: 1 },
+      { do: 'Toss in the lemon juice, zest, parmesan and pepper until glossy.', mins: 1, uses: ['Black pepper', 'Red pepper flakes'] },
     ],
   },
   {
@@ -1102,7 +1102,7 @@ const RECIPES = [
     zero: 'Get the cutting board out.',
     steps: [
       { do: 'Cut each pickle lengthwise into four spears.', mins: 1 },
-      { do: 'Lay out the turkey slices, a piece of cheese on each, and a stripe of mustard.', mins: 2 },
+      { do: 'Lay out the turkey slices, a piece of cheese on each, and a stripe of mustard.', mins: 2, uses: ['Black pepper'] },
       { do: 'Roll each one around a pickle spear. Cut them in half if you like.', mins: 2 },
     ],
   },
@@ -1150,7 +1150,7 @@ const RECIPES = [
       { wait: 'boil', clean: { text: 'Rinse the cutting board and knife.', dish: 'cutting board' } },
       { do: 'Noodles into the broth.', timer: { id: 'noodles', label: 'Noodles', mins: 4 } },
       { wait: 'noodles', clean: { text: 'Get the bowls and a mug out.' } },
-      { do: 'Heat off. Stir in the tofu and spinach. Mix the miso with a ladle of broth in the mug, then stir it back in. Green onions on top.', mins: 2 },
+      { do: 'Heat off. Stir in the tofu and spinach. Mix the miso with a ladle of broth in the mug, then stir it back in. Green onions on top.', mins: 2, uses: ['White pepper'] },
     ],
   },
   {
@@ -1213,6 +1213,77 @@ function describe(item, qty) {
   const name = !item.u && many && item.p ? item.p : item.n;
   const size = item.size ? ` (${item.size}${many ? ' each' : ''})` : '';
   return { qty: `${fmtQty(qty)}${unit ? ' ' + unit : ''}`, name: `${name}${size}` };
+}
+
+// Which ingredients and spices each step uses, so cook mode can show the amounts as labels on that step.
+// An item goes on the first step that names it (the longest name wins, so "lemon juice" isn't read as
+// "lemon"). A single word from a name counts only when no other item in the recipe shares it, so "oil"
+// finds the olive oil unless there's a second oil. A few everyday words stand in for a name ("cheese" for
+// the cheddar, "capsicum" for the bell pepper), and "black pepper" in a step is never the bell pepper.
+// "Spices" picks up any spice not named yet. A step can name its items itself with `uses: ['lemon juice']`
+// when the wording doesn't, or give part of one, `{ n: 'egg', q: 1 }`, when it's split across steps (the
+// amount is for the recipe's base servings). Items with no amount (`q: 0`) are left out.
+const VAGUE = new Set(['large', 'small', 'medium', 'fresh', 'red', 'green', 'yellow', 'white', 'black', 'brown', 'long', 'ground', 'grated', 'dried', 'extra', 'virgin', 'baby', 'whole', 'thick', 'plain', 'light', 'dark', 'sweet', 'hot', 'cold', 'raw', 'cooked', 'shredded', 'sliced', 'canned', 'frozen', 'flat-leaf', 'stick', 'pod', 'sprig', 'of', 'and', 'or', 'the', 'any', 'kind']);
+const STAND_INS = [
+  { word: 'cheese', fits: /cheddar|mozzarella|parmesan|parmigiano|feta|pecorino|provolone|swiss|halloumi|cheese/ },
+  { word: 'parmesan', fits: /parmigiano/ },
+  { word: 'capsicum', fits: /bell pepper/ },
+  { word: 'mayo', fits: /mayonnaise/ },
+];
+const NOT_ITEMS = ['black pepper', 'white pepper', 'salt and pepper', 'sea salt'];
+const escRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const plainName = (name) => name.toLowerCase().split(',')[0].replace(/\(.*?\)/g, '').trim();
+function stepItems(r) {
+  if (r._stepItems) return r._stepItems;
+  const items = [...r.ingredients, ...(r.spices || []).map((sp) => ({ ...sp, spice: true }))].filter((it) => it.q);
+  const words = (it) => [it.n, it.p].filter(Boolean).flatMap((n) => plainName(n).split(/\s+/));
+  const phrases = [];
+  items.forEach((it) => {
+    const seen = new Set();
+    [it.n, it.p].filter(Boolean).forEach((name) => {
+      const w = plainName(name).split(/\s+/).filter(Boolean);
+      for (let a = 0; a < w.length; a++) {
+        for (let b = w.length; b > a; b--) {
+          const ph = w.slice(a, b).join(' ');
+          if (seen.has(ph)) continue;
+          const own = b - a === w.length;
+          if (b - a === 1 && !own && (VAGUE.has(ph) || ph.length < 3 || items.some((o) => o !== it && words(o).includes(ph)))) continue;
+          seen.add(ph);
+          phrases.push({ it, ph });
+        }
+      }
+    });
+  });
+  STAND_INS.forEach(({ word, fits }) => {
+    const all = items.filter((it) => fits.test(it.n.toLowerCase()));
+    if (all.length === 1) phrases.push({ it: all[0], ph: word });
+  });
+  NOT_ITEMS.forEach((ph) => phrases.push({ it: null, ph }));
+  phrases.sort((x, y) => y.ph.length - x.ph.length);
+  const out = r.steps.map(() => []);
+  const placed = new Set();
+  r.steps.forEach((st, i) => (st.uses || []).forEach((u) => {
+    const it = items.find((o) => o.n === (u.n || u));
+    if (!it) return;
+    placed.add(it);
+    out[i].push(u.q ? { ...it, q: u.q } : it);
+  }));
+  r.steps.forEach((st, i) => {
+    if (!st.do) return;
+    let text = ` ${st.do.toLowerCase()} `;
+    phrases.forEach(({ it, ph }) => {
+      const stem = ph.endsWith('y') ? `${escRe(ph.slice(0, -1))}(?:y|ies)` : `${escRe(ph)}(?:e?s)?`;
+      const m = text.match(new RegExp(`(^|[^a-z])${stem}(?![a-z])`));
+      if (!m) return;
+      text = text.slice(0, m.index) + ' '.repeat(m[0].length) + text.slice(m.index + m[0].length);
+      if (it && !placed.has(it)) { placed.add(it); out[i].push(it); }
+    });
+    if (/\bspices\b/.test(text)) items.filter((it) => it.spice && !placed.has(it)).forEach((it) => { placed.add(it); out[i].push(it); });
+  });
+  const order = (x) => items.findIndex((o) => o.n === x.n);
+  out.forEach((list) => list.sort((x, y) => order(x) - order(y)));
+  r._stepItems = out;
+  return out;
 }
 
 // Diets, allergies, dislikes and the "already have" chips. Keto, low-carb and high-protein
@@ -2831,6 +2902,16 @@ if (demo) {
   const waitLeft = (step, t) => (t ? t.remaining - (step.until || 0) * MIN : 0);
   const timerFor = (id) => state.cook.r.steps.find((s) => s.timer && s.timer.id === id).timer;
 
+  // The amounts this step needs, as small labels under it, scaled to the servings.
+  function stepAmts(r, i) {
+    const list = stepItems(r)[i];
+    if (!list.length) return '';
+    return `<ul class="step-amts" aria-label="Amounts for this step">${list.map((it) => {
+      const a = amount(it);
+      return `<li><strong>${a.qty}</strong> ${esc(it.spice ? it.n.toLowerCase() : a.name)}</li>`;
+    }).join('')}</ul>`;
+  }
+
   function renderNow(focus = false) {
     const c = state.cook;
     const steps = c.r.steps;
@@ -2863,6 +2944,7 @@ if (demo) {
       card.innerHTML = `
         <span class="now-card__label">Now · ${c.i + 1} of ${steps.length}</span>
         <p class="now-card__text">${step.do}</p>
+        ${stepAmts(c.r, c.i)}
         ${notes ? `<p class="now-card__note">${notes}</p>` : ''}
         <div class="actions"><button type="button" class="btn btn--yolk js-now-done">${step.timer ? `Done. Start the ${step.timer.label.toLowerCase()} timer` : last ? 'Done. Time to eat' : 'Done. Next'}</button></div>`;
       announce = `Now: ${step.do}`;
