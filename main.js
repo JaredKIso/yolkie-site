@@ -1174,9 +1174,10 @@ const HAVE = [
   { id: 'spinach', label: 'Spinach', test: (n) => /spinach/.test(n) },
   { id: 'lemon', label: 'Lemon', test: (n) => /\blemons?\b/.test(n) },
 ];
-// The house: you (Yolkie, in the kitchen) and up to two more people, because the kitchen fits three.
-// Each member is drawn as one of the three kitchen characters; Boyd and Scramble are the defaults.
-const MAX_HOUSE = 3;
+// The house: you (Yolkie, in the kitchen) and as many others as live there. The demo stops at 12 so the
+// kitchen stays walkable. Everyone else is drawn as a boiled or scrambled egg, taking turns; Boyd and
+// Scramble are the defaults, and name tags tell the rest apart.
+const MAX_HOUSE = 12;
 const CHARS = ['yolk', 'boiled', 'scramble'];
 const CHAR_FACES = { boiled: { idle: 'boyd-default', win: 'boyd-happy', lose: 'boyd-default' }, scramble: { idle: 'scramble-default', win: 'scramble-default', lose: 'scramble-pout' } };
 const DEFAULT_MEMBERS = [
@@ -1862,7 +1863,8 @@ if (demo) {
     savePrefs();
   }
   const charOf = (id) => { const m = member(id); return m ? m.char : id === 'you' ? 'yolk' : null; };
-  const freeChar = () => CHARS.find((c) => !prefs.members.some((m) => m.char === c));
+  // The egg that fewer people in the house are drawn as (boiled first on a tie).
+  const freeChar = () => ['boiled', 'scramble'].sort((x, y) => prefs.members.filter((m) => m.char === x).length - prefs.members.filter((m) => m.char === y).length)[0];
   function avatar(id, mood = 'idle', extra = '') {
     const c = charOf(id);
     if (c === 'yolk') return `<span class="avatar ${extra}">${yolkieArt({ idle: 'default', win: 'happy', lose: 'meh' }[mood])}</span>`;
@@ -3291,7 +3293,7 @@ if (demo) {
   const newCode = () => `YOLK-${Array.from({ length: 4 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join('')}`;
   const inviteLink = (code) => `${location.origin}${location.pathname}#join=${code}`;
   const liveLink = () => (prefs.link && prefs.link.exp > Date.now() ? prefs.link : null);
-  const JOINERS = ['Sunny', 'Poppy', 'Basil', 'Clementine'];
+  const JOINERS = ['Sunny', 'Poppy', 'Basil', 'Clementine', 'Maple', 'Pip', 'Juniper', 'Nori', 'Olive', 'Dash', 'Mochi'];
   const ROLE = { owner: 'Owner', member: 'Member', guest: 'Guest · no app yet' };
   const SHARED = ['Who’s in the house', 'Restrictions needed for cooking', 'The shopping list', 'Votes', 'The house goal', 'The kitchen', 'Kudos', 'Gifts', 'House favorites'];
   const PRIVATE = ['Personal stats', 'Nutrition', 'Check-in times', 'Your sticker book'];
@@ -3410,11 +3412,11 @@ if (demo) {
       <div class="tab-head"><h2 class="stage__title" tabindex="-1">House</h2><p class="stage__sub">One goal for everyone, and a sticker when someone cooks something good.</p></div>
       <p class="vote-label"><span class="icon" aria-hidden="true">smartphone</span><span><strong>Demo: pass the phone.</strong> The whole house shares this one device here. In the app, everyone would join from their own phone.</span></p>
       <section class="panel" aria-labelledby="members-title">
-        <div class="servings"><h3 id="members-title">Who’s in the house?</h3><span class="fine">${prefs.members.length} of ${MAX_HOUSE} spots</span></div>
+        <div class="servings"><h3 id="members-title">Who’s in the house?</h3><span class="fine">${plural(prefs.members.length, 'person', 'people')}</span></div>
         <ul class="members">${prefs.members.map(memberCard).join('')}</ul>
         ${room ? (house.guest ? `<form class="add-row js-guest-form"><label class="sr-only" for="guest-name">Their name</label><input id="guest-name" class="text-input" type="text" placeholder="Their name" maxlength="16" autocomplete="off" required><button class="btn btn--primary btn--small">Add</button><button type="button" class="btn btn--ghost btn--small js-guest-cancel">Cancel</button></form>`
           : '<button type="button" class="btn btn--secondary btn--small js-add-guest"><span class="icon" aria-hidden="true">person_add</span>Add someone without the app</button>')
-          : `<p class="fine">The house is full. The kitchen fits ${MAX_HOUSE}, so the demo stops there.</p>`}
+          : `<p class="fine">That’s ${MAX_HOUSE}, as many as this demo holds.</p>`}
         <p class="fine members__note">Guests get a profile you look after. Members with the app edit their own.</p>
       </section>
       ${linkPanel()}
@@ -3442,7 +3444,7 @@ if (demo) {
     const l = liveLink();
     if (!/^YOLK-[A-Z2-9]{4}$/.test(code)) return { err: 'Codes look like YOLK- and four letters or numbers.' };
     if (code !== DEMO_CODE && !(l && l.code === code)) return { err: 'That code doesn’t match a house. Codes expire after 7 days.' };
-    if (prefs.members.length >= MAX_HOUSE) return { err: `This house is full: the kitchen fits ${MAX_HOUSE}. Remove someone first.` };
+    if (prefs.members.length >= MAX_HOUSE) return { err: `This demo holds ${MAX_HOUSE} people. Remove someone first.` };
     const name = JOINERS.find((n) => !prefs.members.some((m) => m.name === n)) || 'Someone';
     const m = { id: `j${Date.now().toString(36)}`, name, char: freeChar(), role: 'member', status: 'pending' };
     prefs.members.push(m);
@@ -3559,7 +3561,7 @@ if (demo) {
       { id: 'magnets', name: 'Fridge magnets', at: 7 }, { id: 'lights', name: 'String lights', at: 10 }, { id: 'poster', name: 'Yolkie poster', at: 13 },
       { id: 'clock', name: 'Wall clock', at: 16 }, { id: 'lamp', name: 'Pendant lamp', at: 20 },
     ];
-    const opts = Object.assign({ night: false, auto: true, seen: -1, home: 0, seenBonus: null }, prefs.kitchen);
+    const opts = Object.assign({ night: false, auto: true, seen: -1, away: [], seenBonus: null }, prefs.kitchen);
     const saveOpts = () => { prefs.kitchen = opts; savePrefs(); };
     let people = [];    // the members at home, you first
     let size = 1;
@@ -3741,7 +3743,10 @@ if (demo) {
       fridgeDoor = null;
       objects.forEach((o) => { const g = document.createElementNS(NS, 'g'); g.innerHTML = o.html; o.el = g; if (o.id === 'fridgeOpen') { g.style.display = 'none'; fridgeDoor = g; } og.appendChild(g); });
       drawFridge();
+      // Everyone starts on their own free tile; the first three keep the prototype's spots.
       const start = size > 1 ? [[2, 2], [5, 6], [1, 4]] : [[2, 2]];
+      freeTiles().filter(([i, j]) => !start.some((t) => t[0] === i && t[1] === j)).sort((x, y) => (x[0] * 7 + x[1] * 3) % 11 - (y[0] * 7 + y[1] * 3) % 11)
+        .forEach((t) => { if (start.length < people.length) start.push(t); });
       agents = [];
       people.forEach((m, a) => addAgent({ who: m.id, type: m.char, at: start[a], acc: a === 0 ? accLayers(outfit) : '' }));
       if (visit) {
@@ -3993,10 +3998,10 @@ if (demo) {
     const BONUS_DECOR = [['toaster', 'Toaster', 'Breakfast Club'], ['cookies', 'Cookie jar', 'Midnight Snacks'], ['cactus', 'Tiny cactus', 'Taco Tuesday']];
     function renderControls() {
       const all = active();
-      $('.js-k-sizes').innerHTML = all.map((m, k) => {
-        const n = k + 1;
-        const label = n === 1 ? 'Just you' : n === all.length && n > 2 ? 'Everyone' : `You & ${rawName(all[1].id)}`;
-        return `<button type="button" class="tag${size === n ? ' is-on' : ''}" data-k-size="${n}" aria-pressed="${size === n}">${esc(label)}</button>`;
+      // One chip per person. You're always home, because you're Yolkie.
+      $('.js-k-sizes').innerHTML = all.map((m) => {
+        const home = people.includes(m);
+        return `<button type="button" class="tag tag--person${home ? ' is-on' : ''}" data-k-home="${m.id}" aria-pressed="${home}">${avatar(m.id, 'idle', 'avatar--xs')}${memberName(m.id)}</button>`;
       }).join('');
       const names = $('.js-k-names');
       if (!names.contains(document.activeElement)) {
@@ -4049,7 +4054,7 @@ if (demo) {
       if (!sampleOn() && !opts.tester) preview = null;
       meals = preview == null ? real : preview;
       const all = active();
-      people = all.slice(0, opts.home && opts.home <= all.length ? opts.home : all.length);
+      people = all.filter((m) => m.id === 'you' || !opts.away.includes(m.id));
       size = people.length;
       outfit = worn();
       col = collectionFor(a);
@@ -4161,15 +4166,18 @@ if (demo) {
       if (b && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); const [x, y] = freeSpot(); stick(b.dataset.tray, x, y); const next = $('[data-tray]', kBox); if (next) next.focus(); }
     });
     kBox.addEventListener('click', (e) => {
-      const s = e.target.closest('[data-k-size]');
+      const s = e.target.closest('[data-k-home]');
       if (s) {
-        opts.home = Number(s.dataset.kSize);
+        const id = s.dataset.kHome;
+        if (id === 'you') { toast('You’re always home: you’re Yolkie'); return; }
+        const was = size;
+        opts.away = opts.away.includes(id) ? opts.away.filter((x) => x !== id) : [...opts.away, id];
         saveOpts();
         sync();
         build();
         renderControls();
-        $(`[data-k-size="${size}"]`).focus();
-        toast(size > 1 ? 'The kitchen got bigger!' : 'Just you and the kitchen');
+        $(`[data-k-home="${id}"]`).focus();
+        toast(size > 1 && was === 1 ? 'The kitchen got bigger!' : size === 1 ? 'Just you and the kitchen' : opts.away.includes(id) ? `${rawName(id)} headed out` : `${rawName(id)} is home!`);
       }
       const rot = e.target.closest('[data-k-rot]');
       if (rot) { const k = Number(rot.dataset.kRot); fridge[k].r = Math.max(-24, Math.min(24, fridge[k].r + Number(rot.dataset.d))); picked = k; saveFridge(); drawFridge(); renderTray(); $(`[data-k-rot="${k}"][data-d="${rot.dataset.d}"]`).focus(); }
