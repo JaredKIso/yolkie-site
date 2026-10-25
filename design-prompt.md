@@ -14,3 +14,4 @@ _Update: the app was renamed from Tonight to Yolkie (after its mascot) and widen
 
 - **Home (`index.html`)**: the main journey described above, ending on "Get early access".
 - **Try it (`try.html`)**: the practical room in the same building. One decision per card, big type, big tap targets, the grid turning into a step-by-step track; Yolkie's face carries the mood from sleepy to celebrating, and it ends on "Get early access" too.
+- **Help (`help.html`)**: the reference shelf in the same building. Calm, scannable and quiet: numbered sections that fold away like labelled drawers, a search that narrows them as you type, and one “Try it” on every guide that walks you straight back into the demo. Yolkie looks on, cheerful, and it ends on “Try the demo”.

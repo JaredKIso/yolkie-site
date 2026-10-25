@@ -26,7 +26,7 @@ if (toggle) {
 // for in-page links. setTimeout, not requestAnimationFrame, which background tabs pause.
 window.addEventListener('load', () => {
   const target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
-  if (target) target.scrollIntoView({ behavior: 'instant' });
+  if (target && !target.classList.contains('anchor')) target.scrollIntoView({ behavior: 'instant' }); // .anchor marks a sheet, not a place
   if (!reduceMotion) setTimeout(() => root.classList.add('smooth'), 0);
 });
 
@@ -98,6 +98,10 @@ document.querySelectorAll('.js-email').forEach((el) => {
 // 'preview' runs the whole form (checks, Yolkie, confetti) but sends nothing; replace it before launch.
 // While it's empty, the form says the list isn't open yet.
 const WAITLIST_URL = 'preview';
+
+// Where the help page's "Send feedback" button goes: a form (https://…) or a mailto: address.
+// While it's empty, the button says feedback isn't open yet.
+const FEEDBACK_URL = '';
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
@@ -251,6 +255,55 @@ if (heroYolk) {
     resting = moods[(moods.indexOf(resting) + 1) % moods.length];
     show(resting);
   });
+}
+
+/* ---------- The help page (help.html) ---------- */
+
+// Search filters the sections as you type, opening every match; clearing it puts back what was open.
+// Arriving at help.html#water (or tapping it in the contents) opens that section.
+const helpSearch = document.querySelector('.js-help-search');
+if (helpSearch) {
+  const secs = [...document.querySelectorAll('.help-sec')];
+  const tocItems = [...document.querySelectorAll('.js-help-toc li')];
+  const count = document.querySelector('.js-help-count');
+  const empty = document.querySelector('.js-help-empty');
+  let before = null;
+  const openFromHash = () => {
+    const sec = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));
+    if (sec && sec.matches('.help-sec')) sec.open = true;
+  };
+  openFromHash();
+  window.addEventListener('hashchange', openFromHash);
+  document.querySelector('.js-help-toc').addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    const sec = a && document.getElementById(a.getAttribute('href').slice(1));
+    if (sec) sec.open = true;
+  });
+  helpSearch.addEventListener('input', () => {
+    const term = helpSearch.value.trim().toLowerCase();
+    if (term && !before) before = secs.map((sec) => sec.open);
+    let n = 0;
+    secs.forEach((sec, k) => {
+      const hit = !term || sec.textContent.toLowerCase().includes(term);
+      sec.hidden = !hit;
+      tocItems[k].hidden = !hit;
+      if (hit && term) { sec.open = true; n += 1; }
+    });
+    if (!term && before) { secs.forEach((sec, k) => { sec.open = before[k]; }); before = null; }
+    count.textContent = term ? (n ? `${n} ${n === 1 ? 'section matches' : 'sections match'}.` : '') : '';
+    empty.hidden = !term || n > 0;
+  });
+  const feedback = document.querySelector('.js-feedback');
+  const status = document.querySelector('.js-feedback-status');
+  if (/^mailto:/i.test(FEEDBACK_URL)) {
+    feedback.href = `${FEEDBACK_URL}${FEEDBACK_URL.includes('?') ? '&' : '?'}subject=${encodeURIComponent('Yolkie demo feedback')}`;
+  } else if (/^https:\/\//i.test(FEEDBACK_URL)) {
+    feedback.href = FEEDBACK_URL;
+    feedback.target = '_blank';
+    feedback.rel = 'noopener';
+  } else {
+    feedback.addEventListener('click', (e) => { e.preventDefault(); status.textContent = 'Feedback isn’t open just yet. Check back soon!'; });
+  }
 }
 
 /* ---------- The demo (try.html) ---------- */
@@ -1884,6 +1937,8 @@ if (demo) {
       <span class="ring__num" aria-hidden="true"><span>${n}<small>/${goal}</small></span></span></div>`;
   }
   const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+  // A small "?" that opens the matching section of the help page.
+  const helpDot = (id, label) => `<a class="help-dot" href="help.html#${id}" aria-label="${label}">?</a>`;
 
   /* Tabs: Cook, Me, House, Collection */
   const tabs = $$('[role="tab"]');
@@ -2371,7 +2426,7 @@ if (demo) {
     const people = active();
     const ids = eaters();
     box.innerHTML = `${people.length > 1 ? `<div class="eating">
-        <p class="eating__label" id="eating-label">Who’s eating?</p>
+        <div class="title-row"><p class="eating__label" id="eating-label">Who’s eating?</p>${helpDot('picking', 'Help: who’s eating')}</div>
         <div class="tags" role="group" aria-labelledby="eating-label">${people.map((m) => {
           const on = ids.includes(m.id);
           return `<button type="button" class="tag tag--person${on ? ' is-on' : ''}" data-eat="${m.id}" aria-pressed="${on}">${avatar(m.id, 'idle', 'avatar--xs')}${memberName(m.id)}</button>`;
@@ -3353,7 +3408,7 @@ if (demo) {
         <p class="join-msg${house.joinErr ? ' is-error' : ''}" aria-live="polite">${esc(house.joinMsg)}</p></form>`;
     }
     return `<section class="panel" aria-labelledby="link-title">
-      <h3 id="link-title">Link your household</h3>
+      <div class="title-row"><h3 id="link-title">Link your household</h3>${helpDot('household', 'Help: linking a household')}</div>
       <p class="demo-note"><span class="icon" aria-hidden="true">science</span>Demo: real linking needs accounts. This shows how it will work.</p>
       <div class="tags" role="group" aria-label="Link your household">
         <button type="button" class="tag js-link-create" aria-pressed="${house.view === 'create'}"><span class="icon" aria-hidden="true">add_home</span>Create household</button>
@@ -4519,7 +4574,7 @@ if (demo) {
         <section class="panel water-card" aria-labelledby="water-title-${where}">
           <div class="water-card__art">${bottleSvg(where)}<span class="water-card__yolk">${yolkieArt('default', 'js-water-yolk')}</span><span class="water-card__sip" aria-hidden="true">sip!</span></div>
           <div class="water-card__body">
-            <h3 id="water-title-${where}">Water</h3>
+            <div class="title-row"><h3 id="water-title-${where}">Water</h3>${helpDot('nutrition-water', 'Help: the water tracker')}</div>
             <p class="water-card__amount js-water-amount"></p>
             <p class="fine js-water-note"></p>
             <div class="water-card__btns">
@@ -4602,7 +4657,7 @@ if (demo) {
     const view = COL_VIEWS.some((v) => v[0] === prefs.colView) ? prefs.colView : 'binder';
     const body = { binder: binderView, stickers: stickersView, friends: friendsView, pantry: pantryView, swap: swapView }[view](a, col);
     colBox.innerHTML = `
-      <div class="tab-head"><h2 class="stage__title" tabindex="-1">Collection</h2>
+      <div class="tab-head"><div class="title-row"><h2 class="stage__title" tabindex="-1">Collection</h2>${helpDot('collection', 'Help: the collection')}</div>
         <p class="stage__sub">Earned by cooking and trying things. Nothing’s for sale, there are no random packs, and it’s private to you${sampleOn() ? '. Right now it’s the sample week' : ''}.</p></div>
       <div class="col-nav" role="group" aria-label="Collection sections">${COL_VIEWS.map(([id, label, icon]) => `<button type="button" class="tag" data-col-view="${id}" aria-pressed="${id === view}"><span class="icon" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</div>
       ${body}`;
@@ -4920,7 +4975,7 @@ if (demo) {
       + sec('Household restrictions', `<p class="fine">Suggestions and house votes work for everyone eating: all their diets and allergies together. Dislikes only move a recipe down.${sampleOn() ? ' Right now these are the sample week’s.' : ''}</p>
         ${active().map(restrCard).join('')}`, 'prefs-house')
       + sec('Nutrition', `<label class="switch"><input type="checkbox" class="js-nutri-hide"${nutritionOn() ? '' : ' checked'}><span class="switch__track" aria-hidden="true"></span>Hide nutrition</label>
-        <p class="fine">Hides every calorie, protein and nutrition number, here and on the home page.</p>`)
+        <p class="fine">Hides every calorie, protein and nutrition number, here and on the home page.</p>`, 'prefs-nutrition')
       + sec('Water', `<label class="switch"><input type="checkbox" class="js-water-on"${W().on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Water tracker</label>
         <p class="allergy-note"><span class="icon" aria-hidden="true">info</span>Everyone’s needs are different. If a doctor has given you a fluid limit, follow that.</p>
         ${W().on ? `<p class="fine">Private to you: water is never shared with the house. It starts fresh every day, with no streaks.</p>
@@ -4953,8 +5008,8 @@ if (demo) {
         <p class="fine">Each meal you finish adds this to “takeout dodged”. It’s an estimate.</p>`)
       + sec('Sample data for testers', sampleOn()
         ? '<p>Sample data is on. Everything you see, and anything you cook, uses the sample weeks.</p><button type="button" class="btn btn--secondary btn--small js-clear-sample">Clear sample data</button>'
-        : '<p class="fine">Fills in a realistic, made-up few weeks: meals, ratings, cards, stickers, friends, Pantry-dex, the house’s profiles and remembered ingredients. It’s kept apart from your real stats and clears in one tap.</p><button type="button" class="btn btn--secondary btn--small js-load-sample">Load sample week</button>')
-      + sec('Start over', `<p class="fine">Clears every choice and meal this demo saved on this device.</p><button type="button" class="btn btn--ghost btn--small js-reset-all">${resetArmed ? 'Tap again to clear everything' : 'Clear all demo data'}</button>`);
+        : '<p class="fine">Fills in a realistic, made-up few weeks: meals, ratings, cards, stickers, friends, Pantry-dex, the house’s profiles and remembered ingredients. It’s kept apart from your real stats and clears in one tap.</p><button type="button" class="btn btn--secondary btn--small js-load-sample">Load sample week</button>', 'prefs-sample')
+      + sec('Start over', `<p class="fine">Clears every choice and meal this demo saved on this device.</p><button type="button" class="btn btn--ghost btn--small js-reset-all">${resetArmed ? 'Tap again to clear everything' : 'Clear all demo data'}</button>`, 'prefs-reset');
   }
   function openPrefs(section) {
     resetArmed = false;
@@ -5624,6 +5679,54 @@ if (demo) {
     if (t.closest('.js-vote-again')) { renderVoteSetup(); yolk('surprised', 'A recount? Bold.'); }
     if (t.closest('.js-vote-cook')) startCheck(v.picks[v.winner]);
   });
+  /* Links from the help page: try.html#kitchen and so on open the matching view or sheet. */
+  const bringUp = (sel, focus) => setTimeout(() => {
+    const el = $(sel) || document.querySelector(sel);
+    if (!el) return;
+    el.scrollIntoView({ block: 'start' });
+    const f = focus && (el.matches(focus) ? el : $(focus, el));
+    if (f) f.focus({ preventScroll: true });
+  }, 0);
+  // Shopping list and cook mode need a recipe: use the one on screen, or pick one for now.
+  function ensureRecipe() {
+    if (state.recipe) return;
+    const h = new Date().getHours();
+    state.meal = state.meal || (h < 11 ? 'breakfast' : h < 15 ? 'lunch' : h < 21 ? 'dinner' : 'snack');
+    state.energy = state.energy || 2;
+    state.time = state.time || 30;
+    state.haveDone = true;
+    checkRadios();
+    savePick();
+    rank();
+    suggest(false);
+  }
+  const FEATURES = {
+    'quick-start': () => { showTab('cook'); go('pick'); yolk('happy', 'Quick start: pick the meal, your energy and your time.'); },
+    'who-eating': () => { showTab('cook'); go('pick'); bringUp('.js-pick-extras', '[data-eat]'); yolk('default', 'Tap who’s eating, and the picks work for all of you.'); },
+    diets: () => openPrefs(),
+    restrictions: () => openPrefs('prefs-house'),
+    shopping: () => { showTab('cook'); ensureRecipe(); if (state.recipe) { startCheck(state.recipe); bringUp('.js-shop-list'); } },
+    cook: () => { showTab('cook'); ensureRecipe(); if (state.recipe) beginCook(); },
+    nutrition: () => openPrefs('prefs-nutrition'),
+    water: () => { if (!W().on) { openPrefs('prefs-water'); return; } showTab('me'); bringUp('.js-water[data-where="me"]', '.js-water-plus'); yolk('happy', 'Tap +1 when you drink. The kitchen plant gets some too.'); },
+    progress: () => { showTab('me'); showMeView('progress', true); },
+    closet: () => { showTab('me'); showMeView('progress'); bringUp('#closet'); },
+    kitchen: () => { showTab('me'); showMeView('kitchen', true); yolk('happy', 'Welcome to the kitchen. Tap the floor and I’ll walk there.'); },
+    collection: () => { showTab('collection'); showColView('binder', true); },
+    stickers: () => { showTab('collection'); showColView('stickers', true); },
+    favorites: () => { house.recent = 'mine'; showTab('house'); bringUp('#recent-title', '[data-recent="mine"]'); },
+    household: () => { showTab('house'); bringUp('#link-title', '.js-link-create'); },
+    checkin: () => { showTab('cook'); openCheckin(); },
+    sample: () => openPrefs('prefs-sample'),
+    reset: () => openPrefs('prefs-reset'),
+  };
+  function openFeature() {
+    const f = FEATURES[decodeURIComponent(location.hash.slice(1))];
+    if (f) f();
+    return !!f;
+  }
+  window.addEventListener('hashchange', openFeature);
+
   /* Start: put back the last pick, the outfit and the tab */
   (function restore() {
     const last = prefs.last || {};
@@ -5642,6 +5745,7 @@ if (demo) {
     if (state.meal && state.energy && state.time) {
       if (state.haveDone) { rank(); suggest(false); } else renderHave(false);
     }
+    if (openFeature()) return;
     // An invite link (#join=YOLK-XXXX) opens the join screen with the code filled in.
     const join = /^#join=(YOLK-[A-Z0-9]{4})$/i.exec(location.hash);
     if (join) {

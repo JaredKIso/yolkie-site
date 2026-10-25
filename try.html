@@ -46,6 +46,7 @@
         <a href="./#how">How it works</a>
         <a href="./#features">Features</a>
         <a href="./#faq">FAQ</a>
+        <a href="help.html">Help</a>
         <a class="site-nav__try" href="try.html" aria-current="page">Try the demo</a>
       </nav>
       <button class="theme-toggle" type="button" aria-label="Switch colour theme">
@@ -94,10 +95,10 @@
       </ol>
 
       <!-- 1. Pick -->
-      <div class="stage" data-stage="pick">
+      <div class="stage" data-stage="pick" id="quick-start">
         <h2 class="stage__title" tabindex="-1">What are we eating?</h2>
         <p class="stage__sub">Three taps and you'll have one meal.</p>
-        <div class="js-diet-bar">
+        <div class="js-diet-bar" id="diets">
           <div class="pick-top">
             <button type="button" class="diet-chip js-diet-chip" aria-haspopup="dialog"><span class="icon" aria-hidden="true">tune</span><span class="diet-chip__label">Diet:</span><span class="diet-chip__text js-diet-summary">No preferences</span><span class="icon" aria-hidden="true">expand_more</span></button>
             <button type="button" class="btn btn--ghost btn--small js-open-checkin" aria-haspopup="dialog"><span class="icon" aria-hidden="true">notifications</span>Preview Yolkie's check-in</button>
@@ -132,7 +133,7 @@
           </div>
         </fieldset>
 
-        <div class="pick-extras js-pick-extras"></div>
+        <div class="pick-extras js-pick-extras" id="who-eating"></div>
         <p class="choice-hint js-pick-hint">Pick all three and Yolkie suggests one meal.</p>
         <div class="js-meal-slot"></div>
         <div class="js-water" data-where="cook" hidden></div>
@@ -169,7 +170,7 @@
           <ul class="swap-list js-swaps"></ul>
         </div>
 
-        <div class="panel">
+        <div class="panel" id="shopping">
           <h3>Shopping list</h3>
           <p class="fine">Grouped by store section. Just the general section, not real store or aisle data.</p>
           <div class="shop-list js-shop-list" aria-live="polite"></div>
@@ -186,7 +187,7 @@
       </div>
 
       <!-- 3. Cook -->
-      <div class="stage" data-stage="cook" hidden>
+      <div class="stage" data-stage="cook" id="cook" hidden>
         <div class="cook-head">
           <h2 class="stage__title js-cook-title" tabindex="-1">Cook mode</h2>
           <label class="switch"><input type="checkbox" class="js-demo-speed"><span class="switch__track" aria-hidden="true"></span>Demo speed (10×)</label>
@@ -236,9 +237,9 @@
           <button type="button" data-me-view="progress" aria-pressed="true"><span class="icon" aria-hidden="true">insights</span>Progress</button>
           <button type="button" data-me-view="kitchen" aria-pressed="false"><span class="icon" aria-hidden="true">countertops</span>Kitchen</button>
         </div>
-        <div class="js-water water-slot" data-where="me" hidden></div>
-        <div class="tab-stack js-me"></div>
-        <div class="tab-stack js-kitchen" hidden>
+        <div class="js-water water-slot" data-where="me" id="water" hidden></div>
+        <div class="tab-stack js-me" id="progress"></div>
+        <div class="tab-stack js-kitchen" id="kitchen" hidden>
           <div class="tab-head"><h2 class="stage__title" tabindex="-1">Yolkie's Kitchen</h2>
             <p class="stage__sub">Tap the floor to walk Yolkie around. Tap anyone to say hi. Everyone else lives their own life in here, and friends you’ve met drop by.</p></div>
           <div class="kitchen-stage">
@@ -287,11 +288,12 @@
           </section>
         </div>
       </div>
-      <div role="tabpanel" id="panel-house" data-panel="house" aria-labelledby="tab-house" hidden><div class="tab-stack js-house"></div></div>
-      <div role="tabpanel" id="panel-collection" data-panel="collection" aria-labelledby="tab-collection" hidden><div class="tab-stack js-collection"></div></div>
+      <div role="tabpanel" id="panel-house" data-panel="house" aria-labelledby="tab-house" hidden><span class="anchor" id="favorites"></span><div class="tab-stack js-house" id="household"></div></div>
+      <div role="tabpanel" id="panel-collection" data-panel="collection" aria-labelledby="tab-collection" hidden><div class="tab-stack js-collection" id="collection"></div></div>
       <p class="demo-toast js-toast" role="status" aria-live="polite"></p>
 
       <!-- Sheets -->
+      <span class="anchor" id="restrictions"></span><span class="anchor" id="nutrition"></span><span class="anchor" id="sample"></span><span class="anchor" id="reset"></span>
       <dialog class="sheet js-prefs-sheet" aria-labelledby="prefs-title">
         <div class="sheet__head"><h2 id="prefs-title">Preferences</h2><button type="button" class="icon-btn js-close" aria-label="Close preferences"><span class="icon" aria-hidden="true">close</span></button></div>
         <div class="sheet__body js-prefs-body"></div>
@@ -304,7 +306,7 @@
         <div class="sheet__head"><h2 id="nutri-title">Nutrition</h2><button type="button" class="icon-btn js-close" aria-label="Close nutrition"><span class="icon" aria-hidden="true">close</span></button></div>
         <div class="sheet__body js-nutri-body"></div>
       </dialog>
-      <dialog class="sheet sheet--phone js-checkin" aria-label="Preview of Yolkie's check-in notification">
+      <dialog id="checkin" class="sheet sheet--phone js-checkin" aria-label="Preview of Yolkie's check-in notification">
         <div class="js-checkin-body"></div>
       </dialog>
       <dialog class="sheet js-gift" aria-labelledby="gift-sheet-title">
@@ -322,6 +324,7 @@
     <p><strong>Pre-launch concept.</strong> Trademark clearance pending.</p>
     <div class="site-footer__links">
       <a href="./">Home</a>
+      <a href="help.html">Help</a>
       <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
     </div>
   </footer>

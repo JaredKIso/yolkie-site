@@ -1602,6 +1602,92 @@ ol.recent { padding-left: 0; }
 }
 
 /* ==========================================================================
+   3e. HELP PAGE: the reference shelf. Same tokens; numbered sections that fold away,
+       a search that filters as you type, and a "Try it" on every guide.
+   ========================================================================== */
+.help-hero { display: flex; align-items: center; justify-content: space-between; gap: 24px; max-width: none; }
+.help-hero__yolk { width: clamp(96px, 16vw, 170px); height: auto; flex: none; }
+.help { display: grid; grid-template-columns: 240px minmax(0, 1fr); grid-template-areas: "tools tools" "toc main" ". empty"; gap: 24px 48px; padding: 28px 0 40px; }
+.help-tools { grid-area: tools; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.help-search { flex: 1 1 280px; max-width: 520px; margin-top: 0; }
+.help-toc { grid-area: toc; align-self: start; position: sticky; top: calc(var(--header-h) + 16px); }
+.help-toc .mini-head { margin-top: 0; }
+.help-toc ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.help-toc a { display: block; padding: 6px 10px; border-radius: 8px; color: var(--text); text-decoration: none; font-weight: 600; font-size: 15px; }
+.help-toc a:hover { background: var(--surface-2); }
+.help-toc li[hidden] { display: none; }
+.help-sections { grid-area: main; border-top: 3px solid var(--text); }
+.help-sec { border-bottom: 1px solid var(--line); }
+.help-sec[hidden] { display: none; }
+.help-sec summary { display: flex; align-items: center; gap: 16px; min-height: 64px; padding: 14px 0; cursor: pointer; list-style: none; }
+.help-sec summary::-webkit-details-marker { display: none; }
+.help-sec summary h2 { flex: 1; font-size: clamp(22px, 1rem + 1vw, 30px); }
+.help-sec summary::after {
+  content: "+"; display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%;
+  border: 2px solid var(--text); font: 600 22px/1 var(--font-body); transition: transform .25s var(--ease), background .2s;
+}
+.help-sec[open] summary::after { transform: rotate(45deg); background: var(--yolk); border-color: var(--yolk); color: var(--ink); }
+.help-sec__num { font: 800 15px/1 var(--font-display); color: var(--text-dim); min-width: 28px; }
+.help-sec__body { padding: 0 0 26px 44px; max-width: 64ch; }
+.help-sec__body > p { margin-top: 10px; color: var(--text-dim); }
+.help-sec__body .mini-head { margin-top: 18px; }
+.help-steps { margin: 0; padding: 0; list-style: none; counter-reset: step; display: grid; gap: 12px; }
+.help-steps li { position: relative; padding-left: 40px; counter-increment: step; }
+.help-steps li::before {
+  content: counter(step); position: absolute; left: 0; top: -2px; display: grid; place-items: center; width: 28px; height: 28px;
+  border-radius: 50%; background: var(--yolk); color: var(--ink); font: 800 14px/1 var(--font-display);
+}
+.help-note {
+  display: flex; gap: 8px; align-items: center; margin-top: 16px !important; padding: 10px 12px; border-radius: 10px;
+  background: var(--yolk-soft); border-left: 4px solid var(--yolk); color: var(--text) !important; font-weight: 700; font-size: 15px;
+}
+.help-sec__body > .btn { margin-top: 18px; }
+.help-checklist { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.help-checklist li { position: relative; padding-left: 30px; }
+.help-checklist li::before { content: ""; position: absolute; left: 2px; top: 3px; width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--accent); }
+.help-actions { margin-top: 18px; gap: 10px; }
+.help-faq { margin: 0; }
+.help-faq dt { margin-top: 16px; font: 800 19px/1.25 var(--font-display); font-stretch: 88%; }
+.help-faq dt:first-child { margin-top: 0; }
+.help-faq dd { margin: 4px 0 0; color: var(--text-dim); }
+.help-news { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
+.help-news li { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; }
+.help-news time { font-size: 13px; font-weight: 700; color: var(--accent); padding-top: 2px; }
+.help-empty { grid-area: empty; padding: 18px; border-radius: 12px; background: var(--surface-2); font-weight: 600; }
+.help-empty[hidden] { display: none; }
+.help-cta { margin: 0 0 80px; padding: 32px; border-radius: var(--radius-l); background: var(--block-dark); color: var(--paper); }
+.help-cta h2 { font-size: clamp(30px, 1.4rem + 2vw, 44px); }
+.help-cta p { margin-top: 8px; opacity: .9; }
+.help-cta .actions { margin-top: 20px; }
+.help-cta .btn--secondary { color: var(--paper); border-color: var(--paper); }
+.help-cta .btn--secondary:hover { background: var(--paper); color: var(--ink); }
+.help-sec mark { background: var(--yolk-soft); color: inherit; border-radius: 3px; }
+
+/* "?" buttons in the demo that open the matching help section */
+.help-dot {
+  display: inline-grid; place-items: center; flex: none; width: 26px; height: 26px; margin-left: 8px; border-radius: 50%; vertical-align: 3px;
+  border: 2px solid var(--line); background: var(--surface); color: var(--accent); font: 800 14px/1 var(--font-body); text-decoration: none; position: relative;
+}
+.help-dot:hover { border-color: var(--accent); }
+.help-dot::after { content: ""; position: absolute; inset: -8px; } /* a bigger tap target */
+.title-row { display: flex; align-items: center; gap: 2px; }
+.title-row .help-dot { vertical-align: 0; }
+
+@media (max-width: 860px) {
+  .help { grid-template-columns: 1fr; grid-template-areas: "tools" "toc" "main" "empty"; gap: 18px; }
+  .help-toc { position: static; }
+  .help-toc ol { display: flex; flex-wrap: wrap; gap: 6px; }
+  .help-toc a { padding: 6px 12px; border: 2px solid var(--line); border-radius: 999px; font-size: 14px; }
+}
+@media (max-width: 560px) {
+  .help-sec__body { padding-left: 0; }
+  .help-sec summary { gap: 10px; }
+  .help-news li { grid-template-columns: 1fr; gap: 2px; }
+  .help-cta { padding: 24px 16px; }
+  .help-cta .btn { width: 100%; }
+}
+
+/* ==========================================================================
    4. MOTION AND RESPONSIVE
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {

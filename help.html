@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Help · Yolkie</title>
+  <meta name="description" content="How the Yolkie demo works: picking a meal, diets and household restrictions, the shopping list, cook mode, water, progress, the kitchen, collecting, favorites and linking a household. Plus tips for testers and an FAQ.">
+  <meta property="og:title" content="Help · Yolkie">
+  <meta property="og:description" content="Short, plain guides to every part of the Yolkie demo, each with a button that takes you straight to it.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yolkie.isolatedideas.dev/help.html">
+  <meta property="og:image" content="https://yolkie.isolatedideas.dev/og-image.png">
+  <link rel="canonical" href="https://yolkie.isolatedideas.dev/help.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F6F4FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1740" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
+      r.classList.add('js');
+      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
+      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
+      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
+    })();
+  </script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Yolkie, home">
+        <span class="brand__mark"><img src="assets/app-icon.svg" alt="" width="34" height="34"></span>
+        <span class="brand__name">Yolkie</span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="./#problem">Why</a>
+        <a href="./#how">How it works</a>
+        <a href="./#features">Features</a>
+        <a href="./#faq">FAQ</a>
+        <a href="help.html" aria-current="page">Help</a>
+        <a class="site-nav__try" href="try.html">Try the demo</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Switch colour theme">
+        <span class="icon" aria-hidden="true">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero help-hero">
+      <div>
+        <p class="eyebrow">Help</p>
+        <h1>How Yolkie works.</h1>
+        <p class="lede">Short guides to every part of the demo, in plain language. Each one has a button that takes you straight to it.</p>
+      </div>
+      <img class="help-hero__yolk" src="assets/mascots/yolk-happy.svg" alt="" width="220" height="220">
+    </section>
+
+    <div class="help">
+      <div class="help-tools">
+        <div class="have-search help-search"><span class="icon" aria-hidden="true">search</span><label class="sr-only" for="help-search">Search help</label>
+          <input id="help-search" class="js-help-search" type="search" placeholder="Search, like water or allergies" autocomplete="off"></div>
+        <p class="fine js-help-count" aria-live="polite"></p>
+      </div>
+
+      <aside class="help-toc" aria-labelledby="toc-title">
+        <h2 class="mini-head" id="toc-title">Contents</h2>
+        <ol class="js-help-toc">
+          <li><a href="#quick-start">Quick start</a></li>
+          <li><a href="#picking">Picking a meal</a></li>
+          <li><a href="#diets">Diets and restrictions</a></li>
+          <li><a href="#shopping">Shopping list</a></li>
+          <li><a href="#cook-mode">Cook mode</a></li>
+          <li><a href="#nutrition-water">Nutrition and water</a></li>
+          <li><a href="#progress">Progress</a></li>
+          <li><a href="#closet-kitchen">Yolkie’s Closet and Kitchen</a></li>
+          <li><a href="#collection">Collection</a></li>
+          <li><a href="#favorites">Favorites</a></li>
+          <li><a href="#household">Household</a></li>
+          <li><a href="#reminders">Check-in reminders</a></li>
+          <li><a href="#testers">For testers</a></li>
+          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#whats-new">What’s new</a></li>
+        </ol>
+      </aside>
+
+      <div class="help-sections js-help-sections">
+        <details class="help-sec" id="quick-start" open>
+          <summary><span class="help-sec__num">01</span><h2>Quick start</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Pick the meal: breakfast, lunch, dinner or a snack.</li>
+              <li>Tap your energy (Wiped, Okay or Good) and how much time you have.</li>
+              <li>Yolkie suggests one meal. Tap “Let’s make this”, tick what you have, then “Start cooking”.</li>
+              <li>Follow one step at a time until it says “Time to eat”.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#quick-start"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="picking">
+          <summary><span class="help-sec__num">02</span><h2>Picking a meal</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Choose the meal type, your energy and your time. Lower energy means simpler recipes.</li>
+              <li>“What do you already have?” is optional: tap up to three things and Yolkie leans toward meals that use them.</li>
+              <li>If you told Yolkie what you had in the last few days, “Still got them?” asks first. It’s only a guess: say yes, or tap anything that’s gone.</li>
+              <li>“Who’s eating?” starts as just you, every meal. Tap anyone else who’s eating and the picks work for all of you.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#who-eating"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="diets">
+          <summary><span class="help-sec__num">03</span><h2>Diets and restrictions</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Turn on diets (vegan, keto, gluten-free and more) and allergies in Preferences, behind the gear.</li>
+              <li>The diet chip on the pick screen changes your diet for “Just this meal” or “Make it my default”.</li>
+              <li>Each person in the house has their own diets, allergies and dislikes. Dislikes only move a recipe down; allergies always filter it out for anyone eating.</li>
+              <li>“Keep out of the house” filters an allergen out of every suggestion, even when that person isn’t eating.</li>
+            </ol>
+            <p class="help-note"><span class="icon" aria-hidden="true">info</span>We filter recipes, but always check labels.</p>
+            <a class="btn btn--primary btn--small" href="try.html#restrictions"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="shopping">
+          <summary><span class="help-sec__num">04</span><h2>Shopping list</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>After you pick a meal, tap “Got it” or “Need it” for each ingredient.</li>
+              <li>Everything you need lands on the list, sorted by store section (produce, dairy, pantry and so on).</li>
+              <li>Out of a spice? Tap it for an easy swap, or add it to the list. Tick items off as you shop, and Yolkie remembers them for a few days.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#shopping"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="cook-mode">
+          <summary><span class="help-sec__num">05</span><h2>Cook mode</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Set the servings first: the amounts scale for you.</li>
+              <li>Step zero is one tiny, physical thing, like putting a pan on the stove. Momentum does the rest.</li>
+              <li>The “Now” card shows one step. Timers run side by side, so the rice and the sauce finish together.</li>
+              <li>While you wait, Yolkie suggests a quick tidy, so there are fewer dishes later.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#cook"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="nutrition-water">
+          <summary><span class="help-sec__num">06</span><h2>Nutrition and water</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Calories, protein and the nutrition panel are rough estimates per serving. “Hide nutrition” in Preferences hides every number.</li>
+              <li>The water card is on the Cook screen and in Me. Tap “+1” when you drink, and “−” to undo.</li>
+              <li>Each tap waters the plant in Yolkie’s Kitchen. Reach your goal and it blooms for the rest of the day. It starts fresh every morning, with no streaks.</li>
+              <li>Pick the unit, your bottle size and your goal in Preferences, or turn the tracker off.</li>
+            </ol>
+            <p class="help-note"><span class="icon" aria-hidden="true">info</span>Everyone’s needs are different. If a doctor has given you a fluid limit, follow that.</p>
+            <a class="btn btn--primary btn--small" href="try.html#water"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="progress">
+          <summary><span class="help-sec__num">07</span><h2>Progress</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Me shows takeout dodged (meals × your usual takeout cost, an estimate), fridge rescues and dishes dodged.</li>
+              <li>The passport stamps every new cuisine and recipe.</li>
+              <li>Set a weekly goal, and start a themed challenge if you like. One at a time, no deadline.</li>
+              <li>There are no streaks and no guilt: a missed week just starts fresh.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#progress"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="closet-kitchen">
+          <summary><span class="help-sec__num">08</span><h2>Yolkie’s Closet and Yolkie’s Kitchen</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Cooking unlocks outfits in Yolkie’s Closet (in Me) and decor in the Kitchen.</li>
+              <li>In the Kitchen, tap the floor to walk Yolkie around, and tap anyone to say hi.</li>
+              <li>Everyone else at home cooks, washes up, raids the fridge, eats, chats and makes coffee on their own. “Who’s home” chooses who’s there.</li>
+              <li>Turn on Night for string lights and dancing. “Friends drop by” lets friends you’ve met visit now and then.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#kitchen"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="collection">
+          <summary><span class="help-sec__num">09</span><h2>Collection</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Every recipe you finish drops its card into your binder. Cook it 5 times and it turns foil. Rarity comes from effort, never luck, and nothing is ever sold.</li>
+              <li>Fun moments earn fridge stickers. Drag them onto the fridge, in the Collection or in the Kitchen. Cozy bowl comes with any soup in Soup Season (October to March).</li>
+              <li>Cook with avocado, bread, berries or noodles, or make an egg brunch, to meet the friends. Every ingredient fills a Pantry-dex entry.</li>
+              <li>Spare stickers can be gifted to someone in the house or turned into crumbs. Three crumbs pick any sticker you’re missing.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#collection"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="favorites">
+          <summary><span class="help-sec__num">10</span><h2>Favorites</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>After a meal, everyone who ate taps 😕, 🙂 or 😍. Pass the phone.</li>
+              <li>Recent meals in House has three tabs: Recent, My favorites and House favorites.</li>
+              <li>“Make again” jumps straight into cook mode. On a Wiped day, favorites come up as a “Comfort pick”.</li>
+              <li>“Don’t suggest this again” hides a meal. Undo it any time in Preferences. There’s no “worst meals” list.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#favorites"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="household">
+          <summary><span class="help-sec__num">11</span><h2>Household</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>In House, “Create household” makes an invite code (like YOLK-7KQ2), a link and a QR code. Codes last 7 days.</li>
+              <li>Someone joins with the code and waits for the owner to tap Approve or Decline.</li>
+              <li>“Add someone without the app” makes a guest profile you look after. When they get the app, “This is me” hands it over.</li>
+              <li>Members, restrictions, the shopping list, votes, the house goal and favorites are shared. Personal stats, nutrition, water, check-in times and sticker books stay private. Leaving or removing someone never takes their stats.</li>
+            </ol>
+            <p class="help-note"><span class="icon" aria-hidden="true">science</span>Demo: real linking needs accounts. This shows how it will work.</p>
+            <a class="btn btn--primary btn--small" href="try.html#household"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="reminders">
+          <summary><span class="help-sec__num">12</span><h2>Check-in reminders</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-steps">
+              <li>Set reminder times before breakfast, lunch or dinner in Preferences, plus quiet hours and “Not today”.</li>
+              <li>“Preview Yolkie’s check-in” shows the lock-screen notification you’d get. Tap your energy and the meal and shopping list are ready.</li>
+              <li>In the real app, it arrives about an hour before the meal. The demo can only show a preview.</li>
+            </ol>
+            <a class="btn btn--primary btn--small" href="try.html#checkin"><span class="btn__dot" aria-hidden="true"></span>Try it</a>
+          </div>
+        </details>
+
+        <details class="help-sec" id="testers">
+          <summary><span class="help-sec__num">13</span><h2>For testers</h2></summary>
+          <div class="help-sec__body">
+            <h3 class="mini-head">What to try</h3>
+            <ul class="help-checklist">
+              <li>Cook a meal start to finish, and watch a card flip in.</li>
+              <li>Add someone to “Who’s eating?” with an allergy, and see the picks change.</li>
+              <li>Log water to the goal, then visit the Kitchen to see the plant bloom.</li>
+              <li>Put a sticker on the fridge, and gift a spare.</li>
+              <li>Create a household code, join with it, and approve the new member.</li>
+            </ul>
+            <h3 class="mini-head">Sample data</h3>
+            <p>Preferences → “Load sample week” fills in a made-up few weeks: meals, cards, stickers, friends, ratings and more. It’s kept apart from your real stats. Clear it from the yellow banner or from Preferences.</p>
+            <h3 class="mini-head">Start over</h3>
+            <p>Preferences → “Clear all demo data” (tap it twice) removes everything the demo saved in this browser.</p>
+            <div class="actions help-actions">
+              <a class="btn btn--primary btn--small" href="try.html#sample"><span class="btn__dot" aria-hidden="true"></span>Load sample week</a>
+              <a class="btn btn--secondary btn--small" href="try.html#reset">Reset demo data</a>
+              <a class="btn btn--secondary btn--small js-feedback" href="#feedback-status"><span class="icon" aria-hidden="true">chat</span>Send feedback</a>
+            </div>
+            <p class="fine js-feedback-status" id="feedback-status" aria-live="polite"></p>
+          </div>
+        </details>
+
+        <details class="help-sec" id="faq">
+          <summary><span class="help-sec__num">14</span><h2>FAQ</h2></summary>
+          <div class="help-sec__body">
+            <dl class="help-faq">
+              <dt>Where’s my data?</dt><dd>Only in this browser, on this device. Nothing is sent anywhere. Clearing your browser data, or “Clear all demo data”, removes it.</dd>
+              <dt>Is this the real app?</dt><dd>No. It’s a working demo of the app, made before launch, so you can try the ideas and tell us what you think.</dd>
+              <dt>Why doesn’t household linking sync between phones yet?</dt><dd>Real linking needs accounts and a server, and the demo has neither. It shows how linking will work, all on one phone.</dd>
+              <dt>Are nutrition numbers exact?</dt><dd>No. They’re rough estimates per serving, from typical ingredients. Brands and portions vary.</dd>
+              <dt>Can Yolkie guarantee allergy safety?</dt><dd>No. Yolkie filters recipes by the allergies you set, but it can’t know every product. Always check labels.</dd>
+            </dl>
+          </div>
+        </details>
+
+        <details class="help-sec" id="whats-new">
+          <summary><span class="help-sec__num">15</span><h2>What’s new</h2></summary>
+          <div class="help-sec__body">
+            <ol class="help-news">
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>This help page, with “?” buttons in the demo.</span></li>
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>Cozy bowl now comes with any soup in Soup Season, and the cold-day switch is gone.</span></li>
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>“Friends drop by” switch in the Kitchen.</span></li>
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>The water tracker, and a plant that blooms when you hit your goal.</span></li>
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>Households bigger than three, with “Who’s home” per person.</span></li>
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>The Collection tab, “Who’s eating?”, favorites and household linking.</span></li>
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>Yolkie’s Kitchen in the Me tab.</span></li>
+              <li><time datetime="2026-10-24">24 Oct 2026</time><span>Preferences, progress, Yolkie’s Closet and the House tab.</span></li>
+            </ol>
+          </div>
+        </details>
+      </div>
+      <p class="help-empty js-help-empty" hidden>Nothing matches that. Try another word, like “sticker” or “allergy”.</p>
+    </div>
+
+    <section class="help-cta">
+      <h2>Ready to try it?</h2>
+      <p>Everything runs in your browser. Nothing to install.</p>
+      <div class="actions"><a class="btn btn--primary" href="try.html"><span class="btn__dot" aria-hidden="true"></span>Try the demo</a><a class="btn btn--secondary" href="./#early-access">Get early access</a></div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Pre-launch concept.</strong> Trademark clearance pending.</p>
+    <div class="site-footer__links">
+      <a href="./">Home</a>
+      <a href="try.html">Try the demo</a>
+      <a href="help.html">Help</a>
+      <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
