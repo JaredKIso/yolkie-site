@@ -1776,3 +1776,43 @@ ol.recent { padding-left: 0; }
   .decor { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .story-card { min-height: 420px; }
 }
+
+/* ==========================================================================
+   3f. CREATORS' RECIPES: the "Recipe by …" chip, the ingredient finder and the
+       usage page. Same tokens and components as the rest of the demo.
+   ========================================================================== */
+.src-chip {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 12px 4px 8px; min-height: 32px;
+  border: 2px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--accent);
+  font-size: 14px; font-weight: 700; text-decoration: none;
+}
+.src-chip .icon { font-size: 18px; }
+.src-chip:hover { border-color: var(--accent); }
+.src-chip--inline { margin: 0 2px; padding: 0 10px 0 6px; min-height: 0; vertical-align: 1px; font-size: 13px; }
+.js-cook-src .src-chip { margin-top: 6px; }
+.rcard__src { margin-top: 6px; font-size: 12px; font-weight: 700; color: var(--accent); }
+.swap-note { display: flex; gap: 6px; align-items: flex-start; margin-top: 8px; font-size: 14px; color: var(--text-dim); max-width: 52ch; }
+.swap-note .icon { font-size: 18px; color: var(--accent); }
+.swap-note strong { color: var(--text); }
+
+.finder-meals { margin-top: 14px; }
+.js-finder-hints:empty, .js-finder-items:empty { display: none; }
+.js-finder-hints, .js-finder-items { margin-top: 10px; }
+.finder-count { margin-top: 12px; font-weight: 700; }
+.finder-list { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.finder-item {
+  display: grid; gap: 2px; width: 100%; padding: 12px 14px; border: 2px solid var(--line); border-radius: 14px;
+  background: var(--surface); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.finder-item:hover { border-color: var(--accent); }
+.finder-item strong { font-size: 16px; }
+.finder-item small { font-size: 13px; color: var(--text-dim); }
+.finder-item .finder-item__uses { color: var(--accent); font-weight: 700; }
+.finder-none { padding: 14px; border-radius: 12px; background: var(--surface-2); font-weight: 600; }
+
+.usage { max-width: 760px; padding: 28px 0 80px; border-top: 3px solid var(--text); margin-top: 28px; }
+.usage-sec { padding: 22px 0; border-bottom: 1px solid var(--line); }
+.usage-sec h2 { font-size: clamp(24px, 1rem + 1.2vw, 32px); }
+.usage-sec > p { margin-top: 10px; color: var(--text-dim); max-width: 64ch; }
+.usage-list { margin: 12px 0 0; padding-left: 20px; display: grid; gap: 8px; max-width: 64ch; }
+.usage-sec .mini-head { margin-top: 20px; }

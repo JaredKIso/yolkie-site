@@ -293,18 +293,22 @@ if (helpSearch) {
     count.textContent = term ? (n ? `${n} ${n === 1 ? 'section matches' : 'sections match'}.` : '') : '';
     empty.hidden = !term || n > 0;
   });
-  const feedback = document.querySelector('.js-feedback');
-  const status = document.querySelector('.js-feedback-status');
+}
+
+// "Send feedback" (help page) and "Contact us about a recipe" (usage page) both go to FEEDBACK_URL.
+// `data-subject` names the email; `data-closed` is what the button says while there's no address yet.
+document.querySelectorAll('.js-feedback').forEach((feedback) => {
+  const status = feedback.closest('section, details').querySelector('.js-feedback-status');
   if (/^mailto:/i.test(FEEDBACK_URL)) {
-    feedback.href = `${FEEDBACK_URL}${FEEDBACK_URL.includes('?') ? '&' : '?'}subject=${encodeURIComponent('Yolkie demo feedback')}`;
+    feedback.href = `${FEEDBACK_URL}${FEEDBACK_URL.includes('?') ? '&' : '?'}subject=${encodeURIComponent(feedback.dataset.subject || 'Yolkie demo feedback')}`;
   } else if (/^https:\/\//i.test(FEEDBACK_URL)) {
     feedback.href = FEEDBACK_URL;
     feedback.target = '_blank';
     feedback.rel = 'noopener';
   } else {
-    feedback.addEventListener('click', (e) => { e.preventDefault(); status.textContent = 'Feedback isn’t open just yet. Check back soon!'; });
+    feedback.addEventListener('click', (e) => { e.preventDefault(); status.textContent = feedback.dataset.closed || 'Feedback isn’t open just yet. Check back soon!'; });
   }
-}
+});
 
 /* ---------- The demo (try.html) ---------- */
 
@@ -653,7 +657,8 @@ const RECIPES = [
   },
   {
     id: 'popcorn', meal: 'snack', name: 'Parmesan stovetop popcorn', time: 10, effort: 2, base: 2, kcal: 370, protein: 8,
-    cuisine: 'American', diet: ['vegetarian', 'gluten-free'], allergens: ['dairy'],
+    cuisine: 'American', diet: ['gluten-free'], allergens: ['dairy'],
+    withSwap: [{ diet: 'vegetarian', how: 'use a vegetarian hard cheese instead of parmesan, which is made with animal rennet.' }],
     nut: { carbs: 32, fiber: 6, fat: 24, sugar: 0, sodium: 420 },
     blurb: 'Real popcorn in one pot, with butter, parmesan and a little garlic. Movie optional.',
     dishes: ['big pot with a lid', 'big bowl'],
@@ -1004,7 +1009,8 @@ const RECIPES = [
   },
   {
     id: 'lemon-pasta', meal: 'dinner', name: 'Lemon spinach pasta with parmesan', time: 20, effort: 1, base: 2, kcal: 640, protein: 22,
-    cuisine: 'Italian', diet: ['vegetarian'], allergens: ['gluten', 'dairy'], tags: ['noodles'],
+    cuisine: 'Italian', diet: [], allergens: ['gluten', 'dairy'], tags: ['noodles'],
+    withSwap: [{ diet: 'vegetarian', how: 'use a vegetarian hard cheese instead of parmesan, which is made with animal rennet.' }],
     nut: { carbs: 92, fiber: 6, fat: 20, sugar: 4, sodium: 520 },
     blurb: 'Spaghetti tossed with butter, lemon, garlic and parmesan until glossy. Spinach wilts right in.',
     dishes: ['big pot', 'colander'],
@@ -1183,6 +1189,11 @@ const RECIPES = [
   },
 ];
 
+// Recipes based on creators' published recipes live in recipes-sourced.js, which try.html loads first.
+// They follow the same shape, plus `src: { by, url }` for the credit; their card art comes in `cards`.
+const SOURCED = window.YOLKIE_SOURCED || { recipes: [], cards: {} };
+RECIPES.push(...SOURCED.recipes);
+
 const SECTIONS = ['Produce', 'Dairy', 'Meat', 'Pantry', 'Spices'];
 const FRACTIONS = { 0.25: '¼', 0.5: '½', 0.75: '¾' };
 const fmtQty = (v) => {
@@ -1191,9 +1202,11 @@ const fmtQty = (v) => {
   return whole ? `${whole}${frac}` : frac || '0';
 };
 // Scale to the servings, round to the ingredient's step, and never drop below one step.
-const scaleQty = (item, servings, base) => Math.max(item.step, Math.round((item.q * servings) / base / item.step) * item.step);
+// An item with no amount (`q: 0`, like "coriander, to serve") stays at none.
+const scaleQty = (item, servings, base) => (item.q ? Math.max(item.step, Math.round((item.q * servings) / base / item.step) * item.step) : 0);
 const UNIT_PLURALS = { can: 'cans', cup: 'cups', pouch: 'pouches', clove: 'cloves', slice: 'slices', pack: 'packs', bundle: 'bundles', block: 'blocks', pinch: 'pinches' };
 function describe(item, qty) {
+  if (!item.q) return { qty: '', name: `${item.n}, ${item.t || 'to taste'}` };
   const many = qty > 1;
   let unit = item.u || '';
   if (unit && many && UNIT_PLURALS[unit]) unit = UNIT_PLURALS[unit];
@@ -1203,7 +1216,9 @@ function describe(item, qty) {
 }
 
 // Diets, allergies, dislikes and the "already have" chips. Keto, low-carb and high-protein
-// come from each recipe's numbers; the rest are tagged by hand on the recipe (`diet`).
+// come from each recipe's numbers; the rest are tagged by hand on the recipe (`diet`). A diet the recipe
+// only fits after a swap (parmesan and pecorino are made with animal rennet, say) goes in `withSwap`
+// instead, so the filters never count it.
 const DIETS = [
   { id: 'keto', label: 'Keto' }, { id: 'vegetarian', label: 'Vegetarian' }, { id: 'vegan', label: 'Vegan' },
   { id: 'pescatarian', label: 'Pescatarian' }, { id: 'gluten-free', label: 'Gluten-free' }, { id: 'dairy-free', label: 'Dairy-free' },
@@ -1216,7 +1231,7 @@ const ALLERGENS = [
 ];
 const DISLIKE_IDEAS = ['cilantro', 'mushrooms', 'olives', 'onion', 'tomatoes', 'avocado', 'coconut', 'spicy food'];
 const HAVE = [
-  { id: 'chicken', label: 'Chicken', test: (n) => /chicken/.test(n) && !/bouillon|broth/.test(n) },
+  { id: 'chicken', label: 'Chicken', test: (n) => /chicken/.test(n) && !/bouillon|broth|stock/.test(n) },
   { id: 'eggs', label: 'Eggs', test: (n) => /^eggs?$/.test(n) },
   { id: 'rice', label: 'Rice', test: (n) => /\brice\b/.test(n) },
   { id: 'pasta', label: 'Pasta', test: (n) => /pasta|spaghetti|noodle/.test(n) },
@@ -1430,6 +1445,7 @@ const CARDS = {
   'miso-soup': { art: ['noodles', '#E8C98A', ['#FFFFFF', '#3E9B5C']], hint: 'A savoury bowl with noodles…', fact: 'Miso goes in off the heat. Boiling it dulls the flavour.' },
   'saffron-rice': { art: ['pan', '#F2C230', ['#E8553E', '#7CC36A', '#E9D3A8']], hint: 'Golden rice with a precious spice…', fact: 'Saffron threads are picked by hand from crocus flowers, which is why it costs so much.' },
 };
+Object.assign(CARDS, SOURCED.cards);
 // Rarity comes from effort, never luck: quick recipes are Common; longer ones, or your first of a
 // cuisine, are Rare; anything the whole household sat down to is Special. Five cooks: Mastered.
 const RARITY = [null, { id: 'common', name: 'Common' }, { id: 'rare', name: 'Rare' }, { id: 'special', name: 'Special' }];
@@ -2184,6 +2200,8 @@ if (demo) {
     return `<span class="have-badge"><span class="icon" aria-hidden="true">kitchen</span>${text}</span>`;
   }
   const amountFor = (item, r, servings) => describe(item, scaleQty(item, servings, r.base));
+  // "Recipe by …", linking to the creator's page. Yolkie's own recipes have none.
+  const srcChip = (r, cls = '') => (r.src ? `<a class="src-chip ${cls}" href="${esc(r.src.url)}" target="_blank" rel="noopener"><span class="icon" aria-hidden="true">link</span>Recipe by ${esc(r.src.by)}<span class="sr-only"> (opens their site)</span></a>` : '');
 
   function renderMeal(note = '') {
     const r = state.recipe;
@@ -2198,6 +2216,8 @@ if (demo) {
           ${haveBadge(r)}</div>
         <h3 class="meal-card__name">${r.name}</h3>
         <p class="meal-card__blurb">${r.blurb}</p>
+        ${srcChip(r)}
+        ${(r.withSwap || []).map((w) => `<p class="swap-note"><span class="icon" aria-hidden="true">swap_horiz</span><span><strong>${labelOf(DIETS, w.diet)} with a swap:</strong> ${esc(w.how)}</span></p>`).join('')}
         ${fans.length ? `<p class="fan-note"><span class="icon" aria-hidden="true">info</span><span>${esc(listText(fans))}, so this one sits lower in the picks.</span></p>` : ''}
         <div class="meal-stats">
           <span class="stat"><span class="icon" aria-hidden="true">schedule</span>${r.time} min</span>
@@ -2211,7 +2231,7 @@ if (demo) {
           ? `You have ${esc(listText(state.have.map(haveLabel)))}. <button type="button" class="link-btn js-have-change">Change</button>`
           : '<button type="button" class="link-btn js-have-change">Add what you already have</button>'}</p>
         ${state.fromCheckin ? `<div class="ready-list"><p><span class="icon" aria-hidden="true">shopping_cart</span><strong>Shopping list ready</strong>· ${plural(need.length, 'item')}</p>
-          <ul>${need.map((i) => { const a = amountFor(i, r, state.servings); return `<li>${a.qty} ${a.name}</li>`; }).join('')}</ul></div>` : ''}
+          <ul>${need.map((i) => { const a = amountFor(i, r, state.servings); return `<li>${a.qty ? `${a.qty} ` : ''}${a.name}</li>`; }).join('')}</ul></div>` : ''}
         ${note ? `<p class="meal-note">${note}</p>` : ''}
         <div class="actions">
           <button type="button" class="btn btn--primary js-cook-this"><span class="btn__dot" aria-hidden="true"></span>Let's make this</button>
@@ -2333,6 +2353,91 @@ if (demo) {
     const btn = $('.js-cook-this') || $('.js-loosen') || $('.js-open-prefs', slot);
     if (btn) btn.focus({ preventScroll: true });
   }
+
+  /* Find by ingredient: every recipe for everyone eating, narrowed by the ingredients you add (all of them
+     have to be in it) and the meal. Tapping one makes it the pick, whatever the time and energy say. */
+  const finder = $('.js-finder');
+  const FINDER_MAX = 30;
+  const finderState = { items: [], meal: 'all' };
+  // "chicken" means any chicken, but not chicken stock: stock, broth and bouillon only count when you ask for them.
+  const STOCKY = /stock|broth|bouillon/;
+  const finds = (r, k) => itemNames(r).some((n) => n.includes(k) && (STOCKY.test(k) || !STOCKY.test(n)));
+  const finderPool = () => {
+    const g = groupFilter();
+    const term = lower($('.js-finder-search', finder).value).trim();
+    return RECIPES.filter((r) => passesGroup(r, g)
+      && (finderState.meal === 'all' || r.meal === finderState.meal)
+      && finderState.items.every((k) => finds(r, k))
+      && (!term || lower(r.name).includes(term) || finds(r, term)))
+      .sort((a, b) => a.time - b.time || a.name.localeCompare(b.name));
+  };
+  function renderFinderResults() {
+    const term = lower($('.js-finder-search', finder).value).trim();
+    const names = [...new Set(RECIPES.flatMap(itemNames))].sort();
+    // What you typed comes first (any kind of it), then the exact names, shortest first.
+    const exact = names.filter((n) => n.includes(term) && n !== term && !finderState.items.includes(n)).sort((a, b) => a.length - b.length || a.localeCompare(b)).slice(0, 5);
+    const hints = term && names.some((n) => n.includes(term)) ? [...(finderState.items.includes(term) ? [] : [term]), ...exact] : [];
+    $('.js-finder-hints', finder).innerHTML = hints.map((n, k) => `<button type="button" class="tag tag--add" data-find-add="${esc(n)}"><span class="icon" aria-hidden="true">add</span>${esc(n)}${k === 0 && n === term ? ' <small>(any)</small>' : ''}</button>`).join('');
+    $('.js-finder-items', finder).innerHTML = finderState.items.map((n) => `<button type="button" class="tag is-on" data-find-drop="${esc(n)}" aria-label="Remove ${esc(n)}"><span class="icon" aria-hidden="true">close</span>${esc(n)}</button>`).join('');
+    const pool = finderPool();
+    const f = eff();
+    $('.js-finder-count', finder).textContent = `${plural(pool.length, 'recipe')}${pool.length > FINDER_MAX ? `. Showing the quickest ${FINDER_MAX}; add an ingredient to narrow it down` : ''}.`;
+    $('.js-finder-diet', finder).textContent = eaters().length > 1 || summarize(f) !== 'No preferences'
+      ? `Only recipes that work for everyone eating. ${eaters().length > 1 ? '' : `Your diet: ${summarize(f)}.`}` : '';
+    $('.js-finder-list', finder).innerHTML = pool.length ? pool.slice(0, FINDER_MAX).map((r) => {
+      const uses = finderState.items.length ? finderState.items : term && finds(r, term) ? [term] : [];
+      return `<li><button type="button" class="finder-item" data-find-pick="${r.id}">
+        <strong>${esc(r.name)}</strong>
+        <small>${cap(MEALS[r.meal].label)} · ${r.time} min · ${esc(r.cuisine)}${r.src ? ` · Recipe by ${esc(r.src.by)}` : ''}</small>
+        ${uses.length ? `<small class="finder-item__uses">Uses ${esc(listText(uses))}</small>` : ''}</button></li>`;
+    }).join('') : '<li class="finder-none">Nothing has all of that. Try removing an ingredient.</li>';
+  }
+  function renderFinder() {
+    $('.js-finder-meals', finder).innerHTML = ['all', ...Object.keys(MEALS)].map((m) => tag('find-meal', m, m === 'all' ? 'All meals' : cap(MEALS[m].label), finderState.meal === m)).join('');
+    renderFinderResults();
+  }
+  function openFinder() {
+    renderFinder();
+    openSheet(finder);
+    $('.js-finder-search', finder).focus();
+  }
+  function pickFromFinder(id) {
+    const r = byId(id);
+    closeSheet(finder);
+    const h = new Date().getHours();
+    state.meal = r.meal;
+    state.energy = state.energy || 2;
+    state.time = state.time || (h < 21 ? 30 : 15);
+    state.haveDone = true;
+    checkRadios();
+    savePick();
+    rank();
+    const k = state.fits.indexOf(r);
+    state.idx = k < 0 ? 0 : k;
+    state.recipe = r;
+    showTab('cook');
+    go('pick');
+    renderMeal(k < 0 ? `You picked this one from the finder. ${r.time > state.time ? `It takes ${r.time} min, longer than the time you set.` : r.effort > state.energy ? 'It’s a bit more work than the energy you set.' : ''}` : '');
+    yolk(...pickedLine(r));
+    setTimeout(() => { slot.scrollIntoView({ block: 'start' }); $('.js-cook-this').focus({ preventScroll: true }); }, 0);
+  }
+  $('.js-finder-search', finder).addEventListener('input', renderFinderResults);
+  $('.js-finder-search', finder).addEventListener('keydown', (e) => {
+    const first = $('[data-find-add]', finder);
+    if (e.key === 'Enter' && first) { e.preventDefault(); first.click(); }
+  });
+  finder.addEventListener('click', (e) => {
+    const t = e.target;
+    const add = t.closest('[data-find-add]');
+    const drop = t.closest('[data-find-drop]');
+    const meal = t.closest('[data-group="find-meal"]');
+    const pick = t.closest('[data-find-pick]');
+    const search = $('.js-finder-search', finder);
+    if (add) { finderState.items.push(add.dataset.findAdd); search.value = ''; renderFinderResults(); search.focus(); }
+    if (drop) { finderState.items = finderState.items.filter((n) => n !== drop.dataset.findDrop); renderFinderResults(); search.focus(); }
+    if (meal) { finderState.meal = meal.dataset.id; renderFinder(); $(`[data-group="find-meal"][data-id="${meal.dataset.id}"]`, finder).focus(); }
+    if (pick) pickFromFinder(pick.dataset.findPick);
+  });
 
   /* "You probably still have…": what you said you had and what you ticked off the shopping list, kept
      with a date. It's always a guess to confirm, never a fact, and it's forgotten after five days. */
@@ -2575,7 +2680,7 @@ if (demo) {
     const r = state.recipe;
     $('.js-spice-rack').innerHTML = r.spices.map((sp, i) => {
       const out = !!state.out[i];
-      return `<button type="button" class="spice" data-s="${i}" aria-pressed="${out}"><span class="icon" aria-hidden="true">${out ? 'remove_circle' : 'check_circle'}</span>${sp.n} <span class="fine">${amount(sp).qty}</span></button>`;
+      return `<button type="button" class="spice" data-s="${i}" aria-pressed="${out}"><span class="icon" aria-hidden="true">${out ? 'remove_circle' : 'check_circle'}</span>${sp.n} <span class="fine">${amount(sp).qty || sp.t || 'to taste'}</span></button>`;
     }).join('');
     $('.js-swaps').innerHTML = r.spices.map((sp, i) => (state.out[i] ? `
       <li class="swap"><strong>Out of ${sp.n.toLowerCase()}?</strong>${sp.swap}
@@ -2636,7 +2741,7 @@ if (demo) {
     const lines = [`Shopping list: ${state.recipe.name} (for ${state.servings})`];
     SECTIONS.forEach((sec) => {
       const inSec = items.filter((it) => it.s === sec);
-      if (inSec.length) lines.push('', sec.toUpperCase(), ...inSec.map((it) => `- ${it.qty} ${it.name}`));
+      if (inSec.length) lines.push('', sec.toUpperCase(), ...inSec.map((it) => `- ${it.qty} ${it.name}`.replace('-  ', '- ')));
     });
     try { await navigator.clipboard.writeText(lines.join('\n')); btn.textContent = 'Copied'; } catch (err) { btn.textContent = 'Couldn’t copy'; }
     setTimeout(() => { btn.textContent = 'Copy list'; }, 2000);
@@ -2689,6 +2794,7 @@ if (demo) {
     stopCook();
     state.cook = { r: state.recipe, i: -1, timers: new Map(), rinsed: new Set(), tidies: 0, last: performance.now(), loop: setInterval(tick, 200) };
     $('.js-cook-title').textContent = state.recipe.name;
+    $('.js-cook-src').innerHTML = srcChip(state.recipe);
     $('.js-timers').innerHTML = '';
     renderNow();
     go('cook');
@@ -2914,6 +3020,7 @@ if (demo) {
       <h4 class="rcard__name">${r.name}</h4>
       <p class="rcard__meta">${r.cuisine} · ${meal} · ${rar.name}</p>
       <p class="rcard__fact">${info.fact}</p>
+      ${r.src ? `<p class="rcard__src">Recipe by ${esc(r.src.by)}</p>` : ''}
       <p class="rcard__count">Cooked ${c.n}×${foil ? '' : ` · ${MASTER_AT - c.n} more to master`}</p>
     </article>`;
   }
@@ -5512,6 +5619,7 @@ if (demo) {
     if (t.closest('.js-open-prefs')) openPrefs();
     if (t.closest('.js-open-checkin') && !t.closest('.js-prefs-sheet')) openCheckin();
     if (t.closest('.js-nutri-open')) openNutrition();
+    if (t.closest('.js-open-finder')) openFinder();
     if (t.closest('.js-open-wrapped')) { renderWrapped(); openSheet(wrappedSheet); $('.js-story', wrappedSheet).focus(); }
     if (t.closest('.js-sample-banner .js-clear-sample')) { clearSample(); $('.js-open-prefs').focus(); }
   });
@@ -5704,6 +5812,7 @@ if (demo) {
     'quick-start': () => { showTab('cook'); go('pick'); yolk('happy', 'Quick start: pick the meal, your energy and your time.'); },
     'who-eating': () => { showTab('cook'); go('pick'); bringUp('.js-pick-extras', '[data-eat]'); yolk('default', 'Tap who’s eating, and the picks work for all of you.'); },
     diets: () => openPrefs(),
+    finder: () => { showTab('cook'); go('pick'); openFinder(); },
     restrictions: () => openPrefs('prefs-house'),
     shopping: () => { showTab('cook'); ensureRecipe(); if (state.recipe) { startCheck(state.recipe); bringUp('.js-shop-list'); } },
     cook: () => { showTab('cook'); ensureRecipe(); if (state.recipe) beginCook(); },

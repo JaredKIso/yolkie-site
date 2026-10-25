@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Usage · Yolkie</title>
+  <meta name="description" content="Where Yolkie's demo recipes come from, how creators are credited, how diet and allergen tags are worked out, and how a creator can ask for a credit change or a removal.">
+  <meta property="og:title" content="Usage · Yolkie">
+  <meta property="og:description" content="Where the recipes come from, how creators are credited, and how to reach us about a recipe.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yolkie.isolatedideas.dev/usage.html">
+  <meta property="og:image" content="https://yolkie.isolatedideas.dev/og-image.png">
+  <link rel="canonical" href="https://yolkie.isolatedideas.dev/usage.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F6F4FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1740" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
+      r.classList.add('js');
+      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
+      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
+      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
+    })();
+  </script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Yolkie, home">
+        <span class="brand__mark"><img src="assets/app-icon.svg" alt="" width="34" height="34"></span>
+        <span class="brand__name">Yolkie</span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="./#problem">Why</a>
+        <a href="./#how">How it works</a>
+        <a href="./#features">Features</a>
+        <a href="./#faq">FAQ</a>
+        <a href="help.html">Help</a>
+        <a class="site-nav__try" href="try.html">Try the demo</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Switch colour theme">
+        <span class="icon" aria-hidden="true">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero help-hero">
+      <div>
+        <p class="eyebrow">Usage</p>
+        <h1>Where the recipes come from.</h1>
+        <p class="lede">Some recipes in the demo are Yolkie’s own. Others are based on recipes that creators share for free on their own sites. Here’s how we use them and how we credit them.</p>
+      </div>
+      <img class="help-hero__yolk" src="assets/mascots/yolk-default.svg" alt="" width="220" height="220">
+    </section>
+
+    <div class="usage">
+      <section class="usage-sec" aria-labelledby="own-title">
+        <h2 id="own-title">Yolkie’s own recipes</h2>
+        <p>The first recipes in the demo were written for Yolkie. They have no source chip.</p>
+      </section>
+
+      <section class="usage-sec" aria-labelledby="creators-title">
+        <h2 id="creators-title">Recipes from creators</h2>
+        <p>A recipe based on a creator’s recipe has a <span class="src-chip src-chip--inline"><span class="icon" aria-hidden="true">link</span>Recipe by …</span> chip that links to the original page. Here’s what we take from it and what we leave out:</p>
+        <ul class="usage-list">
+          <li><strong>Kept as the creator made it:</strong> the ingredients and amounts, the servings, temperatures, the order of the steps and their timings. Recipes are made the way they are for a reason.</li>
+          <li><strong>Written by Yolkie:</strong> the wording of each step, made shorter for cook mode and split so timers can run.</li>
+          <li><strong>Not copied:</strong> photos, videos, the creator’s story, tips, ratings and reviews. Those stay on their site. For all of that, follow the link.</li>
+        </ul>
+        <p class="help-note"><span class="icon" aria-hidden="true">info</span>Yolkie isn’t affiliated with, sponsored by or endorsed by these creators.</p>
+        <h3 class="mini-head">Creators in the demo</h3>
+        <ul class="usage-list">
+          <li><a href="https://chefjackovens.com/" rel="noopener" target="_blank">Chef Jack Ovens</a> · chefjackovens.com</li>
+        </ul>
+      </section>
+
+      <section class="usage-sec" aria-labelledby="tags-title">
+        <h2 id="tags-title">Diet, allergen and other tags</h2>
+        <p>Yolkie works out the diet and allergen tags from each recipe’s ingredient list, whether or not the creator labels them. We watch for the hidden ones, like stock in an otherwise vegetarian dish, or gluten in soy sauce. When a recipe only fits a diet after a swap, it says so instead of getting the tag.</p>
+        <p>The tags are our reading of the ingredients, not the creator’s. Brands vary, so check the labels if an allergy is serious.</p>
+      </section>
+
+      <section class="usage-sec" aria-labelledby="nutrition-title">
+        <h2 id="nutrition-title">Nutrition</h2>
+        <p>Where a creator publishes nutrition for a recipe, the demo uses their numbers per serving, rounded, and Yolkie fills any gap with its own estimate. Either way, they’re estimates.</p>
+      </section>
+
+      <section class="usage-sec" id="creators" aria-labelledby="contact-title">
+        <h2 id="contact-title">For creators</h2>
+        <p>Is one of your recipes in the demo? If you’d like the credit changed or the recipe taken out, tell us and we’ll do it.</p>
+        <div class="actions help-actions">
+          <a class="btn btn--primary js-feedback" href="#creators" data-subject="Yolkie recipe credit or removal" data-closed="The contact form isn’t open just yet. Check back soon!"><span class="btn__dot" aria-hidden="true"></span>Contact us about a recipe</a>
+        </div>
+        <p class="fine js-feedback-status" aria-live="polite"></p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Pre-launch concept.</strong> Trademark clearance pending.</p>
+    <div class="site-footer__links">
+      <a href="./">Home</a>
+      <a href="try.html">Try the demo</a>
+      <a href="help.html">Help</a>
+      <a href="usage.html" aria-current="page">Usage</a>
+      <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
