@@ -41,26 +41,15 @@
   <main id="main" class="admin">
     <p class="admin-loading js-ad-loading" role="status">Checking who you are…</p>
 
-    <!-- Signed out: the sign-in form and nothing else -->
+    <!-- Signed out: the way to sign in and nothing else -->
     <section class="admin-gate js-ad-signin" hidden aria-labelledby="ad-signin-title">
-      <form class="signup js-ad-signin-form" novalidate>
+      <div class="signup acct-card">
         <div class="signup__yolk" aria-hidden="true"><img src="assets/mascots/yolk-default.svg" alt="" width="220" height="220"></div>
-        <div class="js-ad-signin-fields">
-          <h1 class="signup__title" id="ad-signin-title">Team sign-in</h1>
-          <div class="field">
-            <label for="ad-email">Your email</label>
-            <input id="ad-email" type="email" name="email" autocomplete="email" inputmode="email" required maxlength="254" aria-describedby="ad-signin-status">
-            <p class="field__note">We’ll email you a sign-in link. No password needed.</p>
-          </div>
-          <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Email me a sign-in link</button>
-          <p class="signup__status js-ad-signin-status" id="ad-signin-status" role="status"></p>
-        </div>
-        <div class="signup__done js-ad-signin-done" hidden>
-          <h2 class="signup__title" tabindex="-1">Check your email</h2>
-          <p>If that address is on the Yolkie team, a sign-in link is on its way. It works once, on this device’s browser.</p>
-          <button type="button" class="btn btn--secondary js-ad-signin-again">Use a different email</button>
-        </div>
-      </form>
+        <h1 class="signup__title" id="ad-signin-title">Team sign-in</h1>
+        <p class="acct-lede">Sign in with your Yolkie account. You’ll come straight back here.</p>
+        <a class="btn btn--primary signup__submit" href="account.html?next=admin"><span class="btn__dot" aria-hidden="true"></span>Sign in</a>
+        <p class="signup__status js-ad-signin-status" role="status"></p>
+      </div>
     </section>
 
     <!-- Signed in, not an admin -->
@@ -75,7 +64,7 @@
       <div class="admin-top">
         <div>
           <p class="eyebrow">Admin</p>
-          <h1>Feedback and sign-ups</h1>
+          <h1>Feedback, sign-ups and people</h1>
           <p class="fine js-ad-who"></p>
         </div>
         <div class="admin-top__actions">
@@ -96,6 +85,7 @@
       <div class="demo-tabs admin-tabs" role="tablist" aria-label="Lists">
         <button type="button" role="tab" id="ad-tab-feedback" data-ad-tab="feedback" aria-controls="ad-panel-feedback" aria-selected="true"><span class="icon" aria-hidden="true">chat</span>Feedback</button>
         <button type="button" role="tab" id="ad-tab-waitlist" data-ad-tab="waitlist" aria-controls="ad-panel-waitlist" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">mail</span>Waitlist</button>
+        <button type="button" role="tab" id="ad-tab-people" data-ad-tab="people" aria-controls="ad-panel-people" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">group</span>People</button>
       </div>
 
       <section class="admin-panel" role="tabpanel" id="ad-panel-feedback" aria-labelledby="ad-tab-feedback">
@@ -133,6 +123,21 @@
         </form>
         <p class="admin-count js-ad-wl-count" aria-live="polite"></p>
         <ul class="admin-list admin-list--waitlist js-ad-wl-list"></ul>
+      </section>
+
+      <section class="admin-panel" role="tabpanel" id="ad-panel-people" aria-labelledby="ad-tab-people" hidden>
+        <form class="admin-filters js-ad-pp-filters" role="search" aria-label="Search accounts">
+          <div class="admin-filters__search">
+            <label for="ad-pp-q">Search</label>
+            <input id="ad-pp-q" type="search" name="q" placeholder="A name, an email or a badge" autocomplete="off">
+          </div>
+          <div class="admin-filters__actions">
+            <p class="fine">Tap a badge to give it or take it away. Admin access is changed in SQL (supabase/README.md).</p>
+            <button type="button" class="btn btn--secondary btn--small js-ad-pp-csv"><span class="icon" aria-hidden="true">download</span>Download CSV</button>
+          </div>
+        </form>
+        <p class="admin-count js-ad-pp-count" aria-live="polite"></p>
+        <ul class="admin-list js-ad-pp-list"></ul>
       </section>
     </div>
 

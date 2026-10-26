@@ -144,6 +144,138 @@ const sendFailed = () => (supabaseReady()
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
+/* ---------- Accounts: the sign-in shared by account.html, admin.html and the header link ----------
+   People sign in through Supabase Auth (GitHub, Google, Apple, or an email and password). The login
+   token lives in this browser, and every request carries it, so the database rules in
+   supabase/accounts.sql decide what each person can see. */
+
+// Cloudflare Turnstile's *site* key, which is public. Its secret key goes in the Supabase dashboard,
+// never here. Leave it empty while Supabase's bot protection (CAPTCHA) is switched off.
+const TURNSTILE_SITE_KEY = '0x4AAAAAAFnMEgGLGkUMdSFG';
+
+// Badges, in the order they're shown. Admin isn't given by hand: it shows for anyone on the admin list.
+const BADGES = {
+  owner: { label: 'Owner', icon: 'workspace_premium' },
+  admin: { label: 'Admin', icon: 'shield_person' },
+  developer: { label: 'Developer', icon: 'code' },
+  tester: { label: 'Tester', icon: 'science' },
+  early_adopter: { label: 'Early adopter', icon: 'egg' },
+};
+const badgeList = (keys) => Object.keys(BADGES).filter((k) => keys.includes(k))
+  .map((k) => `<li class="badge badge--${k}"><span class="icon" aria-hidden="true">${BADGES[k].icon}</span>${BADGES[k].label}</li>`).join('');
+
+const YolkieAuth = (() => {
+  const KEY = 'yolkie-session';
+  try {
+    // Before accounts, the admin page kept its own sign-in. Carry it over once.
+    const old = localStorage.getItem('yolkie-admin-session');
+    if (old && !localStorage.getItem(KEY)) localStorage.setItem(KEY, old);
+    localStorage.removeItem('yolkie-admin-session');
+  } catch (e) {}
+  const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } };
+  const save = () => { try { if (session) localStorage.setItem(KEY, JSON.stringify(session)); else localStorage.removeItem(KEY); } catch (e) {} };
+  const fromTokens = (t, name) => ({
+    access_token: t.access_token,
+    refresh_token: t.refresh_token,
+    expires_at: Number(t.expires_at) || Math.floor(Date.now() / 1000) + (Number(t.expires_in) || 3600),
+    ...(name ? { name } : {}),
+  });
+  let session = read();
+  const watchers = [];
+  const changed = () => { save(); watchers.forEach((fn) => fn(session)); };
+  const expired = () => session && session.expires_at - 60 < Date.now() / 1000;
+
+  // Supabase sends people back with tokens, or an error, after the # in the address. Keep the tokens,
+  // then clean the address so they don't sit in the history or get copied. Returns what happened.
+  function takeFromLink() {
+    if (!/access_token|error/.test(location.hash)) return null;
+    const p = new URLSearchParams(location.hash.slice(1));
+    history.replaceState(null, '', location.pathname + location.search);
+    if (p.get('error')) return { error: p.get('error_code') || p.get('error'), type: '' };
+    session = fromTokens(Object.fromEntries(p));
+    changed();
+    return { type: p.get('type') || 'signin' };
+  }
+
+  async function refresh() {
+    if (!session || !session.refresh_token) return false;
+    try {
+      const res = await fetch(`${sbBase()}/auth/v1/token?grant_type=refresh_token`, {
+        method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: session.refresh_token }),
+      });
+      if (!res.ok) return false;
+      session = fromTokens(await res.json(), session.name);
+      changed();
+      return true;
+    } catch (e) { return false; }
+  }
+
+  // A request as the signed-in person. Throws an Error with .status; .signedOut when the login has ended.
+  async function api(path, opts = {}, retried = false) {
+    if (!session) throw Object.assign(new Error('signed out'), { signedOut: true });
+    if (expired()) await refresh();
+    const res = await fetch(`${sbBase()}${path}`, {
+      ...opts,
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, ...(opts.body ? { 'Content-Type': 'application/json' } : {}), ...(opts.headers || {}) },
+    });
+    if (res.status === 401 && !retried && (await refresh())) return api(path, opts, true);
+    if (res.status === 401) { session = null; changed(); throw Object.assign(new Error('signed out'), { signedOut: true, status: 401 }); }
+    if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+    return res;
+  }
+
+  // Signing in, signing up and password resets. Resolves { ok, status, code, data }; `code` is
+  // Supabase's error code (invalid_credentials, weak_password…) when it isn't ok.
+  async function call(path, body, back) {
+    const url = `${sbBase()}/auth/v1/${path}${back ? `${path.includes('?') ? '&' : '?'}redirect_to=${encodeURIComponent(back)}` : ''}`;
+    const res = await fetch(url, { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.access_token) { session = fromTokens(data); changed(); }
+    return { ok: res.ok, status: res.status, code: res.ok ? '' : data.error_code || data.error || data.code || '', data };
+  }
+
+  // Which ways in are switched on in Supabase, so the page only offers those.
+  async function settings() {
+    const res = await fetch(`${sbBase()}/auth/v1/settings`, { headers: { apikey: SUPABASE_ANON_KEY } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  }
+
+  function signOut() {
+    const token = session && session.access_token;
+    session = null;
+    changed();
+    if (token) fetch(`${sbBase()}/auth/v1/logout`, { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` } }).catch(() => {});
+  }
+
+  return {
+    get session() { return session; },
+    takeFromLink, refresh, api, call, settings, signOut,
+    // GitHub, Google and Apple sign in on their own page, then send people back to `back`.
+    providerUrl: (provider, back) => `${sbBase()}/auth/v1/authorize?provider=${encodeURIComponent(provider)}&redirect_to=${encodeURIComponent(back)}`,
+    forget: () => { session = null; changed(); },
+    setName: (name) => { if (session) { session.name = name; changed(); } },
+    expired,
+    onChange: (fn) => watchers.push(fn),
+    // Another tab signed in, out, or renewed the login: pick that up instead of using a stale one.
+    reread: () => { session = read(); watchers.forEach((fn) => fn(session)); },
+  };
+})();
+
+// The header's account link says who's signed in on every page.
+function paintAccountLink() {
+  const s = YolkieAuth.session;
+  document.querySelectorAll('.js-account-link').forEach((a) => {
+    const label = a.querySelector('.js-account-label');
+    if (label) label.textContent = s ? (s.name || 'Account') : 'Sign in';
+    a.classList.toggle('is-signed-in', !!s);
+  });
+}
+paintAccountLink();
+YolkieAuth.onChange(paintAccountLink);
+window.addEventListener('storage', (e) => { if (e.key === 'yolkie-session') YolkieAuth.reread(); });
+
 // Restart a one-shot CSS animation (Yolkie's wobble or hop, a ringing timer). Skipped under reduced motion.
 function replay(el, cls = 'is-wobbling') {
   if (!el || reduceMotion) return;

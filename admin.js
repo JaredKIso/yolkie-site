@@ -1,12 +1,11 @@
 /* Yolkie admin page (admin.html). Loaded after main.js, which provides SUPABASE_URL, SUPABASE_ANON_KEY,
-   esc() and the theme toggle. Admins sign in with a Supabase magic link; every request then carries their
-   own login token, and the database's rules (supabase/admin.sql) decide what they can see. This page never
-   holds the secret key, so nothing here can get past those rules. */
+   esc() and the theme toggle. Admins sign in on the account page like everyone else; every request then carries their
+   own login token, and the database's rules (supabase/admin.sql and accounts.sql) decide what they can see.
+   This page never holds the secret key, so nothing here can get past those rules. */
 (function () {
   const $ = (sel, el = document) => el.querySelector(sel);
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
   const base = SUPABASE_URL.replace(/\/+$/, '');
-  const SESSION_KEY = 'yolkie-admin-session';
   const VISIT_KEY = 'yolkie-admin-last-visit';
   const BUCKET = 'feedback-screenshots';
   const TRIED = ['Picking a meal', 'What do you already have?', 'Diet and restrictions', 'Shopping list', 'Cook mode',
@@ -22,114 +21,36 @@
     $('.js-ad-app').hidden = name !== 'app';
   };
 
-  /* ---------- The login session ---------- */
-  const readSession = () => { try { return JSON.parse(localStorage.getItem(SESSION_KEY)) || null; } catch (e) { return null; } };
-  const saveSession = (s) => { try { localStorage.setItem(SESSION_KEY, JSON.stringify(s)); } catch (e) {} };
-  const dropSession = () => { try { localStorage.removeItem(SESSION_KEY); } catch (e) {} };
-  let session = null;
+  /* ---------- The login session (shared with the account page, through YolkieAuth in main.js) ---------- */
+  const api = (path, opts) => YolkieAuth.api(path, opts).catch((err) => {
+    if (err.signedOut) signOut(true);
+    throw err;
+  });
 
-  // A sign-in link lands back here with the tokens in the address (#access_token=…). Keep them, then
-  // clean the address so they don't sit in the history or get copied.
-  function takeTokensFromLink() {
-    if (!location.hash.includes('access_token') && !location.hash.includes('error')) return '';
-    const p = new URLSearchParams(location.hash.slice(1));
-    history.replaceState(null, '', location.pathname + location.search);
-    if (p.get('error')) return p.get('error_code') === 'otp_expired' ? 'That sign-in link has expired or was already used. Ask for a new one.' : 'That sign-in link didn’t work. Ask for a new one.';
-    const expiresIn = Number(p.get('expires_in')) || 3600;
-    saveSession({ access_token: p.get('access_token'), refresh_token: p.get('refresh_token'), expires_at: Number(p.get('expires_at')) || Math.floor(Date.now() / 1000) + expiresIn });
-    return '';
-  }
-
-  async function refresh() {
-    if (!session || !session.refresh_token) return false;
-    try {
-      const res = await fetch(`${base}/auth/v1/token?grant_type=refresh_token`, {
-        method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: session.refresh_token }),
-      });
-      if (!res.ok) return false;
-      const s = await res.json();
-      session = { access_token: s.access_token, refresh_token: s.refresh_token, expires_at: s.expires_at || Math.floor(Date.now() / 1000) + (s.expires_in || 3600) };
-      saveSession(session);
-      return true;
-    } catch (e) { return false; }
-  }
-
-  // Every data request: the public key identifies the project, the admin's own token identifies them.
-  async function api(path, opts = {}, retried = false) {
-    if (session && session.expires_at - 60 < Date.now() / 1000) await refresh();
-    const res = await fetch(`${base}${path}`, {
-      ...opts,
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, ...(opts.body ? { 'Content-Type': 'application/json' } : {}), ...(opts.headers || {}) },
-    });
-    if (res.status === 401 && !retried && (await refresh())) return api(path, opts, true);
-    if (res.status === 401) { signOut(true); throw new Error('signed out'); }
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res;
-  }
-
-  async function signOut(expired = false) {
-    const token = session && session.access_token;
-    session = null;
-    dropSession();
-    if (token) fetch(`${base}/auth/v1/logout`, { method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` } }).catch(() => {});
+  function signOut(expired = false) {
+    if (YolkieAuth.session) YolkieAuth.signOut();
     feedback = [];
     waitlist = [];
+    people = [];
     $('.js-ad-fb-list').innerHTML = '';
     $('.js-ad-wl-list').innerHTML = '';
+    $('.js-ad-pp-list').innerHTML = '';
     showSignin(expired ? 'You were signed out. Sign in again to carry on.' : '');
   }
   $$('.js-ad-signout').forEach((b) => b.addEventListener('click', () => signOut()));
 
-  /* ---------- Signing in ---------- */
-  const form = $('.js-ad-signin-form');
-  const emailIn = $('#ad-email');
-  const signinStatus = $('.js-ad-signin-status');
+  /* ---------- Signing in happens on the account page, which sends admins back here ---------- */
   function showSignin(msg = '') {
     show('signin');
-    $('.js-ad-signin-fields').hidden = false;
-    $('.js-ad-signin-done').hidden = true;
-    signinStatus.textContent = msg;
-    signinStatus.classList.toggle('is-error', !!msg);
+    const out = $('.js-ad-signin-status');
+    out.textContent = msg;
+    out.classList.toggle('is-error', !!msg);
   }
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = emailIn.value.trim().toLowerCase();
-    if (!EMAIL_OK.test(email)) {
-      signinStatus.textContent = 'That email looks a little scrambled. Mind checking it?';
-      signinStatus.classList.add('is-error');
-      emailIn.focus();
-      return;
-    }
-    const btn = form.querySelector('[type="submit"]');
-    btn.disabled = true;
-    signinStatus.classList.remove('is-error');
-    signinStatus.textContent = 'Sending…';
-    try {
-      const back = encodeURIComponent(location.origin + location.pathname);
-      const res = await fetch(`${base}/auth/v1/otp?redirect_to=${back}`, {
-        method: 'POST', headers: { apikey: SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, create_user: true }),
-      });
-      if (res.status === 429) throw Object.assign(new Error('slow down'), { slow: true });
-      if (!res.ok && res.status >= 500) throw new Error(`HTTP ${res.status}`);
-      // Any other answer looks the same, so the form never reveals which emails have accounts.
-      $('.js-ad-signin-fields').hidden = true;
-      const done = $('.js-ad-signin-done');
-      done.hidden = false;
-      $('h2', done).focus();
-    } catch (err) {
-      signinStatus.textContent = err.slow ? 'Too many sign-in emails just now. Wait a minute, then try again.' : 'That didn’t go through. Check your connection and try again.';
-      signinStatus.classList.add('is-error');
-    } finally {
-      btn.disabled = false;
-    }
-  });
-  $('.js-ad-signin-again').addEventListener('click', () => { showSignin(); emailIn.select(); emailIn.focus(); });
 
   /* ---------- Data ---------- */
   let feedback = [];
   let waitlist = [];
+  let people = [];
   let lastVisit = 0;
   const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
   const fmtWhen = (iso) => new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -143,18 +64,21 @@
   async function load() {
     say('Loading…');
     try {
-      const [fb, wl] = await Promise.all([
+      const [fb, wl, pp] = await Promise.all([
         api('/rest/v1/feedback?select=*&order=created_at.desc&limit=5000').then((r) => r.json()),
         api('/rest/v1/waitlist?select=*&order=created_at.desc&limit=5000').then((r) => r.json()),
+        loadPeople(),
       ]);
       feedback = fb;
       waitlist = wl;
-      say('');
+      people = pp || [];
+      say(pp ? '' : 'Accounts aren’t set up yet. Run supabase/accounts.sql to see people here.');
       renderStats();
       renderFeedback();
       renderWaitlist();
+      renderPeople();
     } catch (e) {
-      if (session) say('Couldn’t load the latest submissions. Check your connection, then tap Refresh.', true);
+      if (YolkieAuth.session) say('Couldn’t load the latest submissions. Check your connection, then tap Refresh.', true);
     }
   }
   $('.js-ad-refresh').addEventListener('click', load);
@@ -177,6 +101,7 @@
       card('Bugs', bugs.length, bugs, 'bug_report'),
       card('Ideas', ideas.length, ideas, 'lightbulb'),
       card('Waitlist sign-ups', waitlist.length, waitlist, 'mail'),
+      card('Accounts', people.length, people, 'group'),
     ].join('');
     renderChart();
   }
@@ -353,6 +278,64 @@
   wlForm.addEventListener('input', renderWaitlist);
   wlForm.addEventListener('submit', (e) => e.preventDefault());
 
+  /* ---------- People: accounts and their badges ---------- */
+  // Null when accounts.sql hasn't been run yet, so the rest of the page still works.
+  async function loadPeople() {
+    try {
+      const [profiles, badges, admins] = await Promise.all([
+        api('/rest/v1/profiles?select=id,display_name,email,created_at&order=created_at.desc&limit=5000').then((r) => r.json()),
+        api('/rest/v1/user_badges?select=user_id,badge&limit=20000').then((r) => r.json()),
+        api('/rest/v1/admin_users?select=user_id&limit=1000').then((r) => r.json()).catch(() => []),
+      ]);
+      const adminIds = new Set(admins.map((a) => a.user_id));
+      return profiles.map((p) => ({ ...p, badges: badges.filter((b) => b.user_id === p.id).map((b) => b.badge), admin: adminIds.has(p.id) }));
+    } catch (e) {
+      if (e.signedOut) throw e;
+      return null;
+    }
+  }
+  const GIVEABLE = ['owner', 'developer', 'tester', 'early_adopter'];
+  function ppFiltered() {
+    const q = $('#ad-pp-q').value.trim().toLowerCase();
+    return people.filter((p) => !q || [p.display_name, p.email, ...p.badges.map((b) => BADGES[b].label), p.admin ? 'admin' : '']
+      .some((v) => v && v.toLowerCase().includes(q)));
+  }
+  function renderPeople() {
+    const rows = ppFiltered();
+    $('.js-ad-pp-count').textContent = `${rows.length} of ${people.length} ${people.length === 1 ? 'account' : 'accounts'}`;
+    $('.js-ad-pp-list').innerHTML = rows.length ? rows.map((p) => `
+      <li class="admin-wl admin-person${isFresh(p) ? ' is-fresh' : ''}">
+        <span class="admin-wl__email">${esc(p.display_name || 'No name yet')}</span>
+        <span class="admin-row__meta">${isFresh(p) ? '<span class="admin-new">New</span>' : ''}${esc(p.email || 'No email')} · joined ${fmtDate(p.created_at)}</span>
+        <ul class="badges badges--toggle" aria-label="Badges for ${esc(p.display_name || p.email || 'this person')}">
+          ${p.admin ? `<li><span class="badge badge--admin"><span class="icon" aria-hidden="true">${BADGES.admin.icon}</span>Admin</span></li>` : ''}
+          ${GIVEABLE.map((k) => `<li><button type="button" class="badge badge--${k}${p.badges.includes(k) ? '' : ' is-off'}" data-person="${esc(p.id)}" data-badge="${k}" aria-pressed="${p.badges.includes(k)}"><span class="icon" aria-hidden="true">${BADGES[k].icon}</span>${BADGES[k].label}</button></li>`).join('')}
+        </ul>
+      </li>`).join('') : `<li class="admin-empty">${people.length ? 'Nobody matches that search.' : 'No accounts yet.'}</li>`;
+  }
+  $('.js-ad-pp-filters').addEventListener('input', renderPeople);
+  $('.js-ad-pp-filters').addEventListener('submit', (e) => e.preventDefault());
+  $('.js-ad-pp-list').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-badge]');
+    if (!b || b.disabled) return;
+    const p = people.find((x) => x.id === b.dataset.person);
+    const k = b.dataset.badge;
+    const has = p.badges.includes(k);
+    b.disabled = true;
+    try {
+      if (has) await api(`/rest/v1/user_badges?user_id=eq.${encodeURIComponent(p.id)}&badge=eq.${k}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+      else await api('/rest/v1/user_badges', { method: 'POST', headers: { Prefer: 'return=minimal,resolution=ignore-duplicates' }, body: JSON.stringify({ user_id: p.id, badge: k }) });
+      p.badges = has ? p.badges.filter((x) => x !== k) : [...p.badges, k];
+      say(`${has ? 'Took' : 'Gave'} ${BADGES[k].label} ${has ? 'from' : 'to'} ${p.display_name || p.email}.`);
+      renderPeople();
+      const again = $(`.js-ad-pp-list [data-person="${CSS.escape(p.id)}"][data-badge="${k}"]`);
+      if (again) again.focus();
+    } catch (err) {
+      say('Couldn’t change that badge. Check your connection and try again.', true);
+      b.disabled = false;
+    }
+  });
+
   /* ---------- Tabs ---------- */
   const tabs = $$('[data-ad-tab]');
   const pick = (tab) => tabs.forEach((t) => {
@@ -390,14 +373,13 @@
   $('.js-ad-fb-csv').addEventListener('click', () => download('yolkie-feedback',
     ['created_at', 'rating', 'kind', 'status', 'tried', 'what_happened', 'device', 'idea', 'anything_else', 'email', 'page', 'app_version', 'screenshot_paths', 'notes'], fbFiltered()));
   $('.js-ad-wl-csv').addEventListener('click', () => download('yolkie-waitlist', ['created_at', 'email', 'must_have', 'source'], wlFiltered()));
+  $('.js-ad-pp-csv').addEventListener('click', () => download('yolkie-accounts', ['created_at', 'display_name', 'email', 'badges'],
+    ppFiltered().map((p) => ({ ...p, badges: [...(p.admin ? ['Admin'] : []), ...p.badges.map((b) => BADGES[b].label)] }))));
 
   /* ---------- Start ---------- */
   async function start() {
     if (!supabaseReady()) { show('denied'); return; }
-    const linkError = takeTokensFromLink();
-    session = readSession();
-    if (!session) { showSignin(linkError); return; }
-    if (session.expires_at - 60 < Date.now() / 1000 && !(await refresh())) { dropSession(); session = null; showSignin('Your sign-in expired. Ask for a new link.'); return; }
+    if (!YolkieAuth.session) { showSignin(); return; }
     try {
       const [user, admin] = await Promise.all([
         api('/auth/v1/user').then((r) => r.json()),
@@ -409,10 +391,8 @@
       show('app');
       await load();
     } catch (e) {
-      if (session) showSignin('Couldn’t check your sign-in. Check your connection, then reload.');
+      if (YolkieAuth.session) showSignin('Couldn’t check your sign-in. Check your connection, then reload.');
     }
   }
   start();
-  // A sign-in link opened in this same tab only changes the #, which doesn't reload the page.
-  window.addEventListener('hashchange', () => { if (/access_token|error/.test(location.hash)) start(); });
 })();

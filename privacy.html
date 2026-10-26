@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Privacy · Yolkie</title>
+  <meta name="description" content="What Yolkie stores about you, where it lives, who helps us run it, and how to delete it.">
+  <meta property="og:title" content="Privacy · Yolkie">
+  <meta property="og:description" content="What Yolkie stores about you, and how to delete it.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yolkie.isolatedideas.dev/privacy.html">
+  <meta property="og:image" content="https://yolkie.isolatedideas.dev/og-image.png">
+  <link rel="canonical" href="https://yolkie.isolatedideas.dev/privacy.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F6F4FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1740" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
+      r.classList.add('js');
+      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
+      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
+      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
+    })();
+  </script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Yolkie, home">
+        <span class="brand__mark"><img src="assets/app-icon.svg" alt="" width="34" height="34"></span>
+        <span class="brand__name">Yolkie</span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="./#problem">Why</a>
+        <a href="./#how">How it works</a>
+        <a href="./#features">Features</a>
+        <a href="./#faq">FAQ</a>
+        <a href="help.html">Help</a>
+        <a class="site-nav__account js-account-link" href="account.html"><span class="icon" aria-hidden="true">account_circle</span><span class="js-account-label">Sign in</span></a>
+        <a class="site-nav__try" href="try.html">Try the demo</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Switch colour theme">
+        <span class="icon" aria-hidden="true">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero help-hero">
+      <div>
+        <p class="eyebrow">Privacy</p>
+        <h1>What we keep, and why.</h1>
+        <p class="lede">Yolkie is a pre-launch concept, so we keep very little. Here’s all of it, in plain words. Last updated 26 October 2026.</p>
+      </div>
+      <img class="help-hero__yolk" src="assets/mascots/yolk-default.svg" alt="" width="220" height="220">
+    </section>
+
+    <div class="usage">
+      <section class="usage-sec" aria-labelledby="short-title">
+        <h2 id="short-title">The short version</h2>
+        <ul class="usage-list">
+          <li>The demo saves everything on your device. We never see it.</li>
+          <li>We only keep what you send us: a waitlist email, feedback, or an account.</li>
+          <li>No ads, no tracking scripts, no selling your data. Ever.</li>
+          <li>You can delete your account yourself, any time, from your <a href="account.html">account page</a>.</li>
+        </ul>
+      </section>
+
+      <section class="usage-sec" aria-labelledby="device-title">
+        <h2 id="device-title">On your device</h2>
+        <p>Your meals, shopping list, cards, stickers, progress and settings in the demo live in your browser’s storage on this device. They aren’t sent anywhere. Clear them in the demo’s settings, or by clearing this site’s data in your browser.</p>
+        <p>The site also remembers your light or dark choice, and, if you sign in, your login, so you stay signed in. The site doesn’t set cookies itself.</p>
+      </section>
+
+      <section class="usage-sec" aria-labelledby="send-title">
+        <h2 id="send-title">What you send us</h2>
+        <h3 class="mini-head">The waitlist</h3>
+        <p>Your email, your answer to “What would make Yolkie a must-have?”, and which page you joined from. We use your email only to tell you about Yolkie.</p>
+        <h3 class="mini-head">Feedback</h3>
+        <p>Your rating and answers, any screenshots or videos you add, which page you came from and the site’s version. Your email too, if you give it, so we can reply. Please don’t include personal health details like your own allergies or conditions.</p>
+        <h3 class="mini-head">An account</h3>
+        <p>Your email, the name you choose, how you sign in, when you joined, and your badges. If you use a password, it’s stored scrambled (hashed), so nobody can read it, us included. If you sign in with GitHub, Google or Apple, they tell us your email and name. We don’t get your password there or anything else from your account. With Apple, you can hide your real email.</p>
+      </section>
+
+      <section class="usage-sec" aria-labelledby="who-title">
+        <h2 id="who-title">Who helps us run it</h2>
+        <ul class="usage-list">
+          <li><strong>Supabase</strong> stores the waitlist, feedback, screenshots and accounts, and handles signing in.</li>
+          <li><strong>GitHub Pages</strong> hosts the website. Like any web host, it may log basic visit details such as your IP address.</li>
+          <li><strong>Google Fonts</strong> supplies the site’s fonts and icons, so your browser asks Google’s servers for them.</li>
+          <li><strong>Cloudflare Turnstile</strong>, when switched on, checks that the email sign-in form is used by a person, not a bot. It looks at signals from your browser to do that.</li>
+          <li><strong>GitHub, Google and Apple</strong>, only if you choose to sign in with one of them.</li>
+        </ul>
+      </section>
+
+      <section class="usage-sec" aria-labelledby="who-sees-title">
+        <h2 id="who-sees-title">Who can see it</h2>
+        <p>Only the small Yolkie team, on a private admin page. The website can add a waitlist email or a feedback note, but it can’t read them back, so nobody else can see what you sent. Your account details are visible to you and to the team.</p>
+      </section>
+
+      <section class="usage-sec" id="delete" aria-labelledby="delete-title">
+        <h2 id="delete-title">Deleting your data</h2>
+        <ul class="usage-list">
+          <li><strong>Your account:</strong> use “Delete my account” on your <a href="account.html">account page</a>. Your login, name and badges are erased straight away.</li>
+          <li><strong>The waitlist or feedback:</strong> these aren’t tied to an account. To have them removed, send a note on the feedback page with the email you used and ask. We’ll remove them and reply.</li>
+        </ul>
+        <p>We keep the waitlist and feedback while they help us build Yolkie, and remove them when they don’t, or when you ask.</p>
+        <div class="actions help-actions">
+          <a class="btn btn--primary" href="feedback.html?from=privacy"><span class="btn__dot" aria-hidden="true"></span>Ask us about your data</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Pre-launch concept.</strong> Trademark clearance pending.</p>
+    <div class="site-footer__links">
+      <a href="./">Home</a>
+      <a href="try.html">Try the demo</a>
+      <a href="help.html">Help</a>
+      <a href="usage.html">Usage</a>
+      <a href="feedback.html">Send feedback</a>
+      <a href="privacy.html" aria-current="page">Privacy</a>
+      <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>

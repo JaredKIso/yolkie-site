@@ -11,7 +11,9 @@ A three-page static site for Yolkie, a cooking app for every meal that gets you 
 | `help.html` | Help: a search box that filters sections as you type, a table of contents, and 15 collapsible sections (only Quick start open at first): 12 guides with a “Try it” link into the demo, For testers (with “Send feedback” and “Join the waitlist”), FAQ and What’s new. `help.html#household` opens that section. The demo links back with small “?” buttons |
 | `feedback.html` | The feedback form: a star rating, what you tried, and bug or idea questions with screenshot uploads. Saves to Supabase |
 | `usage.html` | Where the recipes come from, how creators are credited, and how a creator can reach us |
-| `admin.html`, `admin.js` | The private team page: sign in with a magic link to see feedback and sign-ups, change a note's status, add notes and download CSVs. Not linked, not in the sitemap, `noindex`, and disallowed in `robots.txt`. `admin.js` only loads on this page. Setup: `supabase/README.md` |
+| `account.html`, `account.js` | Sign in or make an account (GitHub, Google, Apple, or email and password; only the ones switched on in Supabase show), see your badges, change your name, sign out or delete your account. `noindex`. The sign-in code itself lives in `main.js` (`YolkieAuth`) so every page's header can say who's signed in |
+| `privacy.html` | What we keep (waitlist, feedback, accounts), who helps run it, and how to delete it. Linked from every footer |
+| `admin.html`, `admin.js` | The private team page: sign in on the account page, then see feedback, sign-ups and accounts, change a note's status, add notes, give badges and download CSVs. Not linked, not in the sitemap, `noindex`, and disallowed in `robots.txt`. `admin.js` only loads on this page. Setup: `supabase/README.md` |
 | `404.html` | Not-found page. Links are root-relative (`/`); change them to `/repo/` if hosted at `username.github.io/repo/` |
 | `styles.css` | One stylesheet for every page. Section 1 is the design tokens, 3b is the demo, 3c its extras, 3d the collection and household |
 | `main.js` | One script for every page. The Yolkie section starts with the Supabase settings (`SUPABASE_URL`, `SUPABASE_ANON_KEY`), then the forms, then the demo recipes (`RECIPES`) |
@@ -20,13 +22,13 @@ A three-page static site for Yolkie, a cooking app for every meal that gets you 
 | `assets/yolkie-ad.mp4`, `assets/yolkie-ad-poster.jpg` | The ad and its poster frame (taken from 0:10.5 of the ad, "Meet Yolkie") |
 | `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` | Browser and home-screen icons, all made from `app-icon.svg`. The Apple icon has square corners because iOS rounds them itself |
 | `og-image.png` | 1200×630 link-preview image of the hero |
-| `supabase/` | `setup.sql` (forms) and `admin.sql` (admin page) to paste into Supabase, and a README with the setup steps |
+| `supabase/` | `setup.sql` (forms), `admin.sql` (admin page) and `accounts.sql` (accounts and badges) to paste into Supabase, and a README with the setup steps |
 | `design-prompt.md` | The design brief the site was built against |
 | `yolkie-brand-kit/`, `tonight-brand-kit/` | The current and the original brand kits. The pages don't use them, so leave both out when publishing |
 
 ## Settings worth knowing
 
-- **Waitlist and feedback (Supabase):** both forms save to a Supabase project. `supabase/setup.sql` creates the tables, the insert-only rules and a private screenshot bucket; `supabase/README.md` explains the setup and where to read submissions. Paste the project's URL and anon (public) key into `SUPABASE_URL` and `SUPABASE_ANON_KEY` at the top of the Yolkie section of `main.js` (never the service_role key). **Both are empty for now**, so the forms say they can't send and keep what was typed.
+- **Waitlist and feedback (Supabase):** both forms save to a Supabase project. `supabase/setup.sql` creates the tables, the insert-only rules and a private screenshot bucket; `supabase/README.md` explains the setup and where to read submissions. Paste the project's URL and anon (public) key into `SUPABASE_URL` and `SUPABASE_ANON_KEY` at the top of the Yolkie section of `main.js` (never the service_role key). Both are filled in for the live project. While either is empty, the forms say they can't send and keep what was typed.
   - **Waitlist:** the card at the bottom of the home page (email, plus an optional "What would make Yolkie a must-have for you?"). An email that's already on the list counts as a success. The help page links to it as `./?from=help#early-access`, which saves the sign-up's source as `help`.
   - **Feedback:** `feedback.html`, linked from the help page, every footer and the demo ("Send feedback"). A star rating is required; "A bug" or "Both" opens what happened, the device and up to 3 screenshots or videos (10 MB each, uploaded first); "An idea" or "Both" opens the idea box. Each note records the page it came from (`?from=…` or the referring page) and `APP_VERSION`.
   - Both have a hidden `company` spam trap (filled in: it looks sent but nothing is), allow one send every 30 seconds per browser, check lengths against the database limits, and never write what was typed to the console.
