@@ -184,7 +184,8 @@ const YolkieAuth = (() => {
   });
   let session = read();
   const watchers = [];
-  const changed = () => { save(); watchers.forEach((fn) => fn(session)); };
+  // Signing out (or the login ending) also ends a pass that was only for this sign-in.
+  const changed = () => { save(); if (!session) dropTemporaryDevice(); watchers.forEach((fn) => fn(session)); };
   const expired = () => session && session.expires_at - 60 < Date.now() / 1000;
 
   // A remembered browser's pass (see supabase/accounts.sql): sent with every request, so the database
@@ -196,8 +197,12 @@ const YolkieAuth = (() => {
       return d && d.expires_at > Date.now() ? d.token : '';
     } catch (e) { return ''; }
   };
-  const setDevice = (token, days) => { try { localStorage.setItem(DEVICE_KEY, JSON.stringify({ token, expires_at: Date.now() + days * 86400000 })); } catch (e) {} };
+  // `temporary`: a backup code used without "remember this device" only covers this sign-in.
+  const setDevice = (token, days, temporary = false) => { try { localStorage.setItem(DEVICE_KEY, JSON.stringify({ token, expires_at: Date.now() + days * 86400000, temporary })); } catch (e) {} };
   const forgetDevice = () => { try { localStorage.removeItem(DEVICE_KEY); } catch (e) {} };
+  function dropTemporaryDevice() {
+    try { if ((JSON.parse(localStorage.getItem(DEVICE_KEY)) || {}).temporary) forgetDevice(); } catch (e) {}
+  }
   // How far this login has got: 'aal2' once a code from the authenticator app was entered.
   const aal = () => {
     try { return JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aal || 'aal1'; } catch (e) { return 'aal1'; }

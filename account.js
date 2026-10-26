@@ -313,7 +313,7 @@
     codeStatus.textContent = 'Checking…';
     try {
       if (code.backup) {
-        A.setDevice(await rpc('use_backup_code', { code: val, remember }), remember ? 30 : 0.5);
+        A.setDevice(await rpc('use_backup_code', { code: val, remember }), remember ? 30 : 0.5, !remember);
       } else {
         await verifyAppCode(code.factor, val.replace(/\s/g, ''));
         if (remember) A.setDevice(await rpc('trust_this_device'), 30);
