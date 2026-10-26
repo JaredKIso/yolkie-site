@@ -100,13 +100,68 @@ never the secret key.
    need it.
 
 **Badges.** Give or take Tester, Early adopter, Developer and Owner on the admin page's **People** tab.
-The Admin badge shows by itself for anyone on the admin list. After launch, remove the Early adopter
+The Admin badge shows by itself for anyone on the admin list, and everyone with an account has the
+Yolkling badge.
+
+**Accepting testers.** On the admin page's **Waitlist** tab, "Accept as tester" gives that email the
+Tester badge: straight away if they already have an account, or the moment they make one with that
+email (it waits in `badge_invites`). "Email them" then opens your email app with an invite ready to
+send. A feedback note that left an email has the same button. You can also send a proper invite email
+from Supabase: **Authentication → Users → Add user → Send invitation**. They pick a password on the
+account page when they tap it. After launch, remove the Early adopter
 line from `handle_new_yolkie_user()` in `accounts.sql` and run that function again, so new accounts
 stop getting it.
 
 **Deleting an account.** People do it themselves from the account page. It erases their login,
 profile and badges (and admin access, if they had it). Waitlist and feedback rows aren't tied to an
 account, so if someone asks for those to go, delete them in the Table Editor.
+
+## Two-step sign-in (2FA)
+
+People can turn on a code from an authenticator app on their account page. It's part of
+`accounts.sql`; run it again if you set up accounts before 2FA was added. Supabase's app-code
+2FA is on by default (check **Authentication → Multi-Factor → TOTP** is enabled).
+
+- **Backup codes:** ten one-time codes, shown once when 2FA is turned on, stored scrambled. Each
+  works once in place of an app code. People can make a new set from their account page.
+- **Remember this device:** a 30-day pass for one browser, so signing in there skips the code.
+  "Forget remembered devices" on the account page ends them all.
+- **Password reset:** the account page asks for an app code or a backup code before the new password,
+  even on a remembered browser. Supabase itself doesn't block a password change without 2FA, so a
+  new password alone still only gets as far as the code step at the next sign-in.
+- **Admins need it.** The admin page, and every admin-only rule in the database, only work after an
+  app code (or on a remembered browser). An admin without 2FA is sent to their account page to
+  turn it on.
+- **Deleting an account** needs 2FA passed first.
+
+**Locked out?** If someone loses their phone *and* their backup codes, remove their 2FA in the
+SQL editor, then they can sign in with just their password or GitHub and set it up again:
+
+```sql
+delete from auth.mfa_factors where user_id = (select id from auth.users where email = 'them@example.com');
+delete from public.mfa_backup_codes where user_id = (select id from auth.users where email = 'them@example.com');
+delete from public.trusted_devices where user_id = (select id from auth.users where email = 'them@example.com');
+```
+
+That works for your own account too, as long as you can still open the Supabase dashboard.
+
+## Email templates
+
+Supabase's emails are plain by default. `email-templates/` has Yolkie-styled ones. For each, open
+**Authentication → Emails → Templates**, pick the email, set the **Subject**, replace the whole
+**Message body** with the file's contents, and **Save**.
+
+| Supabase email | File | Subject |
+|---|---|---|
+| Confirm sign up | `confirm-signup.html` | Confirm your Yolkie account |
+| Reset password | `reset-password.html` | Reset your Yolkie password |
+| Invite user | `invite.html` | You’re invited to Yolkie |
+| Magic link or OTP | `magic-link.html` | Your Yolkie sign-in link |
+| Change email address | `change-email.html` | Confirm your new email |
+
+The site doesn't use magic links or email changes yet, so those two are just there in case. Leave
+**Reauthentication** as it is. Each file keeps Supabase's `{{ .ConfirmationURL }}` placeholder; don't
+change it. The logo loads from the live site, so it shows once the site is published.
 
 ## The admin page (admin.html)
 

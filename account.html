@@ -115,6 +115,26 @@
       </div>
     </section>
 
+    <!-- Signed in, but 2FA is on: a code from the app, or a backup code -->
+    <section class="acct-wrap js-acct-code" hidden>
+      <form class="signup acct-card js-acct-code-form" novalidate>
+        <div class="signup__yolk" aria-hidden="true"><img src="assets/mascots/yolk-surprised.svg" alt="" width="220" height="220"></div>
+        <h2 class="signup__title js-acct-code-title" tabindex="-1">Enter your code</h2>
+        <p class="acct-lede js-acct-code-lede">Open your authenticator app and type the 6-digit code for Yolkie.</p>
+        <div class="field">
+          <label for="acct-code" class="js-acct-code-label">6-digit code</label>
+          <input id="acct-code" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" maxlength="6" required>
+        </div>
+        <label class="acct-check js-acct-remember-wrap"><input type="checkbox" name="remember" class="js-acct-remember"> Remember this device for 30 days</label>
+        <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Continue</button>
+        <p class="signup__status js-acct-code-status" role="status"></p>
+        <p class="acct-links">
+          <button type="button" class="btn btn--ghost btn--small js-acct-code-switch">Use a backup code instead</button>
+          <button type="button" class="btn btn--ghost btn--small js-acct-code-cancel">Cancel and sign out</button>
+        </p>
+      </form>
+    </section>
+
     <!-- Arrived from a password-reset email -->
     <section class="acct-wrap js-acct-newpass" hidden>
       <form class="signup acct-card js-acct-newpass-form" novalidate>
@@ -160,18 +180,67 @@
           </form>
         </section>
 
+        <section class="acct-box acct-2fa" aria-labelledby="acct-2fa-title">
+          <h2 id="acct-2fa-title">Two-step sign-in</h2>
+
+          <div class="js-2fa-off" hidden>
+            <p>Add a code from an authenticator app (like Google Authenticator, 1Password or Authy) when you sign in. Someone with your password still can’t get in without your phone.</p>
+            <button type="button" class="btn btn--secondary btn--small js-2fa-start"><span class="icon" aria-hidden="true">phonelink_lock</span>Set up two-step sign-in</button>
+          </div>
+
+          <form class="js-2fa-setup" novalidate hidden>
+            <ol class="acct-steps">
+              <li>Scan this with your authenticator app.
+                <img class="acct-qr js-2fa-qr" alt="QR code for your authenticator app" width="180" height="180">
+                <span class="fine">Can’t scan it? Type this key in instead: <code class="acct-secret js-2fa-secret"></code></span>
+              </li>
+              <li>
+                <label for="acct-2fa-code">Type the 6-digit code it shows</label>
+                <input id="acct-2fa-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" required>
+              </li>
+            </ol>
+            <div class="acct-row">
+              <button type="submit" class="btn btn--primary btn--small">Turn it on</button>
+              <button type="button" class="btn btn--ghost btn--small js-2fa-cancel">Cancel</button>
+            </div>
+            <p class="admin-saved js-2fa-setup-status" role="status"></p>
+          </form>
+
+          <div class="js-2fa-codes" hidden>
+            <p><strong>Save your backup codes.</strong> If you lose your phone, each one lets you in once instead of an app code. Keep them somewhere safe, like a password manager. We won’t show them again.</p>
+            <ol class="acct-codes js-2fa-code-list"></ol>
+            <div class="acct-row">
+              <button type="button" class="btn btn--secondary btn--small js-2fa-copy"><span class="icon" aria-hidden="true">content_copy</span>Copy</button>
+              <button type="button" class="btn btn--secondary btn--small js-2fa-download"><span class="icon" aria-hidden="true">download</span>Download</button>
+              <button type="button" class="btn btn--primary btn--small js-2fa-saved">I’ve saved them</button>
+            </div>
+          </div>
+
+          <div class="js-2fa-on" hidden>
+            <p><span class="badge badge--tester"><span class="icon" aria-hidden="true">verified_user</span>On</span> You’ll be asked for a code when you sign in, and whenever you reset your password.</p>
+            <p class="fine js-2fa-left"></p>
+            <div class="acct-row">
+              <button type="button" class="btn btn--secondary btn--small js-2fa-newcodes"><span class="icon" aria-hidden="true">password</span>Make new backup codes</button>
+              <button type="button" class="btn btn--secondary btn--small js-2fa-forget"><span class="icon" aria-hidden="true">devices</span>Forget remembered devices</button>
+              <button type="button" class="btn btn--ghost btn--small js-2fa-off-btn">Turn off two-step sign-in</button>
+            </div>
+          </div>
+          <p class="admin-saved js-2fa-status" role="status"></p>
+        </section>
+
         <section class="acct-box" aria-labelledby="acct-what-title">
           <h2 id="acct-what-title">What your account does</h2>
           <p>Right now it holds your name and your badges. Your meals, cards and progress in the demo still save on this device only. Syncing them between your phone and computer is coming next.</p>
           <h3 class="mini-head">About the badges</h3>
           <ul class="acct-badge-key">
+            <li><span class="badge badge--yolkling"><span class="icon" aria-hidden="true">sunny</span>Yolkling</span> Everyone with an account. Welcome to the carton!</li>
             <li><span class="badge badge--early_adopter"><span class="icon" aria-hidden="true">egg</span>Early adopter</span> Joined before Yolkie launched.</li>
             <li><span class="badge badge--tester"><span class="icon" aria-hidden="true">science</span>Tester</span> Helps test new things before anyone else.</li>
             <li><span class="badge badge--developer"><span class="icon" aria-hidden="true">code</span>Developer</span> Builds Yolkie.</li>
             <li><span class="badge badge--admin"><span class="icon" aria-hidden="true">shield_person</span>Admin</span> Looks after feedback and sign-ups.</li>
             <li><span class="badge badge--owner"><span class="icon" aria-hidden="true">workspace_premium</span>Owner</span> Started Yolkie.</li>
           </ul>
-          <p class="fine">Want to be a tester? Say so on the <a href="feedback.html?from=account">feedback page</a>.</p>
+          <p class="fine">Want to be a tester? Join the <a href="./#early-access">waitlist</a> or say so on the <a href="feedback.html?from=account">feedback page</a>, with the email you signed up with.</p>
         </section>
       </div>
 

@@ -56,7 +56,21 @@
     <section class="admin-gate admin-denied js-ad-denied" hidden>
       <img src="assets/mascots/yolk-meh.svg" alt="" width="220" height="220">
       <h1>This page is for the Yolkie team</h1>
-      <button type="button" class="btn btn--secondary btn--small js-ad-signout">Sign out</button>
+      <div class="admin-denied__actions">
+        <a class="btn btn--secondary btn--small" href="account.html"><span class="icon" aria-hidden="true">account_circle</span>Your account</a>
+        <button type="button" class="btn btn--secondary btn--small js-ad-signout">Sign out</button>
+      </div>
+    </section>
+
+    <!-- On the admin list, but two-step sign-in is off or not passed yet -->
+    <section class="admin-gate admin-denied js-ad-2fa" hidden>
+      <img src="assets/mascots/yolk-surprised.svg" alt="" width="220" height="220">
+      <h1>Two-step sign-in first</h1>
+      <p class="admin-2fa-text">The admin page needs two-step sign-in. Turn it on, or enter your code, on your account page, and you’ll come straight back here.</p>
+      <div class="admin-denied__actions">
+        <a class="btn btn--primary btn--small" href="account.html?next=admin"><span class="btn__dot" aria-hidden="true"></span>Go to your account</a>
+        <button type="button" class="btn btn--secondary btn--small js-ad-signout">Sign out</button>
+      </div>
     </section>
 
     <!-- Signed in as an admin -->
@@ -68,6 +82,7 @@
           <p class="fine js-ad-who"></p>
         </div>
         <div class="admin-top__actions">
+          <a class="btn btn--secondary btn--small" href="account.html"><span class="icon" aria-hidden="true">account_circle</span>Your account</a>
           <button type="button" class="btn btn--secondary btn--small js-ad-refresh"><span class="icon" aria-hidden="true">refresh</span>Refresh</button>
           <button type="button" class="btn btn--secondary btn--small js-ad-signout">Sign out</button>
         </div>
@@ -117,6 +132,7 @@
             <label for="ad-wl-q">Search</label>
             <input id="ad-wl-q" type="search" name="q" placeholder="An email or a word from the answer" autocomplete="off">
           </div>
+          <p class="fine admin-filters__search">“Accept as tester” gives them the Tester badge: straight away if they already have an account, or as soon as they make one with that email. Then email them the link.</p>
           <div class="admin-filters__actions">
             <button type="button" class="btn btn--secondary btn--small js-ad-wl-csv"><span class="icon" aria-hidden="true">download</span>Download CSV</button>
           </div>

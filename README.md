@@ -22,7 +22,7 @@ A three-page static site for Yolkie, a cooking app for every meal that gets you 
 | `assets/yolkie-ad.mp4`, `assets/yolkie-ad-poster.jpg` | The ad and its poster frame (taken from 0:10.5 of the ad, "Meet Yolkie") |
 | `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` | Browser and home-screen icons, all made from `app-icon.svg`. The Apple icon has square corners because iOS rounds them itself |
 | `og-image.png` | 1200×630 link-preview image of the hero |
-| `supabase/` | `setup.sql` (forms), `admin.sql` (admin page) and `accounts.sql` (accounts and badges) to paste into Supabase, and a README with the setup steps |
+| `supabase/` | `setup.sql` (forms), `admin.sql` (admin page) and `accounts.sql` (accounts, badges and tester invites) to paste into Supabase, `email-templates/` for its emails, and a README with the setup steps |
 | `design-prompt.md` | The design brief the site was built against |
 | `yolkie-brand-kit/`, `tonight-brand-kit/` | The current and the original brand kits. The pages don't use them, so leave both out when publishing |
 

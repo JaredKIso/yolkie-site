@@ -2062,3 +2062,30 @@ button.badge:disabled { opacity: .6; cursor: progress; }
 .badge.is-off:hover { border-color: var(--text-dim); color: var(--text); }
 .badges--toggle { margin-top: 6px; }
 .badges--toggle .badge { min-height: 36px; }
+
+.badge--yolkling .icon { color: #E0A100; }
+.admin-denied__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.admin-tester { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 6px; font-size: 14px; color: var(--text-dim); }
+.admin-tester .btn--ghost { padding: 0 8px; }
+
+.admin-2fa-text { max-width: 44ch; margin: -6px auto 20px; color: var(--text-dim); }
+.acct-check { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-weight: 600; font-size: 15px; cursor: pointer; }
+.acct-check input { width: 22px; height: 22px; accent-color: var(--plum); }
+.signup label.acct-check { display: flex; }
+.acct-2fa > p, .acct-2fa .js-2fa-off > p, .acct-2fa .js-2fa-codes > p, .acct-2fa .js-2fa-on > p { color: var(--text-dim); margin-bottom: 12px; }
+.acct-2fa .js-2fa-on > p:first-child { color: var(--text); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.acct-2fa [hidden] { display: none; }
+.acct-steps { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 14px; }
+.acct-steps li { display: grid; gap: 8px; justify-items: start; }
+.acct-steps label { font-weight: 700; font-size: 15px; }
+.acct-steps input {
+  width: 100%; max-width: 220px; padding: 10px 14px; min-height: 48px; border: 2px solid var(--line); border-radius: 12px;
+  background: var(--bg); color: var(--text); font: 600 20px/1.2 var(--font-mono); letter-spacing: .15em;
+}
+.acct-steps input:focus-visible { outline: 3px solid var(--yolk); outline-offset: 1px; border-color: var(--text); }
+.acct-qr { display: block; width: 180px; height: 180px; padding: 10px; background: #FFFFFF; border-radius: 12px; border: 2px solid var(--line); }
+.acct-secret { font: 600 14px/1.5 var(--font-mono); overflow-wrap: anywhere; color: var(--text); }
+.acct-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.acct-codes { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px 16px; margin: 0 0 14px; padding: 14px 14px 14px 36px; border-radius: 12px; background: var(--surface-2); }
+.acct-codes code { font: 600 16px/1.5 var(--font-mono); letter-spacing: .04em; white-space: nowrap; }
+#acct-code { font: 600 22px/1.2 var(--font-mono); letter-spacing: .2em; text-align: center; }

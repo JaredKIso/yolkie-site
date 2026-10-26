@@ -6,7 +6,7 @@
   const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
   const A = YolkieAuth;
   const back = location.origin + location.pathname;
-  const VIEWS = ['loading', 'signin', 'check', 'newpass', 'me', 'gone'];
+  const VIEWS = ['loading', 'signin', 'check', 'code', 'newpass', 'me', 'gone'];
   const show = (name) => VIEWS.forEach((v) => { $(`.js-acct-${v}`).hidden = v !== name; });
   const focusIn = (sel) => { const h = $(`${sel} [tabindex="-1"]`); if (h) h.focus(); };
 
@@ -187,24 +187,36 @@
   const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
   const PROVIDER = { email: 'Email and password', github: 'GitHub', google: 'Google', apple: 'Apple' };
 
+  // Functions that return nothing (turning 2FA off, forgetting devices) answer with an empty reply.
+  const rpc = (name, args = {}) => A.api(`/rest/v1/rpc/${name}`, { method: 'POST', body: JSON.stringify(args) })
+    .then((r) => r.text()).then((t) => (t ? JSON.parse(t) : null));
+  const verifiedFactor = (user) => (user.factors || []).find((f) => f.factor_type === 'totp' && f.status === 'verified') || null;
+
   async function enter(note = '') {
-    let next = '';
-    try { next = sessionStorage.getItem('yolkie-next'); sessionStorage.removeItem('yolkie-next'); } catch (e) {}
-    if (next === 'admin') { location.replace('admin.html'); return; }
     show('loading');
     try {
       const user = await A.api('/auth/v1/user').then((r) => r.json());
-      const [profile, badges, admin] = await Promise.all([
+      // 2FA is on and this login hasn't passed it: ask for a code, unless this browser is remembered.
+      const factor = verifiedFactor(user);
+      if (factor && A.aal() !== 'aal2' && (await rpc('yolkie_mfa_ok').catch(() => false)) !== true) {
+        askCode('signin', factor.id, note);
+        return;
+      }
+      let next = '';
+      try { next = sessionStorage.getItem('yolkie-next'); sessionStorage.removeItem('yolkie-next'); } catch (e) {}
+      if (next === 'admin') { location.replace('admin.html'); return; }
+      const [profile, badges, adminStatus] = await Promise.all([
         A.api(`/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=display_name,created_at`).then((r) => r.json()).then((r) => r[0] || null).catch(() => null),
         A.api(`/rest/v1/user_badges?user_id=eq.${encodeURIComponent(user.id)}&select=badge`).then((r) => r.json()).then((r) => r.map((b) => b.badge)).catch(() => []),
-        A.api('/rest/v1/rpc/is_yolkie_admin', { method: 'POST', body: '{}' }).then((r) => r.json()).catch(() => false),
+        rpc('yolkie_admin_status').catch(() => rpc('is_yolkie_admin').then((a) => (a === true ? 'admin' : 'no')).catch(() => 'no')),
       ]);
+      const admin = adminStatus === 'admin' || adminStatus === 'needs_2fa';
       const meta = user.user_metadata || {};
       const name = (profile && profile.display_name) || meta.display_name || meta.full_name || meta.name || (user.email || '').split('@')[0] || 'Yolkie friend';
-      me = { id: user.id, name, admin: admin === true };
+      me = { id: user.id, name, admin };
       A.setName(name);
       $('#acct-me-name').textContent = name;
-      $('.js-acct-badges').innerHTML = badgeList([...badges, ...(me.admin ? ['admin'] : [])]);
+      $('.js-acct-badges').innerHTML = badgeList([...badges, ...(me.admin ? ['admin'] : []), 'yolkling']);
       $('.js-acct-badges').hidden = !$('.js-acct-badges').children.length;
       $('.js-acct-email').textContent = user.email || 'Not shared';
       const via = (user.app_metadata && user.app_metadata.providers) || [];
@@ -212,7 +224,8 @@
       $('.js-acct-joined').textContent = fmtDate((profile && profile.created_at) || user.created_at);
       $('#acct-rename').value = name;
       $('.js-acct-admin').hidden = !me.admin;
-      $('.js-acct-msg').textContent = note;
+      $('.js-acct-msg').textContent = note || (adminStatus === 'needs_2fa' ? 'The admin page needs two-step sign-in. Turn it on below.' : '');
+      await paint2fa(user);
       show('me');
       $('#acct-me-name').focus();
     } catch (err) {
@@ -240,6 +253,200 @@
   });
 
   $('.js-acct-signout').addEventListener('click', () => { A.signOut(); me = null; showSignin(); $('.js-acct-title').focus(); });
+
+  /* ---------- The code step: after signing in, and before a password reset ---------- */
+  const codeForm = $('.js-acct-code-form');
+  const codeIn = $('#acct-code');
+  const codeStatus = $('.js-acct-code-status');
+  let code = { mode: 'signin', factor: '', backup: false, note: '' };
+  const CODE_MSG = {
+    wrong: 'That code didn’t work. Check it and try again.',
+    slow: 'Too many wrong codes. Wait 15 minutes, then try again.',
+    x: 'That didn’t go through. Check your connection and try again.',
+  };
+  function setBackup(on) {
+    code.backup = on;
+    $('.js-acct-code-label').textContent = on ? 'Backup code' : '6-digit code';
+    $('.js-acct-code-lede').textContent = on ? 'Type one of the backup codes you saved when you turned on two-step sign-in. Each works once.' : 'Open your authenticator app and type the 6-digit code for Yolkie.';
+    $('.js-acct-code-switch').textContent = on ? 'Use my authenticator app instead' : 'Use a backup code instead';
+    codeIn.inputMode = on ? 'text' : 'numeric';
+    codeIn.maxLength = on ? 11 : 6;
+    codeIn.autocomplete = on ? 'off' : 'one-time-code';
+    codeIn.value = '';
+    codeStatus.textContent = '';
+    codeStatus.classList.remove('is-error');
+  }
+  function askCode(mode, factor, note = '') {
+    code = { mode, factor, backup: false, note };
+    setBackup(false);
+    $('.js-acct-code-title').textContent = mode === 'reset' ? 'First, your code' : 'Enter your code';
+    // A password reset always asks, even on a remembered browser, so "remember" doesn't apply there.
+    $('.js-acct-remember-wrap').hidden = mode === 'reset';
+    $('.js-acct-remember').checked = false;
+    show('code');
+    focusIn('.js-acct-code');
+  }
+  // A code from the app makes this login "aal2"; Supabase sends back new tokens that say so.
+  async function verifyAppCode(factor, digits) {
+    const ch = await A.api(`/auth/v1/factors/${encodeURIComponent(factor)}/challenge`, { method: 'POST', body: '{}' }).then((r) => r.json());
+    const t = await A.api(`/auth/v1/factors/${encodeURIComponent(factor)}/verify`, { method: 'POST', body: JSON.stringify({ challenge_id: ch.id, code: digits }) }).then((r) => r.json());
+    A.useTokens(t);
+  }
+  const codeError = (err) => (/too_many/.test(err.code) ? 'slow' : (err.status === 422 || err.status === 400 || /wrong_code|mfa_verification|invalid/.test(err.code)) ? 'wrong' : 'x');
+  $('.js-acct-code-switch').addEventListener('click', () => { setBackup(!code.backup); codeIn.focus(); });
+  $('.js-acct-code-cancel').addEventListener('click', () => { A.signOut(); showSignin(); });
+  codeForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const val = codeIn.value.trim();
+    const remember = code.mode === 'signin' && $('.js-acct-remember').checked;
+    const ok = code.backup ? val.replace(/[^a-z0-9]/gi, '').length === 10 : /^\d{6}$/.test(val.replace(/\s/g, ''));
+    codeIn.setAttribute('aria-invalid', !ok);
+    if (!ok) {
+      codeStatus.textContent = code.backup ? 'Backup codes look like abcde-23456.' : 'Type the 6 digits from your app.';
+      codeStatus.classList.add('is-error');
+      codeIn.focus();
+      return;
+    }
+    const btn = $('[type="submit"]', codeForm);
+    btn.disabled = true;
+    codeStatus.classList.remove('is-error');
+    codeStatus.textContent = 'Checking…';
+    try {
+      if (code.backup) {
+        A.setDevice(await rpc('use_backup_code', { code: val, remember }), remember ? 30 : 0.5);
+      } else {
+        await verifyAppCode(code.factor, val.replace(/\s/g, ''));
+        if (remember) A.setDevice(await rpc('trust_this_device'), 30);
+      }
+      codeIn.value = '';
+      codeStatus.textContent = '';
+      if (code.mode === 'reset') { show('newpass'); focusIn('.js-acct-newpass'); } else enter(code.note);
+    } catch (err) {
+      if (err.signedOut) { showSignin('otp_expired'); return; }
+      codeStatus.textContent = CODE_MSG[codeError(err)];
+      codeStatus.classList.add('is-error');
+      codeIn.select();
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  /* ---------- Two-step sign-in on the account page ---------- */
+  const box = (name) => ['off', 'setup', 'codes', 'on'].forEach((v) => { $(`.js-2fa-${v}`).hidden = v !== name; });
+  const twoSay = (text, isError = false) => { const o = $('.js-2fa-status'); o.textContent = text; o.classList.toggle('is-error', isError); };
+  let pending = null; // the authenticator being set up
+  let shownCodes = [];
+
+  async function paint2fa(user) {
+    twoSay('');
+    if (!verifiedFactor(user)) { box('off'); return; }
+    box('on');
+    const left = await rpc('backup_codes_left').catch(() => null);
+    $('.js-2fa-left').textContent = left === null ? '' : left === 0
+      ? 'You have no backup codes left. Make new ones so you can still get in without your phone.'
+      : `${left} backup ${left === 1 ? 'code' : 'codes'} left${left <= 2 ? '. Make new ones soon.' : '.'}`;
+  }
+
+  $('.js-2fa-start').addEventListener('click', async () => {
+    twoSay('Getting a code ready…');
+    try {
+      const user = await A.api('/auth/v1/user').then((r) => r.json());
+      // Clear out any half-finished setup first, so the new one can take its place.
+      for (const f of (user.factors || []).filter((x) => x.status !== 'verified')) {
+        await A.api(`/auth/v1/factors/${encodeURIComponent(f.id)}`, { method: 'DELETE' }).catch(() => {});
+      }
+      const f = await A.api('/auth/v1/factors', { method: 'POST', body: JSON.stringify({ factor_type: 'totp', friendly_name: `Yolkie ${new Date().toISOString().slice(0, 16)}`, issuer: 'Yolkie' }) }).then((r) => r.json());
+      pending = f.id;
+      const qr = f.totp.qr_code;
+      $('.js-2fa-qr').src = qr.startsWith('data:') ? qr : `data:image/svg+xml;utf-8,${encodeURIComponent(qr)}`;
+      $('.js-2fa-secret').textContent = f.totp.secret.replace(/(.{4})/g, '$1 ').trim();
+      $('#acct-2fa-code').value = '';
+      $('.js-2fa-setup-status').textContent = '';
+      twoSay('');
+      box('setup');
+      $('#acct-2fa-code').focus();
+    } catch (err) {
+      twoSay('Couldn’t start setting it up. Check your connection and try again.', true);
+    }
+  });
+  $('.js-2fa-cancel').addEventListener('click', () => {
+    if (pending) A.api(`/auth/v1/factors/${encodeURIComponent(pending)}`, { method: 'DELETE' }).catch(() => {});
+    pending = null;
+    box('off');
+  });
+  function showCodes(codes) {
+    shownCodes = codes;
+    $('.js-2fa-code-list').innerHTML = codes.map((c) => `<li><code>${esc(c)}</code></li>`).join('');
+    box('codes');
+    $('.js-2fa-copy').focus();
+  }
+  $('.js-2fa-setup').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const out = $('.js-2fa-setup-status');
+    const digits = $('#acct-2fa-code').value.replace(/\s/g, '');
+    if (!/^\d{6}$/.test(digits)) { out.textContent = 'Type the 6 digits from your app.'; out.classList.add('is-error'); return; }
+    out.classList.remove('is-error');
+    out.textContent = 'Checking…';
+    try {
+      await verifyAppCode(pending, digits);
+      pending = null;
+      out.textContent = '';
+      showCodes(await rpc('create_backup_codes'));
+      twoSay('Two-step sign-in is on.');
+    } catch (err) {
+      out.textContent = codeError(err) === 'wrong' ? CODE_MSG.wrong : CODE_MSG.x;
+      out.classList.add('is-error');
+    }
+  });
+  $('.js-2fa-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(shownCodes.join('\n')); twoSay('Copied.'); } catch (e) { twoSay('Couldn’t copy. Select the codes and copy them instead.', true); }
+  });
+  $('.js-2fa-download').addEventListener('click', () => {
+    const text = ['Yolkie backup codes', `Made ${new Date().toLocaleDateString()}`, 'Each code works once, in place of a code from your authenticator app.', '', ...shownCodes, ''].join('\r\n');
+    const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'yolkie-backup-codes.txt' });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  $('.js-2fa-saved').addEventListener('click', () => { shownCodes = []; $('.js-2fa-code-list').innerHTML = ''; enter('Two-step sign-in is on.'); });
+
+  // Replacing codes and turning 2FA off are tap-twice buttons, like "Clear all demo data" in the demo.
+  function tapTwice(btn, again, run) {
+    btn.addEventListener('click', async () => {
+      if (!btn.dataset.armed) {
+        btn.dataset.armed = '1';
+        btn.dataset.label = btn.innerHTML;
+        btn.textContent = again;
+        setTimeout(() => { if (btn.dataset.armed) { delete btn.dataset.armed; btn.innerHTML = btn.dataset.label; } }, 5000);
+        return;
+      }
+      delete btn.dataset.armed;
+      btn.innerHTML = btn.dataset.label;
+      btn.disabled = true;
+      try { await run(); } catch (err) { twoSay('That didn’t go through. Check your connection and try again.', true); } finally { btn.disabled = false; }
+    });
+  }
+  tapTwice($('.js-2fa-newcodes'), 'Tap again: your old codes stop working', async () => { showCodes(await rpc('create_backup_codes')); twoSay('Here are your new codes. The old ones no longer work.'); });
+  tapTwice($('.js-2fa-off-btn'), 'Tap again to turn it off', async () => {
+    const user = await A.api('/auth/v1/user').then((r) => r.json());
+    const f = verifiedFactor(user);
+    // With an app code this session, Supabase removes the authenticator itself; the database then
+    // clears the backup codes and remembered browsers (and the authenticator, after a backup code).
+    if (f && A.aal() === 'aal2') await A.api(`/auth/v1/factors/${encodeURIComponent(f.id)}`, { method: 'DELETE' });
+    await rpc('turn_off_my_2fa');
+    A.forgetDevice();
+    await A.refresh();
+    enter('Two-step sign-in is off.');
+  });
+  $('.js-2fa-forget').addEventListener('click', async () => {
+    try {
+      await rpc('forget_my_devices');
+      A.forgetDevice();
+      twoSay('Done. Every browser will ask for a code next time you sign in, this one too.');
+    } catch (err) { twoSay('That didn’t go through. Check your connection and try again.', true); }
+  });
 
   /* ---------- Delete my account ---------- */
   const confirmBox = $('.js-acct-confirm');
@@ -269,7 +476,7 @@
       show('gone');
       focusIn('.js-acct-gone');
     } catch (err) {
-      out.textContent = 'Couldn’t delete your account just now. Check your connection and try again.';
+      out.textContent = /2FA/.test(err.code) ? 'Sign out and back in with your code first, then try again.' : 'Couldn’t delete your account just now. Check your connection and try again.';
       out.classList.add('is-error');
       go.disabled = false;
     }
@@ -282,7 +489,21 @@
     }
     const link = A.takeFromLink();
     if (link && link.error) { showSignin(MSG[link.error] ? link.error : 'otp_expired'); return; }
-    if (link && link.type === 'recovery') { show('newpass'); focusIn('.js-acct-newpass'); return; }
+    if (link && link.type === 'recovery') {
+      try {
+        const factor = verifiedFactor(await A.api('/auth/v1/user').then((r) => r.json()));
+        if (factor && A.aal() !== 'aal2') { askCode('reset', factor.id); return; }
+      } catch (err) {
+        if (err.signedOut) { showSignin('otp_expired'); return; }
+      }
+    }
+    if (link && (link.type === 'recovery' || link.type === 'invite')) {
+      // An invite from the Supabase dashboard signs them in with no password yet, so they pick one now.
+      $('.js-acct-newpass h2').textContent = link.type === 'invite' ? 'Welcome! Pick a password' : 'Pick a new password';
+      show('newpass');
+      focusIn('.js-acct-newpass');
+      return;
+    }
     if (A.session) { enter(link && link.type === 'signup' ? 'Your email is confirmed. Welcome to Yolkie!' : ''); return; }
     showSignin();
   }

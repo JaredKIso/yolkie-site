@@ -27,6 +27,8 @@ create policy "Users can see their own admin row" on public.admin_users
 
 -- One yes/no check the policies below share. It runs with the table owner's rights so policies can use
 -- it without looping, and it only ever answers about the person asking.
+-- accounts.sql replaces this with a version that also needs 2FA. If you run this file again, run
+-- accounts.sql again afterwards, or admins will be let in without 2FA.
 create or replace function public.is_yolkie_admin()
 returns boolean
 language sql

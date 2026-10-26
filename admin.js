@@ -18,6 +18,7 @@
     $('.js-ad-loading').hidden = true;
     $('.js-ad-signin').hidden = name !== 'signin';
     $('.js-ad-denied').hidden = name !== 'denied';
+    $('.js-ad-2fa').hidden = name !== '2fa';
     $('.js-ad-app').hidden = name !== 'app';
   };
 
@@ -51,6 +52,7 @@
   let feedback = [];
   let waitlist = [];
   let people = [];
+  let invites = [];
   let lastVisit = 0;
   const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
   const fmtWhen = (iso) => new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -191,6 +193,7 @@
         ${qa('Their idea', text(r.idea))}
         ${qa('Anything else', text(r.anything_else))}
         ${qa('Reply to', r.email ? `<a href="mailto:${encodeURIComponent(r.email).replace(/%40/g, '@')}?subject=${encodeURIComponent('Your Yolkie feedback')}">${esc(r.email)}</a>` : '')}
+        ${r.email ? `<div class="admin-qa"><dt>Tester</dt><dd class="js-ad-tester">${testerControls(r.email)}</dd></div>` : ''}
         ${qa('Sent from', esc(r.page || 'unknown'))}
         ${qa('App version', esc(r.app_version || ''))}
       </dl>
@@ -244,6 +247,7 @@
     saveEdit({ notes: notes || null });
   });
   detail.addEventListener('click', (e) => {
+    if (e.target.closest('[data-tester]')) { onTesterClick(e); return; }
     if (e.target.closest('.js-close') || e.target === detail) detail.close();
     const z = e.target.closest('[data-zoom]');
     if (z) {
@@ -259,6 +263,72 @@
   zoom.addEventListener('click', (e) => { if (e.target.closest('.js-close') || e.target === zoom) zoom.close(); });
   zoom.addEventListener('close', () => { $('.js-ad-zoom-body').innerHTML = ''; });
 
+  /* ---------- Testers, by email (the waitlist and feedback notes) ---------- */
+  const personFor = (email) => people.find((p) => (p.email || '').toLowerCase() === email);
+  // Where someone stands: has an account or not, and whether they're a tester (or will be once they join).
+  function testerState(raw) {
+    const email = (raw || '').trim().toLowerCase();
+    const person = personFor(email);
+    const accepted = person ? person.badges.includes('tester') : invites.some((i) => i.email === email && i.badge === 'tester');
+    return { email, person, accepted };
+  }
+  const INVITE_SUBJECT = 'You’re in: come test Yolkie';
+  const inviteBody = () => ['Hi!', '',
+    'Thanks for your interest in Yolkie. You’re in as a tester!', '',
+    'Make your account here, with this email address so your Tester badge finds you:',
+    `${location.origin}/account.html`, '',
+    'Then try the demo and tell us how it goes:', `${location.origin}/try.html`, '',
+    'Thanks,', 'The Yolkie team'].join('\n');
+  function testerControls(raw) {
+    const t = testerState(raw);
+    if (!t.email) return '';
+    const status = t.accepted
+      ? `<span class="badge badge--tester"><span class="icon" aria-hidden="true">${BADGES.tester.icon}</span>Tester</span><span>${t.person ? 'Has an account' : 'Accepted, hasn’t signed up yet'}</span>`
+      : (t.person ? '<span>Has an account</span>' : '');
+    const mail = `mailto:${encodeURIComponent(t.email).replace(/%40/g, '@')}?subject=${encodeURIComponent(INVITE_SUBJECT)}&body=${encodeURIComponent(inviteBody())}`;
+    return `<span class="admin-tester">${status}
+      ${t.accepted
+        ? `${t.person ? '' : `<a class="btn btn--secondary btn--small" href="${esc(mail)}"><span class="icon" aria-hidden="true">mail</span>Email them</a>`}<button type="button" class="btn btn--ghost btn--small" data-tester="${esc(t.email)}" data-on="0">Undo</button>`
+        : `<button type="button" class="btn btn--secondary btn--small" data-tester="${esc(t.email)}" data-on="1"><span class="icon" aria-hidden="true">${BADGES.tester.icon}</span>Accept as tester</button>`}
+    </span>`;
+  }
+  // With an account, the badge itself changes; without one, the badge waits for their email.
+  async function setTester(email, on) {
+    const person = personFor(email);
+    const enc = encodeURIComponent(email);
+    if (on) {
+      if (person) await api('/rest/v1/user_badges', { method: 'POST', headers: { Prefer: 'return=minimal,resolution=ignore-duplicates' }, body: JSON.stringify({ user_id: person.id, badge: 'tester' }) });
+      else await api('/rest/v1/badge_invites', { method: 'POST', headers: { Prefer: 'return=minimal,resolution=ignore-duplicates' }, body: JSON.stringify({ email, badge: 'tester' }) });
+    } else {
+      if (person) await api(`/rest/v1/user_badges?user_id=eq.${encodeURIComponent(person.id)}&badge=eq.tester`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+      await api(`/rest/v1/badge_invites?email=eq.${enc}&badge=eq.tester`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+    }
+    if (person) person.badges = on ? [...new Set([...person.badges, 'tester'])] : person.badges.filter((b) => b !== 'tester');
+    invites = invites.filter((i) => !(i.email === email && i.badge === 'tester'));
+    if (on && !person) invites.push({ email, badge: 'tester' });
+  }
+  async function onTesterClick(e) {
+    const b = e.target.closest('[data-tester]');
+    if (!b || b.disabled) return;
+    const email = b.dataset.tester;
+    const on = b.dataset.on === '1';
+    const list = e.currentTarget;
+    b.disabled = true;
+    try {
+      await setTester(email, on);
+      say(on ? `${email} is a tester${personFor(email) ? '' : ' as soon as they make an account'}.` : `${email} isn’t a tester any more.`);
+      renderWaitlist();
+      renderPeople();
+      if (openId) $('.js-ad-tester').innerHTML = testerControls(feedback.find((x) => x.id === openId).email);
+      const again = $(`[data-tester="${CSS.escape(email)}"]`, list);
+      if (again) again.focus();
+    } catch (err) {
+      say('Couldn’t change that. If it keeps happening, run supabase/accounts.sql again.', true);
+      b.disabled = false;
+    }
+  }
+  $('.js-ad-wl-list').addEventListener('click', onTesterClick);
+
   /* ---------- Waitlist ---------- */
   const wlForm = $('.js-ad-wl-filters');
   function wlFiltered() {
@@ -273,6 +343,7 @@
         <span class="admin-wl__email">${esc(r.email)}</span>
         <span class="admin-row__meta">${isFresh(r) ? '<span class="admin-new">New</span>' : ''}${fmtDate(r.created_at)}${r.source === 'help' ? ' · via the help page' : ''}</span>
         ${r.must_have ? `<span class="admin-wl__answer">${esc(r.must_have)}</span>` : ''}
+        ${testerControls(r.email)}
       </li>`).join('') : '<li class="admin-empty">Nobody matches that search.</li>';
   }
   wlForm.addEventListener('input', renderWaitlist);
@@ -282,11 +353,13 @@
   // Null when accounts.sql hasn't been run yet, so the rest of the page still works.
   async function loadPeople() {
     try {
-      const [profiles, badges, admins] = await Promise.all([
+      const [profiles, badges, admins, waiting] = await Promise.all([
         api('/rest/v1/profiles?select=id,display_name,email,created_at&order=created_at.desc&limit=5000').then((r) => r.json()),
         api('/rest/v1/user_badges?select=user_id,badge&limit=20000').then((r) => r.json()),
         api('/rest/v1/admin_users?select=user_id&limit=1000').then((r) => r.json()).catch(() => []),
+        api('/rest/v1/badge_invites?select=email,badge&limit=20000').then((r) => r.json()).catch(() => []),
       ]);
+      invites = waiting;
       const adminIds = new Set(admins.map((a) => a.user_id));
       return profiles.map((p) => ({ ...p, badges: badges.filter((b) => b.user_id === p.id).map((b) => b.badge), admin: adminIds.has(p.id) }));
     } catch (e) {
@@ -328,6 +401,7 @@
       p.badges = has ? p.badges.filter((x) => x !== k) : [...p.badges, k];
       say(`${has ? 'Took' : 'Gave'} ${BADGES[k].label} ${has ? 'from' : 'to'} ${p.display_name || p.email}.`);
       renderPeople();
+      if (k === 'tester') renderWaitlist();
       const again = $(`.js-ad-pp-list [data-person="${CSS.escape(p.id)}"][data-badge="${k}"]`);
       if (again) again.focus();
     } catch (err) {
@@ -381,11 +455,14 @@
     if (!supabaseReady()) { show('denied'); return; }
     if (!YolkieAuth.session) { showSignin(); return; }
     try {
-      const [user, admin] = await Promise.all([
+      const [user, status] = await Promise.all([
         api('/auth/v1/user').then((r) => r.json()),
-        api('/rest/v1/rpc/is_yolkie_admin', { method: 'POST', body: '{}' }).then((r) => r.json()).catch(() => false),
+        api('/rest/v1/rpc/yolkie_admin_status', { method: 'POST', body: '{}' }).then((r) => r.json())
+          .catch(() => api('/rest/v1/rpc/is_yolkie_admin', { method: 'POST', body: '{}' }).then((r) => r.json()).then((a) => (a === true ? 'admin' : 'no')))
+          .catch(() => 'no'),
       ]);
-      if (admin !== true) { show('denied'); return; }
+      if (status === 'needs_2fa') { show('2fa'); return; }
+      if (status !== 'admin') { show('denied'); return; }
       $('.js-ad-who').textContent = `Signed in as ${user.email}`;
       try { lastVisit = Number(localStorage.getItem(VISIT_KEY)) || 0; localStorage.setItem(VISIT_KEY, String(Date.now())); } catch (e) {}
       show('app');

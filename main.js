@@ -154,12 +154,14 @@ const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '
 const TURNSTILE_SITE_KEY = '0x4AAAAAAFnMEgGLGkUMdSFG';
 
 // Badges, in the order they're shown. Admin isn't given by hand: it shows for anyone on the admin list.
+// Yolkling isn't given by hand either: everyone with an account has it.
 const BADGES = {
   owner: { label: 'Owner', icon: 'workspace_premium' },
   admin: { label: 'Admin', icon: 'shield_person' },
   developer: { label: 'Developer', icon: 'code' },
   tester: { label: 'Tester', icon: 'science' },
   early_adopter: { label: 'Early adopter', icon: 'egg' },
+  yolkling: { label: 'Yolkling', icon: 'sunny' },
 };
 const badgeList = (keys) => Object.keys(BADGES).filter((k) => keys.includes(k))
   .map((k) => `<li class="badge badge--${k}"><span class="icon" aria-hidden="true">${BADGES[k].icon}</span>${BADGES[k].label}</li>`).join('');
@@ -184,6 +186,22 @@ const YolkieAuth = (() => {
   const watchers = [];
   const changed = () => { save(); watchers.forEach((fn) => fn(session)); };
   const expired = () => session && session.expires_at - 60 < Date.now() / 1000;
+
+  // A remembered browser's pass (see supabase/accounts.sql): sent with every request, so the database
+  // can skip the 2FA code here until it runs out.
+  const DEVICE_KEY = 'yolkie-device';
+  const device = () => {
+    try {
+      const d = JSON.parse(localStorage.getItem(DEVICE_KEY));
+      return d && d.expires_at > Date.now() ? d.token : '';
+    } catch (e) { return ''; }
+  };
+  const setDevice = (token, days) => { try { localStorage.setItem(DEVICE_KEY, JSON.stringify({ token, expires_at: Date.now() + days * 86400000 })); } catch (e) {} };
+  const forgetDevice = () => { try { localStorage.removeItem(DEVICE_KEY); } catch (e) {} };
+  // How far this login has got: 'aal2' once a code from the authenticator app was entered.
+  const aal = () => {
+    try { return JSON.parse(atob(session.access_token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).aal || 'aal1'; } catch (e) { return 'aal1'; }
+  };
 
   // Supabase sends people back with tokens, or an error, after the # in the address. Keep the tokens,
   // then clean the address so they don't sit in the history or get copied. Returns what happened.
@@ -217,11 +235,19 @@ const YolkieAuth = (() => {
     if (expired()) await refresh();
     const res = await fetch(`${sbBase()}${path}`, {
       ...opts,
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`, ...(opts.body ? { 'Content-Type': 'application/json' } : {}), ...(opts.headers || {}) },
+      headers: {
+        apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}`,
+        ...(device() ? { 'x-yolkie-device': device() } : {}),
+        ...(opts.body ? { 'Content-Type': 'application/json' } : {}), ...(opts.headers || {}),
+      },
     });
     if (res.status === 401 && !retried && (await refresh())) return api(path, opts, true);
     if (res.status === 401) { session = null; changed(); throw Object.assign(new Error('signed out'), { signedOut: true, status: 401 }); }
-    if (!res.ok) throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status });
+    if (!res.ok) {
+      // Keep Supabase's explanation (its error code or the database's message) for the page to read.
+      const data = await res.json().catch(() => ({}));
+      throw Object.assign(new Error(`HTTP ${res.status}`), { status: res.status, code: data.error_code || data.message || data.msg || '' });
+    }
     return res;
   }
 
@@ -255,6 +281,9 @@ const YolkieAuth = (() => {
     // GitHub, Google and Apple sign in on their own page, then send people back to `back`.
     providerUrl: (provider, back) => `${sbBase()}/auth/v1/authorize?provider=${encodeURIComponent(provider)}&redirect_to=${encodeURIComponent(back)}`,
     forget: () => { session = null; changed(); },
+    // New tokens from Supabase (after an authenticator code), keeping the name.
+    useTokens: (t) => { session = fromTokens(t, session && session.name); changed(); },
+    aal, device, setDevice, forgetDevice,
     setName: (name) => { if (session) { session.name = name; changed(); } },
     expired,
     onChange: (fn) => watchers.push(fn),
@@ -274,6 +303,11 @@ function paintAccountLink() {
 }
 paintAccountLink();
 YolkieAuth.onChange(paintAccountLink);
+// Supabase falls back to the home page when a link's address isn't on its allowed list (an invite sent
+// from the dashboard, say). Carry the sign-in on to the account page, which knows what to do with it.
+if (/access_token=|error_code=/.test(location.hash) && !document.querySelector('.js-acct-signin')) {
+  location.replace(`account.html${location.hash}`);
+}
 window.addEventListener('storage', (e) => { if (e.key === 'yolkie-session') YolkieAuth.reread(); });
 
 // Restart a one-shot CSS animation (Yolkie's wobble or hop, a ringing timer). Skipped under reduced motion.
