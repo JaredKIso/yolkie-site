@@ -2090,12 +2090,12 @@ button.badge:disabled { opacity: .6; cursor: progress; }
 .acct-codes code { font: 600 16px/1.5 var(--font-mono); letter-spacing: .04em; white-space: nowrap; }
 #acct-code { font: 600 22px/1.2 var(--font-mono); letter-spacing: .2em; text-align: center; }
 
-/* Account page on wide screens: two balanced columns */
-@media (min-width: 900px) {
-  .acct-grid { grid-template-areas: "details what" "twofa danger"; }
-  .acct-box--details { grid-area: details; }
-  .acct-2fa { grid-area: twofa; }
-  .acct-box--what { grid-area: what; }
-  .acct-grid .acct-danger { grid-area: danger; }
-}
+/* Account page on wide screens: two columns that stack on their own, ending level */
+.acct-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .acct-grid .acct-danger { margin-top: 0; }
+@media (min-width: 900px) {
+  .acct-grid { align-items: stretch; }
+  .acct-col > :last-child { flex: 1; }
+}
+.acct-2fa .js-2fa-on .acct-row { flex-direction: column; align-items: flex-start; }
+.acct-2fa .js-2fa-on .btn--ghost { padding-left: 4px; }
