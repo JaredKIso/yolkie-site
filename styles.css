@@ -1819,3 +1819,53 @@ ol.recent { padding-left: 0; }
 .usage-sec > p { margin-top: 10px; color: var(--text-dim); max-width: 64ch; }
 .usage-list { margin: 12px 0 0; padding-left: 20px; display: grid; gap: 8px; max-width: 64ch; }
 .usage-sec .mini-head { margin-top: 20px; }
+
+/* ==========================================================================
+   3g. FORMS: the waitlist's extras and the feedback page. Same paper card as the
+   early-access form, with stars, branching questions and screenshot previews.
+   ========================================================================== */
+.field__note { margin-top: 6px; font-size: 14px; color: var(--text-dim); }
+.field__req { font-weight: 500; color: var(--accent); }
+.field__err { margin-top: 8px; padding: 6px 10px; border-radius: 8px; background: var(--yolk-soft); font-size: 14px; font-weight: 600; }
+.signup .field__label { font-weight: 700; font-size: 15px; }
+.signup__retry { display: flex; margin: 0 auto 8px; }
+.signup__retry[hidden] { display: none; }
+.signup textarea[aria-invalid="true"] { border-color: var(--text); border-style: dashed; }
+
+.fb-wrap { max-width: 640px; margin: 96px auto 0; }
+.fb { padding-top: 72px; }
+.fb .field + .field, .fb .field + .fb-branch, .fb .fb-branch + .field, .fb .fb-branch + .fb-branch { margin-top: 22px; }
+.fb .fb-branch .field + .field { margin-top: 18px; }
+.fb-branch { padding: 16px; border-radius: 12px; background: var(--surface-2); }
+.fb-branch[hidden] { display: none; }
+.fb-note { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 22px; padding: 12px 14px; border-radius: 10px; background: var(--yolk-soft); border-left: 4px solid var(--yolk); font-size: 15px; }
+.fb-note .icon { font-size: 20px; color: var(--accent); }
+.fb input[type="email"] { max-width: none; }
+
+/* Stars: five big tap targets that fill up to your choice */
+.stars { display: flex; gap: 4px; margin-top: 6px; }
+.signup label.star { position: relative; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 12px; cursor: pointer; }
+.star input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.star .icon { font-size: 42px; color: var(--line); transition: color .12s var(--ease), transform .12s var(--ease); }
+.star.is-on .icon { color: var(--yolk); font-variation-settings: 'FILL' 1; -webkit-text-stroke: 1px var(--text); }
+.star:hover .icon { transform: scale(1.08); }
+.star input:focus-visible ~ .icon { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.fb-rating-text { min-height: 1.4em; font-weight: 700; color: var(--text); }
+
+/* Screenshot upload and previews */
+.signup label.fb-upload { position: relative; display: inline-flex; margin-top: 10px; overflow: hidden; }
+.fb-upload input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
+.fb-upload:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+.fb-upload.is-disabled { opacity: .5; cursor: not-allowed; }
+.fb-upload.is-disabled input { cursor: not-allowed; }
+.fb-shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
+.fb-shots:empty { display: none; }
+.fb-shot { position: relative; display: grid; gap: 4px; padding: 6px; border-radius: 10px; border: 2px solid var(--line); background: var(--surface); }
+.fb-shot img, .fb-shot video { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: var(--surface-2); }
+.fb-shot__name { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-shot__remove { position: absolute; top: 2px; right: 2px; width: 40px; height: 40px; }
+.fb-shot__remove .icon { font-size: 20px; }
+.fb .signup__done h2 { font-size: 30px; }
+
+/* The demo's "Send feedback" link sits beside the device-only badge */
+.demo-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }

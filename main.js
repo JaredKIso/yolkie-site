@@ -92,16 +92,55 @@ document.querySelectorAll('.js-email').forEach((el) => {
    Yolkie
    ========================================================================== */
 
-// Where the early-access form sends sign-ups. Either:
-//   - a form endpoint that accepts a POST (https://…), from a form service, or
-//   - a mailto: link, which opens the visitor's email app with the sign-up written out.
-// 'preview' runs the whole form (checks, Yolkie, confetti) but sends nothing; replace it before launch.
-// While it's empty, the form says the list isn't open yet.
-const WAITLIST_URL = 'preview';
+// The waitlist and the feedback page save to Supabase (supabase/README.md has the setup). Paste in the
+// project's URL and its anon (public) key, or the newer publishable key. Never the service_role key:
+// everything in this file is public. While either is empty, both forms say they can't send right now
+// and keep what was typed.
+const SUPABASE_URL = 'https://teavrtstsnemauatvdfo.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_eDcmppmByWCE37z3SCP1hQ_d5Dqehaq';
+// Sent with each feedback note, so a report can be matched to the version of the site it came from.
+const APP_VERSION = 'demo-2026.10.25';
 
-// Where the help page's "Send feedback" button goes: a form (https://…) or a mailto: address.
-// While it's empty, the button says feedback isn't open yet.
-const FEEDBACK_URL = '';
+const supabaseReady = () => /^https:\/\/\S+$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20;
+// Legacy anon keys are JWTs and also go in Authorization; the newer publishable keys only go in apikey.
+const sbHeaders = (extra) => ({
+  apikey: SUPABASE_ANON_KEY,
+  ...(SUPABASE_ANON_KEY.startsWith('eyJ') ? { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } : {}),
+  ...extra,
+});
+const sbBase = () => SUPABASE_URL.replace(/\/+$/, '');
+// Add one row. Resolves 'ok', or 'duplicate' when a unique value (a waitlist email) is already there.
+// Anything else throws. The website can only insert, so it never asks for the row back.
+async function sbInsert(table, row) {
+  if (!supabaseReady()) throw new Error('not configured');
+  const res = await fetch(`${sbBase()}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+    body: JSON.stringify(row),
+  });
+  if (res.status === 409) return 'duplicate';
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return 'ok';
+}
+// Upload one file into a storage bucket at `path`.
+async function sbUpload(bucket, path, file) {
+  if (!supabaseReady()) throw new Error('not configured');
+  const res = await fetch(`${sbBase()}/storage/v1/object/${bucket}/${path}`, {
+    method: 'POST',
+    headers: sbHeaders({ 'Content-Type': file.type || 'application/octet-stream', 'x-upsert': 'false' }),
+    body: file,
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+}
+// One send per form every 30 seconds, per browser.
+const SEND_GAP = 30000;
+const sentRecently = (form) => { try { return Date.now() - Number(localStorage.getItem(`yolkie-sent-${form}`) || 0) < SEND_GAP; } catch (e) { return false; } };
+const markSent = (form) => { try { localStorage.setItem(`yolkie-sent-${form}`, String(Date.now())); } catch (e) {} };
+// Stricter than type="email", which accepts "name@host" with no dot in the domain. Matches the database check.
+const EMAIL_OK = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const sendFailed = () => (supabaseReady()
+  ? 'That didn’t go through. Check your connection, then try again. Everything you typed is still here.'
+  : 'This can’t send right now. Everything you typed is still here, so try again in a little while.');
 
 const esc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
@@ -126,14 +165,18 @@ function confetti(box) {
   setTimeout(() => { box.innerHTML = ''; }, 3200);
 }
 
-// Early-access form: Yolkie watches you fill it in, then it sends to WAITLIST_URL.
+// Waitlist form: Yolkie watches you fill it in, then it saves to the `waitlist` table. Arriving from
+// the help page (./?from=help#early-access) marks the sign-up's source as "help".
 const signup = document.querySelector('.js-signup');
 if (signup) {
   const face = signup.querySelector('.js-signup-yolk');
   const dir = face.getAttribute('src').replace(/[^/]+$/, '');
   const email = signup.querySelector('input[type="email"]');
+  const mustHave = signup.querySelector('[name="must_have"]');
   const status = signup.querySelector('.js-signup-status');
   const submit = signup.querySelector('[type="submit"]');
+  const retry = signup.querySelector('.js-signup-retry');
+  const source = new URLSearchParams(location.search).get('from') === 'help' ? 'help' : 'landing';
   ['happy', 'meh', 'sleepy', 'surprised'].forEach((m) => { new Image().src = `${dir}yolk-${m}.svg`; });
   const setFace = (m, cls) => {
     if (!face.getAttribute('src').endsWith(`yolk-${m}.svg`)) face.src = `${dir}yolk-${m}.svg`;
@@ -143,8 +186,7 @@ if (signup) {
     status.textContent = text;
     status.classList.toggle('is-error', isError);
   };
-  // Stricter than type="email", which accepts "name@host" with no dot in the domain.
-  const looksValid = () => email.validity.valid && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim());
+  const looksValid = () => email.validity.valid && EMAIL_OK.test(email.value.trim()) && email.value.trim().length <= 254;
 
   email.addEventListener('focus', () => { if (!looksValid() && !email.getAttribute('aria-invalid')) setFace('surprised'); });
   email.addEventListener('input', () => {
@@ -153,9 +195,6 @@ if (signup) {
     if (!face.getAttribute('src').endsWith(`yolk-${mood}.svg`)) setFace(mood);
   });
   email.addEventListener('blur', () => { if (!email.value) setFace('default'); });
-  signup.addEventListener('change', (e) => {
-    if (e.target.name === 'energy') setFace({ Wiped: 'sleepy', Okay: 'default', Good: 'happy' }[e.target.value]);
-  });
 
   const finish = (title, text) => {
     signup.querySelector('.signup__fields').hidden = true;
@@ -170,6 +209,7 @@ if (signup) {
 
   signup.addEventListener('submit', async (e) => {
     e.preventDefault();
+    retry.hidden = true;
     if (!looksValid()) {
       email.setAttribute('aria-invalid', 'true');
       setFace('meh');
@@ -177,40 +217,29 @@ if (signup) {
       email.focus();
       return;
     }
-    const data = new FormData(signup);
-    if (data.get('company')) { finish(); return; } // filled spam trap: look successful, send nothing
-    data.delete('company');
-    if (WAITLIST_URL === 'preview') {
-      finish(null, 'We’ll email you when Yolkie has something to tap. (Preview mode: sign-ups aren’t saved yet.)');
-      return;
-    }
-    if (!WAITLIST_URL) {
-      setFace('meh');
-      say('The list isn’t open just yet. Check back soon!', true);
-      return;
-    }
-    if (/^mailto:/i.test(WAITLIST_URL)) {
-      const body = [`Email: ${data.get('email')}`, data.get('energy') && `Usual mealtime energy: ${data.get('energy')}`, data.get('note') && `Note: ${data.get('note')}`]
-        .filter(Boolean).join('\n');
-      const sep = WAITLIST_URL.includes('?') ? '&' : '?';
-      location.href = `${WAITLIST_URL}${sep}subject=${encodeURIComponent('Yolkie early access')}&body=${encodeURIComponent(body)}`;
-      finish('Almost there!', 'Your email app should open with a note ready to go. Hit send and you’re on the list.');
+    if (signup.elements.company.value) { finish(); return; } // filled spam trap: look successful, send nothing
+    if (sentRecently('waitlist')) {
+      setFace('sleepy');
+      say('You just signed up a moment ago! Give it 30 seconds, then try again.', true);
       return;
     }
     submit.disabled = true;
     say('Sending…');
     try {
-      const res = await fetch(WAITLIST_URL, { method: 'POST', body: data, headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const result = await sbInsert('waitlist', { email: email.value.trim().toLowerCase(), must_have: mustHave.value.trim() || null, source });
+      markSent('waitlist');
       say('');
-      finish();
+      if (result === 'duplicate') finish('You’re already on the list!', 'No need to sign up twice. We’ll email you when Yolkie has something to tap.');
+      else finish();
     } catch (err) {
       setFace('meh');
-      say('That didn’t go through. Try again in a minute?', true);
+      say(sendFailed(), true);
+      retry.hidden = false;
     } finally {
       submit.disabled = false;
     }
   });
+  retry.addEventListener('click', () => signup.requestSubmit());
 
   // "Get early access" links on this page: scroll to the card, then put the cursor in the email field.
   document.querySelectorAll('a[href="#early-access"]').forEach((a) => a.addEventListener('click', () => {
@@ -295,20 +324,221 @@ if (helpSearch) {
   });
 }
 
-// "Send feedback" (help page) and "Contact us about a recipe" (usage page) both go to FEEDBACK_URL.
-// `data-subject` names the email; `data-closed` is what the button says while there's no address yet.
-document.querySelectorAll('.js-feedback').forEach((feedback) => {
-  const status = feedback.closest('section, details').querySelector('.js-feedback-status');
-  if (/^mailto:/i.test(FEEDBACK_URL)) {
-    feedback.href = `${FEEDBACK_URL}${FEEDBACK_URL.includes('?') ? '&' : '?'}subject=${encodeURIComponent(feedback.dataset.subject || 'Yolkie demo feedback')}`;
-  } else if (/^https:\/\//i.test(FEEDBACK_URL)) {
-    feedback.href = FEEDBACK_URL;
-    feedback.target = '_blank';
-    feedback.rel = 'noopener';
-  } else {
-    feedback.addEventListener('click', (e) => { e.preventDefault(); status.textContent = feedback.dataset.closed || 'Feedback isn’t open just yet. Check back soon!'; });
+/* ---------- The feedback page (feedback.html) ---------- */
+
+// A star rating (the only required answer), what they tried, and whether it's a bug or an idea, which
+// each open their own questions. Screenshots upload to the private bucket first, then the note saves to
+// the `feedback` table with their paths. `page` is where the form was opened from: ?from=… on the link,
+// or else the page it was reached from on this site.
+const fb = document.querySelector('.js-fb');
+if (fb) {
+  const f = fb.elements;
+  const face = fb.querySelector('.js-fb-yolk');
+  const dir = face.getAttribute('src').replace(/[^/]+$/, '');
+  const status = fb.querySelector('.js-fb-status');
+  const submit = fb.querySelector('[type="submit"]');
+  const retry = fb.querySelector('.js-fb-retry');
+  const bugBox = fb.querySelector('.js-fb-bug');
+  const ideaBox = fb.querySelector('.js-fb-idea');
+  const fileInput = fb.querySelector('.js-fb-file');
+  const upload = fb.querySelector('.js-fb-upload');
+  const shotList = fb.querySelector('.js-fb-shots');
+  const ratingText = fb.querySelector('.js-fb-rating-text');
+  const stars = [...fb.querySelectorAll('input[name="rating"]')];
+  const MAX_SHOTS = 3;
+  const MAX_BYTES = 10 * 1024 * 1024;
+  const LONG = 2000;
+  // File types the storage bucket takes, by extension.
+  const EXT = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif', 'video/mp4': 'mp4', 'video/quicktime': 'mov', 'video/webm': 'webm' };
+  const RATING_WORDS = ['', 'Not great', 'Could be better', 'It’s okay', 'Pretty good', 'Loved it'];
+  const RATING_FACES = ['', 'meh', 'meh', 'default', 'happy', 'happy'];
+  const shots = []; // { file, url, path once uploaded }
+
+  const page = (() => {
+    const from = new URLSearchParams(location.search).get('from');
+    if (from) return from.slice(0, 200);
+    try {
+      const ref = new URL(document.referrer);
+      if (ref.origin === location.origin) return ref.pathname.replace(/^.*\//, '').replace(/\.html$/, '') || 'home';
+    } catch (e) {}
+    return 'direct';
+  })();
+
+  ['happy', 'meh', 'sleepy'].forEach((m) => { new Image().src = `${dir}yolk-${m}.svg`; });
+  const setFace = (m, cls) => {
+    if (!face.getAttribute('src').endsWith(`yolk-${m}.svg`)) face.src = `${dir}yolk-${m}.svg`;
+    replay(face, cls);
+  };
+  const say = (text, isError = false) => {
+    status.textContent = text;
+    status.classList.toggle('is-error', isError);
+  };
+  const val = (name) => f[name].value.trim();
+
+  // Messages under a field, tied to it with aria-describedby so screen readers hear them too.
+  const errFor = (name) => fb.querySelector(`[data-err="${name}"]`);
+  const flag = (name, msg, el) => {
+    const err = errFor(name);
+    err.textContent = msg;
+    err.hidden = false;
+    if (el.matches('input:not([type="radio"]), textarea')) el.setAttribute('aria-invalid', 'true');
+  };
+  const unflag = (name) => {
+    const err = errFor(name);
+    if (!err || err.hidden) return;
+    err.hidden = true;
+    err.textContent = '';
+    fb.querySelectorAll(`[name="${name}"][aria-invalid]`).forEach((el) => el.removeAttribute('aria-invalid'));
+  };
+
+  // Stars fill up to the one you pick (or point at), and Yolkie reacts.
+  const paint = (n) => stars.forEach((s) => s.closest('.star').classList.toggle('is-on', Number(s.value) <= n));
+  stars.forEach((s) => {
+    const label = s.closest('.star');
+    label.addEventListener('pointerenter', () => paint(Number(s.value)));
+    label.addEventListener('pointerleave', () => paint(Number(f.rating.value) || 0));
+  });
+
+  const showBranches = () => {
+    const kind = f.kind.value;
+    bugBox.hidden = !['bug', 'both'].includes(kind);
+    ideaBox.hidden = !['idea', 'both'].includes(kind);
+  };
+
+  fb.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.name === 'rating') {
+      const n = Number(t.value);
+      paint(n);
+      ratingText.textContent = RATING_WORDS[n];
+      setFace(RATING_FACES[n], n === 5 ? 'is-celebrating' : undefined);
+      unflag('rating');
+    }
+    if (t.name === 'kind') showBranches();
+  });
+  fb.addEventListener('input', (e) => { if (e.target.name) unflag(e.target.name); });
+
+  // Screenshots: up to three images or videos, 10 MB each, with a preview and a remove button.
+  const extOf = (file) => {
+    const m = /\.([a-z0-9]{2,5})$/i.exec(file.name);
+    const byName = m && m[1].toLowerCase();
+    return Object.values(EXT).includes(byName) ? byName : EXT[file.type] || (byName === 'jpeg' ? 'jpeg' : '');
+  };
+  function renderShots() {
+    shotList.innerHTML = shots.map((s, i) => {
+      const isVideo = s.file.type.startsWith('video/');
+      const thumb = isVideo
+        ? `<video src="${s.url}" muted playsinline preload="metadata" aria-hidden="true"></video>`
+        : `<img src="${s.url}" alt="" aria-hidden="true">`;
+      return `<li class="fb-shot">${thumb}<span class="fb-shot__name">${esc(s.file.name)}</span>
+        <button type="button" class="icon-btn fb-shot__remove" data-remove="${i}" aria-label="Remove ${esc(s.file.name)}"><span class="icon" aria-hidden="true">close</span></button></li>`;
+    }).join('');
+    const full = shots.length >= MAX_SHOTS;
+    fileInput.disabled = full;
+    upload.classList.toggle('is-disabled', full);
+    fb.querySelector('.js-fb-shot-count').textContent = shots.length ? `${shots.length} of ${MAX_SHOTS} added.` : '';
   }
-});
+  fileInput.addEventListener('change', () => {
+    const notes = new Set();
+    [...fileInput.files].forEach((file) => {
+      if (shots.length >= MAX_SHOTS) { notes.add(`Only ${MAX_SHOTS} files fit, so some were left out.`); return; }
+      if (!/^(image|video)\//.test(file.type) || !extOf(file)) { notes.add(`${file.name} isn’t an image or video type we can take.`); return; }
+      if (file.size > MAX_BYTES) { notes.add(`${file.name} is over 10 MB.`); return; }
+      shots.push({ file, url: URL.createObjectURL(file) });
+    });
+    fileInput.value = '';
+    renderShots();
+    if (notes.size) flag('screenshots', [...notes].join(' '), fileInput);
+    else unflag('screenshots');
+  });
+  shotList.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-remove]');
+    if (!b) return;
+    const [gone] = shots.splice(Number(b.dataset.remove), 1);
+    URL.revokeObjectURL(gone.url);
+    renderShots();
+    unflag('screenshots');
+    fileInput.focus();
+  });
+
+  const uid = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`);
+
+  const finish = () => {
+    fb.querySelector('.js-fb-fields').hidden = true;
+    const done = fb.querySelector('.js-fb-done');
+    done.hidden = false;
+    done.querySelector('.js-fb-done-title').focus({ preventScroll: true });
+    done.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+    setFace('happy', 'is-celebrating');
+    confetti(fb.querySelector('.js-fb-confetti'));
+    shots.forEach((s) => URL.revokeObjectURL(s.url));
+  };
+
+  fb.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    retry.hidden = true;
+    const kind = f.kind.value || null;
+    const isBug = kind === 'bug' || kind === 'both';
+    const isIdea = kind === 'idea' || kind === 'both';
+    const rating = Number(f.rating.value) || 0;
+    const problems = [];
+    if (!rating) problems.push(['rating', 'Pick a rating first: tap a star.', stars[0]]);
+    if (isBug && !val('what_happened')) problems.push(['what_happened', 'Tell us what happened, even in a few words.', f.what_happened]);
+    if (isIdea && !val('idea')) problems.push(['idea', 'Tell us your idea, even in a few words.', f.idea]);
+    ['what_happened', 'idea', 'anything_else'].forEach((name) => {
+      if (val(name).length > LONG) problems.push([name, 'That’s a little long. Keep it under 2,000 characters.', f[name]]);
+    });
+    if (val('email') && (!EMAIL_OK.test(val('email')) || val('email').length > 254)) problems.push(['email', 'That email looks a little scrambled. Mind checking it?', f.email]);
+    if (problems.length) {
+      problems.forEach(([name, msg, el]) => flag(name, msg, el));
+      problems[0][2].focus();
+      setFace('meh');
+      say(problems.length === 1 ? 'One thing to fix before this can send.' : `${problems.length} things to fix before this can send.`, true);
+      return;
+    }
+    if (f.company.value) { finish(); return; } // filled spam trap: look successful, send nothing
+    if (sentRecently('feedback')) {
+      setFace('sleepy');
+      say('You sent a note a moment ago! Give it 30 seconds, then send this one.', true);
+      return;
+    }
+    const toUpload = isBug ? shots : [];
+    submit.disabled = true;
+    say(toUpload.length ? 'Uploading…' : 'Sending…');
+    try {
+      const day = new Date().toISOString().slice(0, 10);
+      for (const s of toUpload) {
+        if (s.path) continue; // already uploaded on an earlier try
+        const path = `${day}/${uid()}.${extOf(s.file)}`;
+        await sbUpload('feedback-screenshots', path, s.file);
+        s.path = path;
+      }
+      await sbInsert('feedback', {
+        rating,
+        tried: [...fb.querySelectorAll('input[name="tried"]:checked')].map((c) => c.value),
+        kind,
+        what_happened: isBug ? val('what_happened') : null,
+        device: isBug ? f.device.value || null : null,
+        idea: isIdea ? val('idea') : null,
+        anything_else: val('anything_else') || null,
+        email: val('email').toLowerCase() || null,
+        screenshot_paths: toUpload.map((s) => s.path),
+        page,
+        app_version: APP_VERSION,
+      });
+      markSent('feedback');
+      say('');
+      finish();
+    } catch (err) {
+      setFace('meh');
+      say(sendFailed(), true);
+      retry.hidden = false;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  retry.addEventListener('click', () => fb.requestSubmit());
+}
 
 /* ---------- The demo (try.html) ---------- */
 

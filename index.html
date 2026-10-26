@@ -286,25 +286,18 @@
             <h3 class="signup__title">Save me a seat</h3>
             <div class="field">
               <label for="signup-email">Your email</label>
-              <input id="signup-email" type="email" name="email" autocomplete="email" inputmode="email" required placeholder="So Yolkie knows where to find you" aria-describedby="signup-status">
+              <input id="signup-email" type="email" name="email" autocomplete="email" inputmode="email" required maxlength="254" placeholder="So Yolkie knows where to find you" aria-describedby="signup-email-note signup-status">
+              <p class="field__note" id="signup-email-note">We'll only use your email for Yolkie updates.</p>
             </div>
-            <fieldset class="field">
-              <legend>Your usual mealtime energy <span class="field__opt">(optional)</span></legend>
-              <div class="chips">
-                <label class="chip"><input type="radio" name="energy" value="Wiped"><span>Wiped</span></label>
-                <label class="chip"><input type="radio" name="energy" value="Okay"><span>Okay</span></label>
-                <label class="chip"><input type="radio" name="energy" value="Good"><span>Good</span></label>
-              </div>
-            </fieldset>
             <div class="field">
-              <label for="signup-note">Anything else? <span class="field__opt">(optional)</span></label>
-              <textarea id="signup-note" name="note" rows="3" maxlength="500" placeholder="Your 7:48 pm nemesis, a feature you'd love…"></textarea>
+              <label for="signup-must-have">What would make Yolkie a must-have for you? <span class="field__opt">(optional)</span></label>
+              <textarea id="signup-must-have" name="must_have" rows="3" maxlength="2000" placeholder="Your 7:48 pm nemesis, a feature you'd love…"></textarea>
             </div>
             <!-- Spam trap: people never see or fill this; bots often do. -->
             <div class="signup__trap" aria-hidden="true"><label>Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
-            <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Get early access</button>
+            <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Join the waitlist</button>
             <p class="signup__status js-signup-status" id="signup-status" role="status"></p>
-            <p class="fine">We'll only email you about Yolkie.</p>
+            <button type="button" class="btn btn--secondary btn--small signup__retry js-signup-retry" hidden><span class="icon" aria-hidden="true">refresh</span>Try again</button>
           </div>
           <div class="signup__done js-signup-done" hidden>
             <h3 class="signup__title js-signup-done-title" tabindex="-1">You're on the list!</h3>
@@ -322,6 +315,7 @@
       <a href="try.html">Try the demo</a>
       <a href="help.html">Help</a>
       <a href="usage.html">Usage</a>
+      <a href="feedback.html">Send feedback</a>
       <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
     </div>
   </footer>
