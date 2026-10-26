@@ -161,9 +161,13 @@
         </div>
       </div>
       <p class="admin-msg js-acct-msg" role="status"></p>
+      <div class="acct-actions">
+        <a class="btn btn--secondary btn--small js-acct-admin" href="admin.html" hidden><span class="icon" aria-hidden="true">dashboard</span>Admin page</a>
+        <button type="button" class="btn btn--secondary btn--small js-acct-signout"><span class="icon" aria-hidden="true">logout</span>Sign out</button>
+      </div>
 
       <div class="acct-grid">
-        <section class="acct-box" aria-labelledby="acct-details-title">
+        <section class="acct-box acct-box--details" aria-labelledby="acct-details-title">
           <h2 id="acct-details-title">Details</h2>
           <dl class="admin-qa-list">
             <div class="admin-qa"><dt>Email</dt><dd class="js-acct-email"></dd></div>
@@ -228,7 +232,7 @@
           <p class="admin-saved js-2fa-status" role="status"></p>
         </section>
 
-        <section class="acct-box" aria-labelledby="acct-what-title">
+        <section class="acct-box acct-box--what" aria-labelledby="acct-what-title">
           <h2 id="acct-what-title">What your account does</h2>
           <p>Right now it holds your name and your badges. Your meals, cards and progress in the demo still save on this device only. Syncing them between your phone and computer is coming next.</p>
           <h3 class="mini-head">About the badges</h3>
@@ -242,18 +246,12 @@
           </ul>
           <p class="fine">Want to be a tester? Join the <a href="./#early-access">waitlist</a> or say so on the <a href="feedback.html?from=account">feedback page</a>, with the email you signed up with.</p>
         </section>
+        <section class="acct-danger" aria-labelledby="acct-danger-title">
+          <h2 id="acct-danger-title">Delete my account</h2>
+          <p>This erases your login, your name and your badges straight away. It can’t be undone. Anything saved on this device stays until you clear it in the demo’s settings.</p>
+          <button type="button" class="btn btn--secondary btn--small acct-danger__btn js-acct-delete"><span class="icon" aria-hidden="true">delete_forever</span>Delete my account</button>
+        </section>
       </div>
-
-      <div class="acct-actions">
-        <a class="btn btn--secondary btn--small js-acct-admin" href="admin.html" hidden><span class="icon" aria-hidden="true">dashboard</span>Admin page</a>
-        <button type="button" class="btn btn--secondary btn--small js-acct-signout"><span class="icon" aria-hidden="true">logout</span>Sign out</button>
-      </div>
-
-      <section class="acct-danger" aria-labelledby="acct-danger-title">
-        <h2 id="acct-danger-title">Delete my account</h2>
-        <p>This erases your login, your name and your badges straight away. It can’t be undone. Anything saved on this device stays until you clear it in the demo’s settings.</p>
-        <button type="button" class="btn btn--secondary btn--small acct-danger__btn js-acct-delete"><span class="icon" aria-hidden="true">delete_forever</span>Delete my account</button>
-      </section>
     </section>
 
     <!-- Account deleted -->
