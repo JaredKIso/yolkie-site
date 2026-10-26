@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin · Yolkie</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#F6F4FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1740" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    (function () {
+      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
+      r.classList.add('js');
+      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
+      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
+    })();
+  </script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Yolkie, home">
+        <span class="brand__mark"><img src="assets/app-icon.svg" alt="" width="34" height="34"></span>
+        <span class="brand__name">Yolkie</span>
+      </a>
+      <button class="theme-toggle" type="button" aria-label="Switch colour theme">
+        <span class="icon" aria-hidden="true">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main" class="admin">
+    <p class="admin-loading js-ad-loading" role="status">Checking who you are…</p>
+
+    <!-- Signed out: the sign-in form and nothing else -->
+    <section class="admin-gate js-ad-signin" hidden aria-labelledby="ad-signin-title">
+      <form class="signup js-ad-signin-form" novalidate>
+        <div class="signup__yolk" aria-hidden="true"><img src="assets/mascots/yolk-default.svg" alt="" width="220" height="220"></div>
+        <div class="js-ad-signin-fields">
+          <h1 class="signup__title" id="ad-signin-title">Team sign-in</h1>
+          <div class="field">
+            <label for="ad-email">Your email</label>
+            <input id="ad-email" type="email" name="email" autocomplete="email" inputmode="email" required maxlength="254" aria-describedby="ad-signin-status">
+            <p class="field__note">We’ll email you a sign-in link. No password needed.</p>
+          </div>
+          <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Email me a sign-in link</button>
+          <p class="signup__status js-ad-signin-status" id="ad-signin-status" role="status"></p>
+        </div>
+        <div class="signup__done js-ad-signin-done" hidden>
+          <h2 class="signup__title" tabindex="-1">Check your email</h2>
+          <p>If that address is on the Yolkie team, a sign-in link is on its way. It works once, on this device’s browser.</p>
+          <button type="button" class="btn btn--secondary js-ad-signin-again">Use a different email</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Signed in, not an admin -->
+    <section class="admin-gate admin-denied js-ad-denied" hidden>
+      <img src="assets/mascots/yolk-meh.svg" alt="" width="220" height="220">
+      <h1>This page is for the Yolkie team</h1>
+      <button type="button" class="btn btn--secondary btn--small js-ad-signout">Sign out</button>
+    </section>
+
+    <!-- Signed in as an admin -->
+    <div class="js-ad-app" hidden>
+      <div class="admin-top">
+        <div>
+          <p class="eyebrow">Admin</p>
+          <h1>Feedback and sign-ups</h1>
+          <p class="fine js-ad-who"></p>
+        </div>
+        <div class="admin-top__actions">
+          <button type="button" class="btn btn--secondary btn--small js-ad-refresh"><span class="icon" aria-hidden="true">refresh</span>Refresh</button>
+          <button type="button" class="btn btn--secondary btn--small js-ad-signout">Sign out</button>
+        </div>
+      </div>
+      <p class="admin-msg js-ad-msg" role="status"></p>
+
+      <section class="admin-stats" aria-label="At a glance">
+        <ul class="admin-cards js-ad-cards"></ul>
+        <figure class="admin-chart">
+          <figcaption>What people tried</figcaption>
+          <div class="js-ad-chart"></div>
+        </figure>
+      </section>
+
+      <div class="demo-tabs admin-tabs" role="tablist" aria-label="Lists">
+        <button type="button" role="tab" id="ad-tab-feedback" data-ad-tab="feedback" aria-controls="ad-panel-feedback" aria-selected="true"><span class="icon" aria-hidden="true">chat</span>Feedback</button>
+        <button type="button" role="tab" id="ad-tab-waitlist" data-ad-tab="waitlist" aria-controls="ad-panel-waitlist" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">mail</span>Waitlist</button>
+      </div>
+
+      <section class="admin-panel" role="tabpanel" id="ad-panel-feedback" aria-labelledby="ad-tab-feedback">
+        <form class="admin-filters js-ad-fb-filters" role="search" aria-label="Filter feedback">
+          <div class="admin-filters__search">
+            <label for="ad-fb-q">Search</label>
+            <input id="ad-fb-q" type="search" name="q" placeholder="Words, an email or a page" autocomplete="off">
+          </div>
+          <div><label for="ad-fb-kind">Kind</label>
+            <select id="ad-fb-kind" name="kind"><option value="">Any</option><option value="bug">Bug</option><option value="idea">Idea</option><option value="both">Both</option><option value="neither">Neither</option><option value="none">Not said</option></select></div>
+          <div><label for="ad-fb-rating">Rating</label>
+            <select id="ad-fb-rating" name="rating"><option value="">Any</option><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select></div>
+          <div><label for="ad-fb-status">Status</label>
+            <select id="ad-fb-status" name="status"><option value="">Any</option><option value="new">New</option><option value="reviewing">Reviewing</option><option value="done">Done</option></select></div>
+          <div><label for="ad-fb-from">From</label><input id="ad-fb-from" type="date" name="from"></div>
+          <div><label for="ad-fb-to">To</label><input id="ad-fb-to" type="date" name="to"></div>
+          <div class="admin-filters__actions">
+            <button type="reset" class="btn btn--ghost btn--small">Clear filters</button>
+            <button type="button" class="btn btn--secondary btn--small js-ad-fb-csv"><span class="icon" aria-hidden="true">download</span>Download CSV</button>
+          </div>
+        </form>
+        <p class="admin-count js-ad-fb-count" aria-live="polite"></p>
+        <ul class="admin-list js-ad-fb-list"></ul>
+      </section>
+
+      <section class="admin-panel" role="tabpanel" id="ad-panel-waitlist" aria-labelledby="ad-tab-waitlist" hidden>
+        <form class="admin-filters js-ad-wl-filters" role="search" aria-label="Search the waitlist">
+          <div class="admin-filters__search">
+            <label for="ad-wl-q">Search</label>
+            <input id="ad-wl-q" type="search" name="q" placeholder="An email or a word from the answer" autocomplete="off">
+          </div>
+          <div class="admin-filters__actions">
+            <button type="button" class="btn btn--secondary btn--small js-ad-wl-csv"><span class="icon" aria-hidden="true">download</span>Download CSV</button>
+          </div>
+        </form>
+        <p class="admin-count js-ad-wl-count" aria-live="polite"></p>
+        <ul class="admin-list admin-list--waitlist js-ad-wl-list"></ul>
+      </section>
+    </div>
+
+    <dialog class="sheet admin-sheet js-ad-detail" aria-labelledby="ad-detail-title">
+      <div class="sheet__head"><h2 id="ad-detail-title">Feedback</h2><button type="button" class="icon-btn js-close" aria-label="Close"><span class="icon" aria-hidden="true">close</span></button></div>
+      <div class="sheet__body js-ad-detail-body"></div>
+    </dialog>
+
+    <dialog class="sheet admin-zoom js-ad-zoom" aria-label="Screenshot">
+      <div class="sheet__head"><h2>Screenshot</h2><button type="button" class="icon-btn js-close" aria-label="Close"><span class="icon" aria-hidden="true">close</span></button></div>
+      <div class="sheet__body js-ad-zoom-body"></div>
+    </dialog>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Yolkie team only.</strong> Nothing here is public.</p>
+    <div class="site-footer__links">
+      <a href="./">Home</a>
+      <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+  <script src="admin.js" defer></script>
+</body>
+</html>

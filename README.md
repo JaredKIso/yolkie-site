@@ -11,6 +11,7 @@ A three-page static site for Yolkie, a cooking app for every meal that gets you 
 | `help.html` | Help: a search box that filters sections as you type, a table of contents, and 15 collapsible sections (only Quick start open at first): 12 guides with a “Try it” link into the demo, For testers (with “Send feedback” and “Join the waitlist”), FAQ and What’s new. `help.html#household` opens that section. The demo links back with small “?” buttons |
 | `feedback.html` | The feedback form: a star rating, what you tried, and bug or idea questions with screenshot uploads. Saves to Supabase |
 | `usage.html` | Where the recipes come from, how creators are credited, and how a creator can reach us |
+| `admin.html`, `admin.js` | The private team page: sign in with a magic link to see feedback and sign-ups, change a note's status, add notes and download CSVs. Not linked, not in the sitemap, `noindex`, and disallowed in `robots.txt`. `admin.js` only loads on this page. Setup: `supabase/README.md` |
 | `404.html` | Not-found page. Links are root-relative (`/`); change them to `/repo/` if hosted at `username.github.io/repo/` |
 | `styles.css` | One stylesheet for every page. Section 1 is the design tokens, 3b is the demo, 3c its extras, 3d the collection and household |
 | `main.js` | One script for every page. The Yolkie section starts with the Supabase settings (`SUPABASE_URL`, `SUPABASE_ANON_KEY`), then the forms, then the demo recipes (`RECIPES`) |
@@ -19,7 +20,7 @@ A three-page static site for Yolkie, a cooking app for every meal that gets you 
 | `assets/yolkie-ad.mp4`, `assets/yolkie-ad-poster.jpg` | The ad and its poster frame (taken from 0:10.5 of the ad, "Meet Yolkie") |
 | `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`, `site.webmanifest` | Browser and home-screen icons, all made from `app-icon.svg`. The Apple icon has square corners because iOS rounds them itself |
 | `og-image.png` | 1200×630 link-preview image of the hero |
-| `supabase/` | `setup.sql` to paste into Supabase, and a README with the setup steps |
+| `supabase/` | `setup.sql` (forms) and `admin.sql` (admin page) to paste into Supabase, and a README with the setup steps |
 | `design-prompt.md` | The design brief the site was built against |
 | `yolkie-brand-kit/`, `tonight-brand-kit/` | The current and the original brand kits. The pages don't use them, so leave both out when publishing |
 
