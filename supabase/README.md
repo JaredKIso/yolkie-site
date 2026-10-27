@@ -145,6 +145,28 @@ delete from public.trusted_devices where user_id = (select id from auth.users wh
 
 That works for your own account too, as long as you can still open the Supabase dashboard.
 
+## Emails from the admin page
+
+"Email them" on the Waitlist tab and "Reply by email" on a feedback note open a compose box, and Send
+delivers it through Resend from `Yolkie <yolkie@isolatedideas.dev>` (replies go to that address).
+The Resend key can't go in the website, where anyone could read it, so a small Supabase Edge
+Function, `functions/send-email/index.ts`, holds it and does the sending. It only works for an admin
+who has passed 2FA, only emails people who gave us their address (the waitlist, a feedback note or
+an account), sends at most 90 a day, and logs each email in `email_log`.
+
+1. **Run the email script.** In **SQL Editor → New query**, paste all of `email.sql` and press **Run**.
+2. **Make a Resend key just for this.** In Resend, **API Keys → Create API key**, permission
+   **Sending access**, domain `isolatedideas.dev`. Copy it.
+3. **Give it to Supabase, and only Supabase.** In **Edge Functions → Secrets**, add a secret named
+   `RESEND_API_KEY` with that key as the value. Don't paste it anywhere else.
+4. **Deploy the function.** In **Edge Functions → Deploy a new function → Via Editor**, name it
+   `send-email` (exactly), replace the example code with all of `functions/send-email/index.ts`, and
+   deploy. Leave **Verify JWT** on. (With the Supabase CLI instead: `supabase functions deploy send-email`.)
+5. **Try it.** Open a feedback note that left your own email and press **Reply by email**.
+
+If you test the admin page on your computer, it's allowed from `http://127.0.0.1:8781` too. To use
+another address, change `ALLOWED_ORIGINS` at the top of the function and deploy it again.
+
 ## Email templates
 
 Supabase's emails are plain by default. `email-templates/` has Yolkie-styled ones. For each, open

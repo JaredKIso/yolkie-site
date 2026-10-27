@@ -53,6 +53,7 @@
   let waitlist = [];
   let people = [];
   let invites = [];
+  let emails = []; // what the admin page has sent (supabase/email.sql), newest first
   let lastVisit = 0;
   const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
   const fmtWhen = (iso) => new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
@@ -66,11 +67,13 @@
   async function load() {
     say('Loading…');
     try {
-      const [fb, wl, pp] = await Promise.all([
+      const [fb, wl, pp, el] = await Promise.all([
         api('/rest/v1/feedback?select=*&order=created_at.desc&limit=5000').then((r) => r.json()),
         api('/rest/v1/waitlist?select=*&order=created_at.desc&limit=5000').then((r) => r.json()),
         loadPeople(),
+        api('/rest/v1/email_log?select=to_email,subject,kind,ref_id,sent_at&order=sent_at.desc&limit=2000').then((r) => r.json()).catch(() => []),
       ]);
+      emails = el;
       feedback = fb;
       waitlist = wl;
       people = pp || [];
@@ -192,7 +195,8 @@
         ${qa('Using', esc(r.device || ''))}
         ${qa('Their idea', text(r.idea))}
         ${qa('Anything else', text(r.anything_else))}
-        ${qa('Reply to', r.email ? `<a href="mailto:${encodeURIComponent(r.email).replace(/%40/g, '@')}?subject=${encodeURIComponent('Your Yolkie feedback')}">${esc(r.email)}</a>` : '')}
+        ${qa('Reply to', r.email ? `<span class="admin-reply">${esc(r.email)}<button type="button" class="btn btn--secondary btn--small js-ad-compose" data-to="${esc(r.email)}" data-kind="reply" data-ref="${esc(r.id)}"><span class="icon" aria-hidden="true">reply</span>Reply by email</button></span>` : '')}
+        ${qa('Replies sent', repliesFor(r.id).map((m) => `${esc(fmtWhen(m.sent_at))} · ${esc(m.subject)}`).join('<br>'))}
         ${r.email ? `<div class="admin-qa"><dt>Tester</dt><dd class="js-ad-tester">${testerControls(r.email)}</dd></div>` : ''}
         ${qa('Sent from', esc(r.page || 'unknown'))}
         ${qa('App version', esc(r.app_version || ''))}
@@ -285,10 +289,11 @@
     const status = t.accepted
       ? `<span class="badge badge--tester"><span class="icon" aria-hidden="true">${BADGES.tester.icon}</span>Tester</span><span>${t.person ? 'Has an account' : 'Accepted, hasn’t signed up yet'}</span>`
       : (t.person ? '<span>Has an account</span>' : '');
-    const mail = `mailto:${encodeURIComponent(t.email).replace(/%40/g, '@')}?subject=${encodeURIComponent(INVITE_SUBJECT)}&body=${encodeURIComponent(inviteBody())}`;
-    return `<span class="admin-tester">${status}
+    const invited = emails.find((m) => m.to_email === t.email && m.kind === 'invite');
+    const mail = `<button type="button" class="btn btn--secondary btn--small js-ad-compose" data-to="${esc(t.email)}" data-kind="invite"><span class="icon" aria-hidden="true">mail</span>${invited ? 'Email again' : 'Email them'}</button>`;
+    return `<span class="admin-tester">${status}${invited ? `<span>Invited ${fmtDate(invited.sent_at)}</span>` : ''}
       ${t.accepted
-        ? `${t.person ? '' : `<a class="btn btn--secondary btn--small" href="${esc(mail)}"><span class="icon" aria-hidden="true">mail</span>Email them</a>`}<button type="button" class="btn btn--ghost btn--small" data-tester="${esc(t.email)}" data-on="0">Undo</button>`
+        ? `${t.person ? '' : mail}<button type="button" class="btn btn--ghost btn--small" data-tester="${esc(t.email)}" data-on="0">Undo</button>`
         : `<button type="button" class="btn btn--secondary btn--small" data-tester="${esc(t.email)}" data-on="1"><span class="icon" aria-hidden="true">${BADGES.tester.icon}</span>Accept as tester</button>`}
     </span>`;
   }
@@ -328,6 +333,84 @@
     }
   }
   $('.js-ad-wl-list').addEventListener('click', onTesterClick);
+
+  /* ---------- Sending email (through Resend, by the send-email Edge Function) ---------- */
+  const repliesFor = (id) => emails.filter((m) => m.kind === 'reply' && m.ref_id === id);
+  const mailBox = $('.js-ad-mail');
+  const mailForm = $('.js-ad-mail-form');
+  const mailStatus = $('.js-ad-mail-status');
+  let mailing = null; // { to, kind, ref }
+  // The sender the send-email function uses, written here rather than in the page so scrapers miss it.
+  $('.js-ad-mail-from').textContent = `Yolkie <${['yolkie', 'isolatedideas.dev'].join('@')}>`;
+  const MAIL_ERRORS = {
+    not_configured: 'Email isn’t set up yet: add the Resend key in Supabase (supabase/README.md, “Emails from the admin page”).',
+    not_admin: 'Only admins who’ve passed two-step sign-in can send email. Sign in again with your code.',
+    unknown_recipient: 'That address isn’t on the waitlist, in a feedback note or on an account, so Yolkie won’t email it.',
+    daily_limit: 'That’s the daily limit (90 emails, to stay under Resend’s free plan). Try again tomorrow.',
+    bad_input: 'Add a subject and a message first.',
+    no_log: 'Couldn’t check today’s count. Run supabase/email.sql, then try again.',
+    resend: 'Resend didn’t accept it. Check the domain and key in Resend, then try again.',
+  };
+  function replyBody(r) {
+    const said = [r.what_happened, r.idea, r.anything_else].filter(Boolean).join('\n\n').slice(0, 800);
+    return ['Hi!', '', 'Thanks for your feedback on Yolkie.', '', '', '', 'Thanks,', 'The Yolkie team',
+      ...(said ? ['', '---', `You wrote on ${fmtDate(r.created_at)}:`, ...said.split('\n').map((l) => `> ${l}`)] : [])].join('\n');
+  }
+  function syncMailApp() {
+    $('.js-ad-mail-app').href = `mailto:${encodeURIComponent(mailing.to).replace(/%40/g, '@')}?subject=${encodeURIComponent($('#ad-mail-subject').value)}&body=${encodeURIComponent($('#ad-mail-body').value)}`;
+  }
+  function openCompose(to, kind, ref) {
+    mailing = { to, kind, ref };
+    const r = ref ? feedback.find((x) => x.id === ref) : null;
+    $('.js-ad-mail-to').textContent = to;
+    $('#ad-mail-subject').value = kind === 'reply' ? 'Re: your Yolkie feedback' : INVITE_SUBJECT;
+    const body = $('#ad-mail-body');
+    body.value = kind === 'reply' && r ? replyBody(r) : inviteBody();
+    mailStatus.textContent = '';
+    mailStatus.classList.remove('is-error');
+    $('.js-ad-mail-send').disabled = false;
+    syncMailApp();
+    mailBox.showModal();
+    body.focus();
+    // In a reply, start typing on the empty line under "Thanks for your feedback".
+    const at = kind === 'reply' ? body.value.indexOf('\n\n\n') + 2 : 0;
+    body.setSelectionRange(at, at);
+    body.scrollTop = 0;
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('.js-ad-compose');
+    if (b) openCompose(b.dataset.to, b.dataset.kind, b.dataset.ref || null);
+  });
+  mailForm.addEventListener('input', syncMailApp);
+  mailBox.addEventListener('click', (e) => { if (e.target.closest('.js-close') || e.target === mailBox) mailBox.close(); });
+  mailForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const subject = $('#ad-mail-subject').value.trim();
+    const text = $('#ad-mail-body').value.trim();
+    if (!subject || !text) { mailStatus.textContent = MAIL_ERRORS.bad_input; mailStatus.classList.add('is-error'); return; }
+    const send = $('.js-ad-mail-send');
+    send.disabled = true;
+    mailStatus.classList.remove('is-error');
+    mailStatus.textContent = 'Sending…';
+    try {
+      await api('/functions/v1/send-email', { method: 'POST', body: JSON.stringify({ to: mailing.to, subject, text, kind: mailing.kind, ref: mailing.ref }) });
+      emails.unshift({ to_email: mailing.to, subject, kind: mailing.kind, ref_id: mailing.ref, sent_at: new Date().toISOString() });
+      mailStatus.textContent = `Sent to ${mailing.to}.`;
+      say(`Email sent to ${mailing.to}.`);
+      renderWaitlist();
+      // Close the box after a moment, then refresh the open feedback note so the reply shows up there.
+      const noteId = openId;
+      setTimeout(() => {
+        if (mailBox.open) mailBox.close();
+        if (noteId && detail.open) { detail.close(); openDetail(noteId); }
+      }, 1200);
+    } catch (err) {
+      if (err.signedOut) return;
+      mailStatus.textContent = err.status === 404 ? 'The send-email function isn’t deployed yet (supabase/README.md, “Emails from the admin page”).' : (MAIL_ERRORS[err.code] || 'That didn’t send. Check your connection and try again.');
+      mailStatus.classList.add('is-error');
+      send.disabled = false;
+    }
+  });
 
   /* ---------- Waitlist ---------- */
   const wlForm = $('.js-ad-wl-filters');

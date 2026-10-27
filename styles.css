@@ -2139,3 +2139,18 @@ button.badge:disabled { opacity: .6; cursor: progress; }
 .pro-tip { display: flex; gap: 6px; align-items: flex-start; margin-top: 10px; padding: 8px 12px; border-radius: 10px; border: 1.5px dashed var(--line); font-size: 14px; color: var(--text-dim); max-width: 52ch; }
 .pro-tip .icon { font-size: 18px; color: var(--accent); }
 .pro-tip strong { color: var(--text); }
+
+/* Admin emails: the compose box, and "Reply by email" on a feedback note */
+.admin-mail .field { margin: 0; padding: 0; border: 0; }
+.admin-mail .field + .field { margin-top: 14px; }
+.admin-mail label { display: block; font-weight: 700; font-size: 15px; }
+.admin-mail input, .admin-mail textarea {
+  display: block; width: 100%; margin-top: 6px; padding: 10px 14px; min-height: 48px;
+  border: 2px solid var(--line); border-radius: 12px; background: var(--bg); color: var(--text); font: 500 16px/1.45 var(--font-body);
+}
+.admin-mail textarea { resize: vertical; min-height: 220px; }
+.admin-mail input:focus-visible, .admin-mail textarea:focus-visible { outline: 3px solid var(--yolk); outline-offset: 1px; border-color: var(--text); }
+.admin-mail__to { margin-bottom: 4px; overflow-wrap: anywhere; }
+.admin-mail .fine { margin-bottom: 16px; }
+.admin-mail__actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; }
+.admin-reply { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; overflow-wrap: anywhere; }

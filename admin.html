@@ -162,6 +162,27 @@
       <div class="sheet__body js-ad-detail-body"></div>
     </dialog>
 
+    <dialog class="sheet admin-sheet js-ad-mail" aria-labelledby="ad-mail-title">
+      <div class="sheet__head"><h2 id="ad-mail-title">Send an email</h2><button type="button" class="icon-btn js-close" aria-label="Close"><span class="icon" aria-hidden="true">close</span></button></div>
+      <form class="sheet__body admin-mail js-ad-mail-form" novalidate>
+        <p class="admin-mail__to">To <strong class="js-ad-mail-to"></strong></p>
+        <p class="fine">From <span class="js-ad-mail-from">Yolkie</span>, sent through Resend. Their reply goes to that address.</p>
+        <div class="field">
+          <label for="ad-mail-subject">Subject</label>
+          <input id="ad-mail-subject" type="text" maxlength="200" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="ad-mail-body">Message</label>
+          <textarea id="ad-mail-body" rows="11" maxlength="10000" required></textarea>
+        </div>
+        <div class="admin-mail__actions">
+          <button type="submit" class="btn btn--primary btn--small js-ad-mail-send"><span class="icon" aria-hidden="true">send</span>Send</button>
+          <a class="btn btn--ghost btn--small js-ad-mail-app" href="#">Open in my email app instead</a>
+        </div>
+        <p class="admin-saved js-ad-mail-status" role="status"></p>
+      </form>
+    </dialog>
+
     <dialog class="sheet admin-zoom js-ad-zoom" aria-label="Screenshot">
       <div class="sheet__head"><h2>Screenshot</h2><button type="button" class="icon-btn js-close" aria-label="Close"><span class="icon" aria-hidden="true">close</span></button></div>
       <div class="sheet__body js-ad-zoom-body"></div>
