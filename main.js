@@ -1588,6 +1588,134 @@ const RECIPES = [
       { do: 'Fluff it up. Parsley over, lemon on the side.', mins: 1 },
     ],
   },
+
+  /* Few-ingredient basics: each needs only one or two things plus pantry basics, so a Wiped or
+     15-minute day with a near-empty fridge always has a match. They suit any meal (`also`), and
+     `tip` is an optional extra that never goes on the shopping list. */
+  {
+    id: 'cheesy-eggs', meal: 'breakfast', also: ['lunch', 'dinner', 'snack'], name: 'Cheesy scrambled eggs', time: 8, effort: 1, base: 1, kcal: 370, protein: 25,
+    cuisine: 'American', diet: ['vegetarian', 'gluten-free'], allergens: ['egg', 'dairy'],
+    nut: { carbs: 2, fiber: 0, fat: 29, sugar: 1, sodium: 520 },
+    blurb: 'Eggs, cheese and one pan. Stir low and slow until they’re soft and melty.',
+    tip: 'Great on toast if you have bread!',
+    dishes: ['non-stick pan', 'bowl'],
+    ingredients: [
+      { q: 3, n: 'egg', p: 'eggs', s: 'Dairy', step: 1 },
+      { q: 0.25, u: 'cup', n: 'shredded cheddar cheese', s: 'Dairy', step: 0.25 },
+      { q: 0.5, u: 'tbsp', n: 'butter', s: 'Dairy', step: 0.5 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' }],
+    zero: 'Put the pan on the stove and get the eggs and cheese out of the fridge.',
+    steps: [
+      { do: 'Crack the eggs into the bowl with a pinch of salt and the pepper. Beat with a fork.', mins: 1 },
+      { do: 'Melt the butter in the pan over low heat, then pour in the eggs.', mins: 1 },
+      { do: 'Stir slowly with a spatula. When they’re nearly set, scatter the cheese on and fold it in.', mins: 4 },
+      { do: 'Take the pan off the heat while they still look a little glossy. They finish cooking on the plate.', mins: 1 },
+    ],
+  },
+  {
+    id: 'fried-eggs', meal: 'breakfast', also: ['lunch', 'dinner', 'snack'], name: 'Crispy-edged fried eggs', time: 6, effort: 1, base: 1, kcal: 230, protein: 13,
+    cuisine: 'American', diet: ['vegetarian', 'gluten-free', 'dairy-free'], allergens: ['egg'],
+    nut: { carbs: 1, fiber: 0, fat: 19, sugar: 0, sodium: 290 },
+    blurb: 'Hot oil, two eggs, lacy golden edges and a runny middle. Five minutes, start to plate.',
+    tip: 'A dash of hot sauce on top if you have some.',
+    dishes: ['frying pan'],
+    ingredients: [
+      { q: 2, n: 'egg', p: 'eggs', s: 'Dairy', step: 1 },
+      { q: 1, u: 'tbsp', n: 'olive oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' }],
+    zero: 'Put the frying pan on the stove.',
+    steps: [
+      { do: 'Heat the oil in the pan over medium-high heat until it shimmers.', mins: 1 },
+      { do: 'Crack in the eggs. Fry until the edges are crispy and the whites are set, spooning a little hot oil over the whites.', mins: 3 },
+      { do: 'Sprinkle with a pinch of salt and the pepper, and slide them onto a plate.', mins: 1 },
+    ],
+  },
+  {
+    id: 'veggie-rice', meal: 'dinner', also: ['breakfast', 'lunch', 'snack'], name: 'Five-minute veggie rice', time: 10, effort: 1, base: 1, kcal: 390, protein: 9,
+    cuisine: 'Chinese', diet: ['vegan'], allergens: ['soy', 'gluten'],
+    nut: { carbs: 70, fiber: 6, fat: 8, sugar: 4, sodium: 900 },
+    blurb: 'Leftover rice and a handful of frozen veg, tossed hot with soy sauce. Dinner from the back of the freezer.',
+    tip: 'Fry an egg on top if you have one.',
+    dishes: ['frying pan'],
+    ingredients: [
+      { q: 1.5, u: 'cup', n: 'cooked rice (leftover or a pouch)', s: 'Pantry', step: 0.5 },
+      { q: 1, u: 'cup', n: 'frozen mixed vegetables', s: 'Produce', step: 0.25 },
+      { q: 1, u: 'tbsp', n: 'soy sauce', s: 'Pantry', step: 0.5 },
+      { q: 1, u: 'tbsp', n: 'vegetable oil', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Garlic powder', step: 0.25, swap: 'Skip it. The soy sauce does the work.' }],
+    zero: 'Put the frying pan on the stove and get the veg out of the freezer.',
+    steps: [
+      { do: 'Heat the oil in the pan over high heat. Add the frozen veg and stir-fry until hot.', mins: 3 },
+      { do: 'Add the rice, breaking up any clumps, and the garlic powder. Fry until it’s hot all the way through.', mins: 4 },
+      { do: 'Pour the soy sauce around the edge of the pan, toss, and serve.', mins: 1 },
+    ],
+  },
+  {
+    id: 'cheesy-pasta', meal: 'dinner', also: ['breakfast', 'lunch', 'snack'], name: 'Cheesy butter pasta', time: 15, effort: 1, base: 1, kcal: 560, protein: 20,
+    cuisine: 'Italian', diet: [], allergens: ['dairy', 'gluten'],
+    withSwap: [{ diet: 'vegetarian', how: 'use a vegetarian hard cheese instead of parmesan, which is made with animal rennet.' }],
+    nut: { carbs: 68, fiber: 3, fat: 22, sugar: 3, sodium: 560 },
+    blurb: 'Pasta, butter and a snowfall of parmesan, loosened with a splash of the cooking water. Comfort in a bowl.',
+    tip: 'Stir in a handful of frozen peas for the last minute if you have some.',
+    dishes: ['pot', 'colander'],
+    ingredients: [
+      { q: 3, u: 'oz', n: 'dried pasta (any shape)', s: 'Pantry', step: 1 },
+      { q: 0.25, u: 'cup', n: 'grated parmesan cheese', s: 'Dairy', step: 0.25 },
+      { q: 1, u: 'tbsp', n: 'butter', s: 'Dairy', step: 0.5 },
+    ],
+    spices: [{ q: 0.25, u: 'tsp', n: 'Black pepper', step: 0.25, swap: 'Skip it.' }],
+    zero: 'Fill the pot with water and put it on high heat.',
+    steps: [
+      { do: 'Add a big pinch of salt to the water and bring it to the boil.', timer: { id: 'boil', label: 'Water boiling', mins: 5 } },
+      { wait: 'boil' },
+      { do: 'Add the pasta and stir so it doesn’t stick.', timer: { id: 'pasta', label: 'Pasta', mins: 8 } },
+      { wait: 'pasta', note: 'Give it a stir now and then.' },
+      { do: 'Scoop out a mug of the pasta water, then drain the pasta and tip it back into the pot.', mins: 1 },
+      { do: 'Add the butter, the parmesan and a splash of the pasta water. Stir until it’s glossy and clings to the pasta. Pepper on top.', mins: 1 },
+    ],
+  },
+  {
+    id: 'cheese-quesadilla', meal: 'lunch', also: ['breakfast', 'dinner', 'snack'], name: 'Crispy cheese quesadilla', time: 8, effort: 1, base: 1, kcal: 480, protein: 19,
+    cuisine: 'Mexican', diet: ['vegetarian'], allergens: ['dairy', 'gluten'],
+    nut: { carbs: 46, fiber: 3, fat: 24, sugar: 2, sodium: 820 },
+    blurb: 'Two tortillas, a pile of cheese, a hot pan. Flip once, cut into wedges, try not to burn your mouth.',
+    tip: 'Salsa or sour cream on the side if you have some.',
+    dishes: ['frying pan'],
+    ingredients: [
+      { q: 2, n: 'flour tortilla', p: 'flour tortillas', s: 'Pantry', step: 1 },
+      { q: 0.5, u: 'cup', n: 'shredded cheddar cheese', s: 'Dairy', step: 0.25 },
+      { q: 1, u: 'tsp', n: 'butter', s: 'Dairy', step: 1 },
+    ],
+    spices: [],
+    zero: 'Put the frying pan on the stove over medium heat.',
+    steps: [
+      { do: 'Melt the butter in the pan. Lay in one tortilla, scatter the cheese over it, and put the other tortilla on top.', mins: 2 },
+      { do: 'Cook until the bottom is golden and the cheese starts to melt.', mins: 2 },
+      { do: 'Flip it with a spatula and cook the other side until golden.', mins: 2 },
+      { do: 'Slide it onto a board and cut it into wedges.', mins: 1 },
+    ],
+  },
+  {
+    id: 'pb-toast', meal: 'breakfast', also: ['lunch', 'dinner', 'snack'], name: 'Peanut butter toast', time: 4, effort: 1, base: 1, kcal: 390, protein: 14,
+    cuisine: 'American', diet: ['vegan'], allergens: ['peanut', 'gluten'],
+    nut: { carbs: 34, fiber: 5, fat: 22, sugar: 6, sodium: 420 },
+    blurb: 'Hot toast, peanut butter spread right to the edges so it melts in. Sometimes simple wins.',
+    tip: 'Sliced banana on top if you have one!',
+    dishes: ['toaster'],
+    ingredients: [
+      { q: 2, u: 'slice', n: 'sandwich bread', s: 'Pantry', step: 1 },
+      { q: 2, u: 'tbsp', n: 'peanut butter', s: 'Pantry', step: 0.5 },
+    ],
+    spices: [],
+    zero: 'Put the bread in the toaster.',
+    steps: [
+      { do: 'Toast the bread until it’s golden.', mins: 3, uses: ['sandwich bread'] },
+      { do: 'Spread the peanut butter on while the toast is hot, right to the edges.', mins: 1 },
+    ],
+  },
 ];
 
 // Recipes based on creators' published recipes live in recipes-sourced.js, which try.html loads first.
@@ -1711,6 +1839,8 @@ const HAVE = [
   { id: 'potatoes', label: 'Potatoes', test: (n) => /potato/.test(n) },
   { id: 'beans', label: 'Beans', test: (n) => /black beans|kidney beans|chickpea/.test(n) },
   { id: 'cheese', label: 'Cheese', test: (n) => /cheese|cheddar|parmesan|feta/.test(n) },
+  { id: 'bread', label: 'Bread', test: (n) => /\bbread\b/.test(n) },
+  { id: 'frozen-veg', label: 'Frozen veg', test: (n) => /frozen (peas|corn|mixed|veg|shelled edamame|spinach)/.test(n) },
   { id: 'spinach', label: 'Spinach', test: (n) => /spinach/.test(n) },
   { id: 'lemon', label: 'Lemon', test: (n) => /\blemons?\b/.test(n) },
 ];
@@ -1791,6 +1921,61 @@ const allergic = (r, list) => list.some((a) => (ALLERGENS.some((x) => x.id === a
 const haveTest = (key) => { const p = HAVE.find((h) => h.id === key); return p ? p.test : (n) => n.includes(stem(key)); };
 const hasItem = (item, have) => have.some((k) => haveTest(k)(lower(item.n)));
 const usesHave = (r, have) => have.filter((k) => r.ingredients.some((i) => haveTest(k)(lower(i.n))));
+// Pantry basics: what nearly every kitchen has, so they never count as missing. Spices live on the
+// spice rack and never count either.
+const BASICS = new RegExp(['(sea |kosher |table )?salt( flakes)?', 'water', '(white |granulated |caster |raw |brown )?sugar',
+  '(plain |all-purpose )?flour', 'baking (powder|soda)', '(spray|neutral|vegetable|sunflower|canola|olive|extra virgin olive|cooking) oil',
+  'oil', 'cooking spray', '(unsalted |salted )?butter', 'soy sauce', '(white )?vinegar', 'ketchup', 'honey'].map((x) => `^${x}$`).join('|'));
+const isBasic = (item) => BASICS.test(lower(item.n));
+// The main ingredients a recipe needs that you didn't pick.
+const missingFor = (r, have) => r.ingredients.filter((i) => !isBasic(i) && !hasItem(i, have));
+// Common swaps for an ingredient you don't have: `use` is what to use instead, and `skip` means the
+// dish still works without it. The first match wins. Only shown on the suggestion; picking ignores them.
+const SWAPS = [
+  [/^(fresh |flat-leaf )?(parsley|coriander|cilantro|basil|chives|mint|dill)$|^(thai basil|basil leaves|coriander roots and stems)$/, { skip: true }],
+  [/^(fresh )?(thyme|oregano|rosemary|sage)( sprig| leaves| leaf)?$|^(thyme|rosemary) sprig$/, { use: 'a pinch of the dried herb', skip: true }],
+  [/^(spring|green) onion$/, { use: 'a little chopped onion', skip: true }],
+  [/^((brown|white|red) )?onion$|^shallot$/, { use: 'any onion' }],
+  [/^garlic$|^whole garlic bulb$/, { use: 'garlic powder (¼ tsp a clove)' }],
+  [/^lemon( juice)?$/, { use: 'lime, or a splash of vinegar' }],
+  [/^lime$/, { use: 'lemon' }],
+  [/wedges$/, { skip: true }],
+  [/^(thickened|heavy) cream$|^cream or milk$/, { use: 'milk with a knob of butter' }],
+  [/^(full-fat |full-cream )?milk$/, { use: 'any milk, plant milk too' }],
+  [/^greek yogurt$/, { use: 'sour cream' }],
+  [/^sour cream$/, { use: 'Greek yogurt', skip: true }],
+  [/parmesan|parmigiano|pecorino/, { use: 'any hard cheese' }],
+  [/cheddar|^grated mozzarella$|^provolone$|^swiss cheese$|^gruyère$/, { use: 'any melting cheese' }],
+  [/feta/, { use: 'goat cheese' }],
+  [/^baby spinach$/, { use: 'frozen spinach or kale', skip: true }],
+  [/^(chicken|vegetable|beef)( or (chicken|vegetable|beef))? (stock|broth)$|^chicken bouillon cube$/, { use: 'water and a stock cube' }],
+  [/^(canned )?(diced|crushed|whole peeled) tomatoes$/, { use: 'any canned tomatoes' }],
+  [/^tomato paste$/, { use: 'a squeeze of ketchup' }],
+  [/^(spaghetti|penne|pappardelle)$|^dried pasta/, { use: 'any pasta' }],
+  [/^(long-grain|basmati|jasmine) rice$/, { use: 'any rice' }],
+  [/mustard$/, { use: 'any mustard', skip: true }],
+  [/^maple syrup$/, { use: 'honey or sugar' }],
+  [/^(toasted )?sesame oil$|^peanut oil$|^coconut oil$/, { use: 'vegetable oil' }],
+  [/^(sourdough bread|thick sourdough|bread of your choice|brioche|sandwich bread|bread)$/, { use: 'any bread' }],
+  [/^flour tortilla$/, { use: 'corn tortillas' }],
+  [/^corn tortilla$/, { use: 'flour tortillas' }],
+  [/^(canned )?(black beans|kidney beans|chickpeas)$/, { use: 'any canned beans' }],
+  [/^(boneless |skinless |boneless skinless )?chicken (thighs?|breast)$/, { use: 'any boneless chicken' }],
+  [/^worcestershire sauce$/, { use: 'soy sauce' }],
+  [/^(dry )?(white|red) wine$/, { use: 'stock' }],
+  [/^(swiss brown |button )?mushrooms$/, { use: 'any mushrooms' }],
+  [/^frozen (peas|mixed vegetables|shelled edamame)$/, { use: 'any frozen veg' }],
+  [/^ginger$/, { use: 'a pinch of ground ginger' }],
+  [/^mayonnaise$/, { use: 'Greek yogurt' }],
+  [/^(dark|light|low-sodium) soy sauce$/, { use: 'regular soy sauce' }],
+  [/vinegar$/, { use: 'any vinegar' }],
+  [/^(mirin|chinese rice wine|cooking sake)$/, { use: 'a splash of water with a pinch of sugar' }],
+  [/^(long red |red |fresh )chill?i$|^pickled chilli$/, { use: 'a pinch of chilli flakes', skip: true }],
+  [/^(black )?sesame seeds$|^fried shallots$|^snow pea sprouts$|^pickled (jalapeños|onions)$|^hot sauce$|^sriracha$|^chilli oil$|^sliced almonds$|^pumpkin seeds$|^pepitas$|^roasted peanuts$|^whipped cream$|^ice cream$|^cherry tomatoes$|^salsa$|^celery stalk$/, { skip: true }],
+];
+const swapFor = (item) => { const hit = SWAPS.find(([re]) => re.test(lower(item.n))); return hit ? hit[1] : null; };
+// A recipe's own meal, plus any other meals it suits (`also`): eggs work for dinner too.
+const forMeal = (r, meal) => r.meal === meal || (r.also || []).includes(meal);
 const haveLabel = (key) => lower(labelOf(HAVE, key));
 const CUISINES = [...new Set(RECIPES.map((r) => r.cuisine))].sort();
 const ALL_ITEMS = [...new Set(RECIPES.flatMap((r) => r.ingredients.map((i) => lower(i.n))))].sort();
@@ -1886,6 +2071,12 @@ const FRIENDS = [
 // Each recipe's card: food art (`art`: a dish shape, its main colour, then the colours of the bits on top),
 // a fun fact, and the hint shown on its silhouette until you cook it.
 const CARDS = {
+  'cheesy-eggs': { art: ['plate', '#FFD86B', ['#F2A93B', '#FFF1C7']], hint: 'Soft, golden and melty…', fact: 'Adding cheese at the end keeps it gooey. Too early and it turns stringy.' },
+  'fried-eggs': { art: ['eggs', '#FFFFFF', ['#FFC83D']], hint: 'Lacy edges, sunny middles…', fact: 'The crispy lace on a fried egg is the white browning in very hot oil.' },
+  'veggie-rice': { art: ['bowl', '#F6E7B4', ['#7CC36A', '#FF8A3D']], hint: 'From the back of the freezer…', fact: 'Frozen veg is frozen within hours of picking, so it keeps most of its vitamins.' },
+  'cheesy-pasta': { art: ['noodles', '#FFE7A0', ['#FFF6DA']], hint: 'Buttery, cheesy and glossy…', fact: 'Starchy pasta water helps butter and cheese turn into a smooth sauce.' },
+  'cheese-quesadilla': { art: ['wedges', '#F2D49B', ['#FFC83D']], hint: 'Golden wedges, melty middle…', fact: 'A dry or barely buttered pan makes the crispiest quesadilla.' },
+  'pb-toast': { art: ['toast', '#C98A4B', ['#8A5A3C']], hint: 'Warm, nutty and spread to the edges…', fact: 'Peanut butter melts a little on hot toast, which is why it spreads so easily.' },
   scrambled: { art: ['toast', '#FFD86B', ['#E8553E']], hint: 'Soft and golden, on toast…', fact: 'Low heat is the secret: the eggs set gently and stay soft instead of rubbery.' },
   oatmeal: { art: ['bowl', '#E9D3A8', ['#F7E07A', '#8A5A3C']], hint: 'A warm bowl that keeps you going…', fact: 'Rolled oats are a whole grain: steamed, then pressed flat between rollers.' },
   pancakes: { art: ['stack', '#E8B060', ['#D93A4A', '#6B4DE6']], hint: 'A fluffy stack…', fact: 'The bubbles are gas from the baking powder. When they pop, it’s time to flip.' },
@@ -2489,7 +2680,8 @@ if (demo) {
     dinner: { label: 'dinner', plural: 'dinners', at: 'dinner', say: ['happy', 'Dinner. The main event.'] },
     snack: { label: 'snack', plural: 'snacks', at: 'snack time', say: ['happy', 'Snack time. A very serious meal.'] },
   };
-  const mealOf = (r) => MEALS[(r || state.recipe).meal];
+  // The meal a recipe is being cooked as: the one you chose, when the recipe suits it (`also`).
+  const mealOf = (r = state.recipe) => MEALS[state.meal && forMeal(r, state.meal) ? state.meal : r.meal];
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const ENERGY = { 1: ['sleepy', 'Same. Let’s keep it lazy.'], 2: ['default', 'Okay is plenty.'], 3: ['happy', 'Ooh, energy. Look at you.'] };
   const PICKED = ['%s. Decided.', '%s. That’s %m sorted.', '%M: %s. You just have to show up.'];
@@ -2645,7 +2837,10 @@ if (demo) {
   // dislikes and fewer 😕 first; on a Wiped day, favorites (a Comfort pick); then the
   // most of what you already have; then effort close to your energy, using most of the time you have.
   // If nothing fits the time and energy, the quickest one that works.
-  function rank() {
+  // Wiped or 15 minutes, with something picked under "What do you already have?": only recipes whose
+  // main ingredients are all picked or pantry basics ("Only using what you picked"). The chip on the
+  // suggestion lets one missing ingredient back in; `keepStrict` keeps that choice while re-ranking.
+  function rank(keepStrict = false) {
     const g = groupFilter();
     const rated = ratingsByRecipe();
     const ids = eaters();
@@ -2653,11 +2848,25 @@ if (demo) {
     const low = (r) => { const f = faces(r); return f.length > 0 && f.every((v) => v === 1); };
     state.group = g;
     state.comfort = (r) => state.energy === 1 && faces(r).includes(3);
-    const key = (r) => [softHits(r, g).length, low(r) ? 1 : 0, state.comfort(r) ? 0 : 1,
+    state.strict = state.have.length > 0 && (state.energy === 1 || state.time === 15);
+    if (!keepStrict) state.strictOff = false;
+    state.strictNote = '';
+    const missing = (r) => (state.strict ? missingFor(r, state.have).length : 0);
+    const key = (r) => [missing(r), softHits(r, g).length, low(r) ? 1 : 0, state.comfort(r) ? 0 : 1,
       -usesHave(r, state.have).length, (state.energy - r.effort) * 2 + (state.time - r.time) / 15];
     const cmp = (a, b) => { const ka = key(a), kb = key(b); const k = ka.findIndex((x, i) => x !== kb[i]); return k < 0 ? 0 : ka[k] - kb[k]; };
-    state.pool = RECIPES.filter((r) => r.meal === state.meal && passesGroup(r, g));
+    state.pool = RECIPES.filter((r) => forMeal(r, state.meal) && passesGroup(r, g));
     state.fits = state.pool.filter((r) => r.time <= state.time && r.effort <= state.energy).sort(cmp);
+    if (state.strict && state.fits.length) {
+      const within = (n) => state.fits.filter((r) => missing(r) <= n);
+      if (!state.strictOff && !within(0).length) {
+        state.strictOff = true;
+        state.strictNote = 'Nothing uses only what you picked, so this one needs one more thing.';
+      }
+      const kept = within(state.strictOff ? 1 : 0);
+      if (kept.length) state.fits = kept;
+      else state.strictNote = 'Nothing fits with what you picked plus one more thing, so here are the usual picks.';
+    }
     state.fallback = !state.fits.length && state.pool.length > 0;
     if (state.fallback) state.fits = [...state.pool].sort((a, b) => a.time - b.time || a.effort - b.effort).slice(0, 1);
     state.idx = 0;
@@ -2675,9 +2884,40 @@ if (demo) {
   // "Recipe by …", linking to the creator's page. Yolkie's own recipes have none.
   const srcChip = (r, cls = '') => (r.src ? `<a class="src-chip ${cls}" href="${esc(r.src.url)}" target="_blank" rel="noopener"><span class="icon" aria-hidden="true">link</span>Recipe by ${esc(r.src.by)}<span class="sr-only"> (opens their site)</span></a>` : '');
 
+  // With something picked under "What do you already have?": on a Wiped or 15-minute day the
+  // strict-matching chip, and on every suggestion a line for each main ingredient you didn't pick (not
+  // pantry basics), with "Use …" and "Skip it" where a swap exists. A choice lasts for this session and
+  // carries into the check step, where that item is ticked off with a note and kept off the list.
+  state.choices = {};
+  const choiceOf = (r, i) => state.choices[`${r.id}:${i}`];
+  const choiceText = (c, item) => (c.kind === 'skip' ? `Skipping ${item.n.replace(/\s*\(.*\)/, '')}` : `Using ${c.use}`);
+  function strictBits(r) {
+    if (!state.have.length) return '';
+    const on = !state.strictOff;
+    const chip = state.strict
+      ? `<div class="strict-row"><button type="button" class="strict-chip js-strict" aria-pressed="${on}"><span class="icon" aria-hidden="true">${on ? 'check' : 'add'}</span>Only using what you picked</button></div>`
+      : '';
+    const miss = r.ingredients.map((item, i) => ({ item, i })).filter(({ item }) => !isBasic(item) && !hasItem(item, state.have));
+    const rows = miss.slice(0, 3).map(({ item, i }) => {
+      const name = esc(item.n.replace(/\s*\(.*\)/, ''));
+      const c = choiceOf(r, i);
+      if (c) {
+        return `<li class="needs-item"><span class="needs-tag is-done"><span class="icon" aria-hidden="true">check</span>${esc(choiceText(c, item))}</span>
+          <button type="button" class="needs-opt js-needs" data-i="${i}" data-kind="undo" aria-label="Undo: ${esc(choiceText(c, item))}">Undo</button></li>`;
+      }
+      const sw = swapFor(item);
+      return `<li class="needs-item"><span class="needs-tag"><span class="icon" aria-hidden="true">shopping_basket</span>Needs: ${name}</span>
+        ${sw && sw.use ? `<button type="button" class="needs-opt js-needs" data-i="${i}" data-kind="use">Use ${esc(sw.use)}</button>` : ''}
+        ${sw && sw.skip ? `<button type="button" class="needs-opt js-needs" data-i="${i}" data-kind="skip" aria-label="Skip the ${name}">Skip it</button>` : ''}</li>`;
+    }).join('');
+    const more = miss.length > 3 ? `<li class="needs-more">+ ${miss.length - 3} more to check before you cook</li>` : '';
+    return chip + (rows ? `<ul class="needs-list" aria-label="What this needs">${rows}${more}</ul>` : '');
+  }
   function renderMeal(note = '') {
     const r = state.recipe;
     const need = r.ingredients.filter((i) => !hasItem(i, state.have));
+    state.mealNote = note;
+    note = [state.strictNote, note].filter(Boolean).join(' ');
     const fans = [...new Set(softHits(r, state.group).map(fanLine))];
     state.shown = true;
     $('.js-pick-hint').hidden = true;
@@ -2686,8 +2926,10 @@ if (demo) {
         <div class="meal-card__top"><p class="eyebrow">Yolkie's pick · ${cap(mealOf(r).label)} · ${r.cuisine}</p>
           ${state.comfort(r) ? '<span class="pick-badge"><span class="icon" aria-hidden="true">favorite</span>Comfort pick</span>' : ''}
           ${haveBadge(r)}</div>
+        ${strictBits(r)}
         <h3 class="meal-card__name">${r.name}</h3>
         <p class="meal-card__blurb">${r.blurb}</p>
+        ${r.tip ? `<p class="pro-tip"><span class="icon" aria-hidden="true">tips_and_updates</span><span><strong>Pro tip (optional):</strong> ${esc(r.tip)}</span></p>` : ''}
         ${srcChip(r)}
         ${(r.withSwap || []).map((w) => `<p class="swap-note"><span class="icon" aria-hidden="true">swap_horiz</span><span><strong>${labelOf(DIETS, w.diet)} with a swap:</strong> ${esc(w.how)}</span></p>`).join('')}
         ${fans.length ? `<p class="fan-note"><span class="icon" aria-hidden="true">info</span><span>${esc(listText(fans))}, so this one sits lower in the picks.</span></p>` : ''}
@@ -2721,17 +2963,17 @@ if (demo) {
       ...f.diets.map((d) => ({ label: labelOf(DIETS, d), own: { ...f, diets: f.diets.filter((x) => x !== d) } })),
       ...f.dislikes.map((t) => ({ label: `no ${t}`, own: { ...f, dislikes: f.dislikes.filter((x) => x !== t) } })),
     ];
-    opts.forEach((o) => { const g = groupFilter(eaters(), o.own); o.n = RECIPES.filter((r) => r.meal === state.meal && passesGroup(r, g)).length; });
+    opts.forEach((o) => { const g = groupFilter(eaters(), o.own); o.n = RECIPES.filter((r) => forMeal(r, state.meal) && passesGroup(r, g)).length; });
     return opts.filter((o) => o.n).sort((a, b) => b.n - a.n)[0];
   }
   function tightest() {
-    const all = RECIPES.filter((r) => r.meal === state.meal);
+    const all = RECIPES.filter((r) => forMeal(r, state.meal));
     return groupFilter().rules.map((rule) => ({ rule, n: all.filter((r) => blocks(r, rule)).length })).filter((x) => x.n).sort((a, b) => b.n - a.n)[0];
   }
   let loosen = null;
   function renderEmpty() {
     const meal = MEALS[state.meal].label;
-    const total = RECIPES.filter((r) => r.meal === state.meal).length;
+    const total = RECIPES.filter((r) => forMeal(r, state.meal)).length;
     const t = tightest();
     const group = eaters().length > 1;
     loosen = loosenIdea();
@@ -2838,7 +3080,7 @@ if (demo) {
     const g = groupFilter();
     const term = lower($('.js-finder-search', finder).value).trim();
     return RECIPES.filter((r) => passesGroup(r, g)
-      && (finderState.meal === 'all' || r.meal === finderState.meal)
+      && (finderState.meal === 'all' || forMeal(r, finderState.meal))
       && finderState.items.every((k) => finds(r, k))
       && (!term || lower(r.name).includes(term) || finds(r, term)))
       .sort((a, b) => a.time - b.time || a.name.localeCompare(b.name));
@@ -3048,6 +3290,26 @@ if (demo) {
     if (t.closest('.js-cook-this')) startCheck(state.recipe);
     if (t.closest('.js-vote-start')) startVote();
     if (t.closest('.js-have-change')) { renderHave(); yolk('default', 'What’s in the fridge?'); }
+    const needOpt = t.closest('.js-needs');
+    if (needOpt) {
+      const r = state.recipe;
+      const i = Number(needOpt.dataset.i);
+      const key = `${r.id}:${i}`;
+      const kind = needOpt.dataset.kind;
+      if (kind === 'undo') delete state.choices[key];
+      else state.choices[key] = kind === 'use' ? { kind, use: swapFor(r.ingredients[i]).use } : { kind };
+      renderMeal(state.mealNote);
+      const again = $(`.js-needs[data-i="${i}"]`);
+      if (again) again.focus({ preventScroll: true });
+      if (kind !== 'undo') yolk('happy', kind === 'skip' ? 'Skipped. It’ll still be good.' : `${cap(state.choices[key].use)} it is.`);
+    }
+    if (t.closest('.js-strict')) {
+      state.strictOff = !state.strictOff;
+      rank(true);
+      suggest(false);
+      $('.js-strict').focus({ preventScroll: true });
+      yolk('default', state.strictOff ? 'Okay, one extra thing is allowed. I’ll say what to grab.' : 'Back to only what you picked.');
+    }
     const h = t.closest('[data-group="have"]');
     if (h) { toggleHave(h.dataset.id); const again = $(`[data-group="have"][data-id="${CSS.escape(h.dataset.id)}"]`); if (again && !again.disabled) again.focus(); else $('.js-have-search').focus(); }
     const add = t.closest('[data-group="have-add"]');
@@ -3079,7 +3341,7 @@ if (demo) {
     state.bought = {};
     // What you said you have is ticked already; from the check-in, the rest is on the list.
     recipe.ingredients.forEach((item, i) => {
-      if (hasItem(item, state.have)) state.marks[i] = 'have';
+      if (hasItem(item, state.have) || choiceOf(recipe, i)) state.marks[i] = 'have';
       else if (state.fromCheckin) state.marks[i] = 'need';
     });
     $('.js-check-meal').textContent = `${recipe.name} · ${recipe.time} min · Dishes: ${recipe.dishes.length}`;
@@ -3100,7 +3362,7 @@ if (demo) {
       const a = amount(item);
       const mark = state.marks[i];
       return `<li class="check-row${mark ? ' is-' + mark : ''}" data-i="${i}">
-        <span class="check-row__item"><span class="check-row__section">${item.s}</span><span class="check-row__qty">${a.qty}</span> <span class="check-row__name">${a.name}</span></span>
+        <span class="check-row__item"><span class="check-row__section">${item.s}</span><span class="check-row__qty">${a.qty}</span> <span class="check-row__name">${a.name}</span>${choiceOf(state.recipe, i) ? `<span class="check-row__swap">${esc(choiceText(choiceOf(state.recipe, i), item))}</span>` : ''}</span>
         <span class="have-need" role="group" aria-label="${a.qty} ${a.name}">
           <button type="button" data-mark="have" aria-pressed="${mark === 'have'}">Got it</button>
           <button type="button" data-mark="need" aria-pressed="${mark === 'need'}">Need it</button>
@@ -5751,7 +6013,7 @@ if (demo) {
     const keys = stillHave().slice(0, 3).map((x) => x.k);
     if (!keys.length) return null;
     const g = groupFilter(['you']);
-    const best = RECIPES.filter((rr) => rr.meal === meal && passesGroup(rr, g)).map((rr) => ({ rr, used: usesHave(rr, keys) })).filter((x) => x.used.length).sort((a, b) => b.used.length - a.used.length)[0];
+    const best = RECIPES.filter((rr) => forMeal(rr, meal) && passesGroup(rr, g)).map((rr) => ({ rr, used: usesHave(rr, keys) })).filter((x) => x.used.length).sort((a, b) => b.used.length - a.used.length)[0];
     if (!best) return { keys, text: `You probably still have ${listText(keys.map(haveLabel))}. Hungry in an hour?` };
     return { keys: best.used, text: `You probably still have ${listText(best.used.map(haveLabel))}. ${best.rr.name} ${WHEN[meal]}?` };
   }
@@ -6115,7 +6377,7 @@ if (demo) {
   function votePicks(voters) {
     const meal = state.recipe.meal;
     const g = groupFilter(voters);
-    const sameMeal = RECIPES.filter((r) => r.meal === meal && !state.fits.includes(r)).sort((a, b) => a.time - b.time);
+    const sameMeal = RECIPES.filter((r) => forMeal(r, meal) && !state.fits.includes(r)).sort((a, b) => a.time - b.time);
     return [state.recipe, ...state.fits, ...sameMeal].filter((r, k, all) => all.indexOf(r) === k).filter((r) => passesGroup(r, g)).slice(0, 3);
   }
   function startVote() {
