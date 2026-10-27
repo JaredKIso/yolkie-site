@@ -99,7 +99,7 @@ document.querySelectorAll('.js-email').forEach((el) => {
 const SUPABASE_URL = 'https://teavrtstsnemauatvdfo.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_eDcmppmByWCE37z3SCP1hQ_d5Dqehaq';
 // Sent with each feedback note, so a report can be matched to the version of the site it came from.
-const APP_VERSION = 'demo-2026.10.25';
+const APP_VERSION = 'demo-2026.10.27';
 
 const supabaseReady = () => /^https:\/\/\S+$/.test(SUPABASE_URL) && SUPABASE_ANON_KEY.length > 20;
 // Legacy anon keys are JWTs and also go in Authorization; the newer publishable keys only go in apikey.
@@ -339,7 +339,7 @@ function confetti(box) {
 // Motion tokens, read from the stylesheet so scripted motion matches the CSS.
 const durL = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-l')) || 400;
 
-// Numbers that count up to a new value (takeout dodged, meals cooked). `key` remembers the last value
+// Numbers that count up to a new value (meals cooked at home, and what that saved). `key` remembers the last value
 // shown, so a number only moves when it changed. Instant with reduced motion.
 const lastCount = {};
 function countTo(el, key, to, pre = '', from = lastCount[key]) {
@@ -576,6 +576,8 @@ if (fb) {
   const status = fb.querySelector('.js-fb-status');
   const submit = fb.querySelector('[type="submit"]');
   const retry = fb.querySelector('.js-fb-retry');
+  const noShots = fb.querySelector('.js-fb-noshots');
+  let skipFiles = false;
   const bugBox = fb.querySelector('.js-fb-bug');
   const ideaBox = fb.querySelector('.js-fb-idea');
   const fileInput = fb.querySelector('.js-fb-file');
@@ -740,16 +742,26 @@ if (fb) {
       say('You sent a note a moment ago! Give it 30 seconds, then send this one.', true);
       return;
     }
-    const toUpload = isBug ? shots : [];
+    // Files go with every kind of note. If uploading them fails, the note can still go without them.
+    const toUpload = skipFiles ? shots.filter((s) => s.path) : shots;
     submit.disabled = true;
+    noShots.hidden = true;
     say(toUpload.length ? 'Uploading…' : 'Sending…');
     try {
       const day = new Date().toISOString().slice(0, 10);
-      for (const s of toUpload) {
-        if (s.path) continue; // already uploaded on an earlier try
-        const path = `${day}/${uid()}.${extOf(s.file)}`;
-        await sbUpload('feedback-screenshots', path, s.file);
-        s.path = path;
+      try {
+        for (const s of toUpload) {
+          if (s.path) continue; // already uploaded on an earlier try
+          const path = `${day}/${uid()}.${extOf(s.file)}`;
+          await sbUpload('feedback-screenshots', path, s.file);
+          s.path = path;
+        }
+      } catch (err) {
+        setFace('meh');
+        say('The files didn’t upload. Try again, or send your note without them. Everything you typed is still here.', true);
+        retry.hidden = false;
+        noShots.hidden = false;
+        return;
       }
       await sbInsert('feedback', {
         rating,
@@ -760,7 +772,7 @@ if (fb) {
         idea: isIdea ? val('idea') : null,
         anything_else: val('anything_else') || null,
         email: val('email').toLowerCase() || null,
-        screenshot_paths: toUpload.map((s) => s.path),
+        screenshot_paths: toUpload.map((s) => s.path).filter(Boolean),
         page,
         app_version: APP_VERSION,
       });
@@ -775,7 +787,8 @@ if (fb) {
       submit.disabled = false;
     }
   });
-  retry.addEventListener('click', () => fb.requestSubmit());
+  retry.addEventListener('click', () => { skipFiles = false; fb.requestSubmit(); });
+  noShots.addEventListener('click', () => { skipFiles = true; fb.requestSubmit(); });
 }
 
 /* ---------- The demo (try.html) ---------- */
@@ -1969,7 +1982,30 @@ const lower = (s) => String(s).toLowerCase();
 const stem = (s) => lower(s).trim().replace(/ food$/, '').replace(/(es|s)$/, '');
 const labelOf = (list, id) => (list.find((x) => x.id === id) || { label: id }).label;
 const listText = (arr) => (arr.length < 2 ? arr.join('') : `${arr.slice(0, -1).join(', ')} and ${arr[arr.length - 1]}`);
-const byId = (id) => RECIPES.find((r) => r.id === id);
+// Every recipe, hidden or not, so a meal cooked before a recipe was hidden still shows its name.
+const ALL_RECIPES = RECIPES.slice();
+const byId = (id) => ALL_RECIPES.find((r) => r.id === id);
+/* Recipes the team has hidden after a creator asked (request-removal.html, admin "Removal requests"). They
+   come out of RECIPES, so nothing suggests, lists or collects them. The list is cached on the device so
+   they're gone straight away on the next visit, then refreshed from the hidden_recipes table. */
+const HIDDEN_RECIPES_KEY = 'yolkie-hidden-recipes';
+let hiddenRecipes = new Set();
+function applyHiddenRecipes(ids) {
+  hiddenRecipes = new Set(ids);
+  RECIPES.splice(0, RECIPES.length, ...ALL_RECIPES.filter((r) => !hiddenRecipes.has(r.id)));
+}
+try { applyHiddenRecipes(JSON.parse(localStorage.getItem(HIDDEN_RECIPES_KEY) || '[]')); } catch (e) {}
+// Resolves true when the list changed.
+async function refreshHiddenRecipes() {
+  if (!supabaseReady()) return false;
+  const res = await fetch(`${sbBase()}/rest/v1/hidden_recipes?select=recipe_id`, { headers: sbHeaders() });
+  if (!res.ok) return false;
+  const ids = (await res.json()).map((x) => x.recipe_id).filter((id) => typeof id === 'string').sort();
+  try { localStorage.setItem(HIDDEN_RECIPES_KEY, JSON.stringify(ids)); } catch (e) {}
+  if (ids.join() === [...hiddenRecipes].sort().join()) return false;
+  applyHiddenRecipes(ids);
+  return true;
+}
 const itemNames = (r) => [...r.ingredients, ...r.spices].map((i) => lower(i.n));
 const mentions = (r, term) => (stem(term) === 'spicy' ? (r.has || []).includes('spicy') : itemNames(r).some((n) => n.includes(stem(term))));
 function dietsOf(r) {
@@ -1984,7 +2020,30 @@ function dietsOf(r) {
   }
   return r.dietSet;
 }
-const allergic = (r, list) => list.some((a) => (ALLERGENS.some((x) => x.id === a) ? r.allergens.includes(a) : mentions(r, a)));
+// Typed-in allergies: common words map onto the built-in tags, which come from each recipe's allergen
+// list. "Nuts" counts as both kinds. Anything else is only matched against ingredient names.
+const ALLERGY_WORDS = {
+  peanut: /^(pea ?nuts?|groundnuts?|peanut butter)$/,
+  treenut: /^(tree ?nuts?|almonds?|cashews?|walnuts?|pecans?|hazelnuts?|pistachios?|macadamias?|brazil nuts?|pine nuts?)$/,
+  dairy: /^(milk|dairy|lactose|cows? milk|cheese|butter|cream|yog(h)?urt|whey|casein)$/,
+  egg: /^(eggs?|egg whites?|egg yolks?)$/,
+  gluten: /^(wheat|gluten|wheat ?\/ ?gluten|barley|rye|spelt|c(o)?eliac)$/,
+  soy: /^(soy|soya|soybeans?|soy beans?|tofu|edamame)$/,
+  sesame: /^(sesame|sesame seeds?|tahini)$/,
+  fish: /^(fish|salmon|tuna|cod|anchov(y|ies)|white fish)$/,
+  shellfish: /^(shell ?fish|shrimps?|prawns?|crabs?|lobsters?|crustaceans?|mussels?|clams?|oysters?|scallops?|molluscs?|mollusks?)$/,
+};
+const allergyIds = (text) => {
+  const t = lower(text).trim().replace(/\s+/g, ' ');
+  if (ALLERGENS.some((x) => x.id === t)) return [t];
+  if (/^(nuts?|all nuts)$/.test(t)) return ['peanut', 'treenut'];
+  return Object.keys(ALLERGY_WORDS).filter((id) => ALLERGY_WORDS[id].test(t));
+};
+// Swap recognised words for their tags (an old "milk" entry becomes the Milk tag), keeping the rest as typed.
+const normAllergies = (list) => [...new Set((list || []).flatMap((a) => { const ids = allergyIds(a); return ids.length ? ids : [a]; }))];
+const allergic = (r, list) => list.some((a) => { const ids = allergyIds(a); return ids.length ? ids.some((id) => r.allergens.includes(id)) : mentions(r, a); });
+const ALLERGY_LABELS = 'We filter recipes, but always check labels.';
+const allergyNote = (extra = '') => `<p class="allergy-note"><span class="icon" aria-hidden="true">info</span><span>${ALLERGY_LABELS}${extra}</span></p>`;
 const haveTest = (key) => { const p = HAVE.find((h) => h.id === key); return p ? p.test : (n) => n.includes(stem(key)); };
 const hasItem = (item, have) => have.some((k) => haveTest(k)(lower(item.n)));
 const usesHave = (r, have) => have.filter((k) => r.ingredients.some((i) => haveTest(k)(lower(i.n))));
@@ -2521,7 +2580,8 @@ if (demo) {
   /* Saved choices and activity */
   // Your own diet, dislikes and allergies live at the top level; everyone else's are in `restr`, by member id.
   const freshPrefs = () => ({
-    diets: [], dislikes: [], allergies: [], keepOut: [], members: DEFAULT_MEMBERS.map((m) => ({ ...m })), restr: {}, names: {},
+    diets: [], dislikes: [], allergies: [], keepOut: [], members: DEFAULT_MEMBERS.filter((m) => m.id === 'you').map((m) => ({ ...m })), restr: {}, names: {},
+    eatersBy: {}, sampleMates: false,
     houseGoal: 10, goal: 3, takeout: 15, takeoutAsked: false, outfit: {}, tab: 'cook', hidden: [], link: null,
     reminders: { breakfast: { on: false, time: '07:30' }, lunch: { on: false, time: '11:30' }, dinner: { on: true, time: '17:30' } },
     notToday: '', quiet: { on: true, from: '21:30', to: '07:00' }, dietAsk: { key: '', count: 0, never: false }, last: {},
@@ -2544,6 +2604,16 @@ if (demo) {
     delete prefs.houseAllergies;
   }
   if (Array.isArray(prefs.names)) prefs.names = {};
+  // Earlier versions started everyone with Boyd and Scramble in the house. If they're still exactly
+  // as they came (same names, no restrictions), they were never chosen: start as a house of one.
+  const untouched = (m) => { const d = DEFAULT_MEMBERS.find((x) => x.id === m.id); return d && m.name === d.name && m.status === 'active' && !((prefs.restr || {})[m.id]); };
+  if (saved.members && !('sampleMates' in saved) && prefs.members.length === 3 && prefs.members.every(untouched)) {
+    if (store.get(SAMPLE_KEY, null)) prefs.sampleMates = 'sample';
+    else prefs.members = prefs.members.filter((m) => m.id === 'you');
+  }
+  prefs.allergies = normAllergies(prefs.allergies);
+  prefs.keepOut = normAllergies(prefs.keepOut);
+  Object.values(prefs.restr || {}).forEach((r) => { r.allergies = normAllergies(r.allergies); r.keepOut = normAllergies(r.keepOut); });
   const savePrefs = () => store.set(PREFS_KEY, prefs);
   const sampleOn = () => !!store.get(SAMPLE_KEY, null);
   // Meals used to say who cooked by number; now it's by member id.
@@ -2698,25 +2768,33 @@ if (demo) {
     el.classList.add('is-entering');
     el.addEventListener('animationend', () => el.classList.remove('is-entering'), { once: true });
   }
-  function showTab(name, focus = false) {
+  // Tester tools (the sample week, the Kitchen's preview slider) show only with ?tester=1, for this visit.
+  const TESTER = (() => { try { if (/[?&]tester=1/.test(location.search)) sessionStorage.setItem('yolkie-tester', '1'); return sessionStorage.getItem('yolkie-tester') === '1'; } catch (e) { return /[?&]tester=1/.test(location.search); } })();
+  $$('.js-tester-only').forEach((el) => { el.hidden = !TESTER; });
+  /* Panels and the tab that stays lit for them: Extras, its House and Collection, and the Kitchen hang off Me.
+     `mode` picks the Kitchen inside Me, or the extras inside Collection (the Cards tab is just the binder). */
+  const TAB_OF = { extras: 'me', house: 'me' };
+  function showTab(name, focus = false, mode = '') {
+    const lit = name === 'collection' && mode === 'extras' ? 'me' : TAB_OF[name] || name;
     tabs.forEach((t) => {
-      const on = t.dataset.tab === name;
+      const on = t.dataset.tab === lit;
       t.setAttribute('aria-selected', String(on));
       t.tabIndex = on ? 0 : -1;
       if (on && focus) t.focus();
     });
     $$('[data-panel]').forEach((p) => { const was = p.hidden; p.hidden = p.dataset.panel !== name; if (was && !p.hidden) enter(p); });
     if (prefs.tab !== name) { prefs.tab = name; savePrefs(); }
-    if (name === 'me') showMeView(prefs.meView === 'kitchen' ? 'kitchen' : 'progress');
+    if (name === 'me') showMeView(mode === 'kitchen' ? 'kitchen' : 'progress');
+    if (name === 'extras') renderHub();
     if (name === 'house') renderHouse();
-    if (name === 'collection') renderCollection();
+    if (name === 'collection') { colMode = mode === 'extras' ? 'extras' : 'binder'; renderCollection(); }
   }
+  let colMode = 'binder';
   tabs.forEach((t, k) => {
     t.addEventListener('click', () => {
       showTab(t.dataset.tab);
       if (t.dataset.tab === 'me') yolk('happy', 'Your progress. It only goes up from here.');
-      if (t.dataset.tab === 'house') yolk('default', 'The whole house, on one phone. Pass it around.');
-      if (t.dataset.tab === 'collection') yolk('happy', 'Everything you’ve earned. All by cooking, never by luck.');
+      if (t.dataset.tab === 'collection') yolk('happy', 'Your recipe cards. Every one earned by cooking.');
       if (t.dataset.tab === 'cook') yolk('default', 'Back to the kitchen.');
     });
     t.addEventListener('keydown', (e) => {
@@ -2740,11 +2818,23 @@ if (demo) {
       li.classList.toggle('is-done', i < pos);
       if (i === pos) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
     });
-    demo.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    if (name === 'cook') toNow();
+    else demo.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
     const title = $(`[data-stage="${name}"] .stage__title`);
     if (title) title.focus({ preventScroll: true });
   }
   $$('.js-go').forEach((b) => b.addEventListener('click', () => go(b.dataset.go)));
+  // Cooking starts with the tracker just under the header, or, if that would push the Now card's button
+  // off a short screen, with the Now card itself there.
+  function toNow() {
+    const head = document.querySelector('.site-header');
+    const top = head ? head.getBoundingClientRect().bottom + 8 : 8;
+    const track = $('.js-cook-track');
+    const now = $('.js-now');
+    const fits = now.getBoundingClientRect().bottom - track.getBoundingClientRect().top <= window.innerHeight - top;
+    const y = (fits ? track : now).getBoundingClientRect().top + window.scrollY - top;
+    window.scrollTo({ top: Math.max(0, y), behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
 
   /* Sheets (native <dialog>: focus stays inside, Escape closes) */
   const openSheet = (d) => { if (!d.open) d.showModal(); };
@@ -2827,6 +2917,7 @@ if (demo) {
     $('.js-quick-body').innerHTML = `
       <div class="tags">${DIETS.map((d) => tag('quick', d.id, d.label, quickDraft.includes(d.id))).join('')}</div>
       <p class="fine quick-note"><span class="icon" aria-hidden="true">lock</span>${al.length ? `Your allergies stay on: ${esc(listText(al))}.` : 'Allergies aren’t changed here.'} Change them in <button type="button" class="link-btn js-quick-prefs">Preferences</button>.</p>
+      ${al.length ? allergyNote() : ''}
       <p class="quick-q">Use this for…</p>
       <div class="sheet-actions">
         <button type="button" class="btn btn--primary js-quick-once">Just this meal</button>
@@ -2873,8 +2964,32 @@ if (demo) {
     }
   });
 
-  /* Who's eating: the people this meal is for. It starts as just you, every meal. */
+  /* Who's eating: the people this meal is for. Yolkie remembers who ate at each meal (breakfast, lunch…)
+     and starts with everyone in the house for a meal it hasn't seen, so nobody's allergy is off by accident. */
   const eaters = () => state.eaters.filter((id) => id === 'you' || active().some((m) => m.id === id));
+  const slotEaters = (meal = state.meal) => {
+    const saved = (prefs.eatersBy || {})[meal || 'any'];
+    const ids = (saved || active().map((m) => m.id)).filter((id) => id === 'you' || active().some((m) => m.id === id));
+    return ids.length ? ids : ['you'];
+  };
+  const rememberEaters = () => { prefs.eatersBy = { ...(prefs.eatersBy || {}), [state.meal || 'any']: eaters() }; savePrefs(); };
+  // Demo housemates: Boyd and Scramble move in with the sample week or "Try it as a house".
+  const SAMPLE_MATES = DEFAULT_MEMBERS.filter((m) => m.id !== 'you');
+  function addSampleMates(why) {
+    SAMPLE_MATES.forEach((m) => { if (!member(m.id) && prefs.members.length < MAX_HOUSE) prefs.members.push({ ...m }); });
+    if (!prefs.sampleMates || why === 'try') prefs.sampleMates = why;
+    prefs.eatersBy = {};
+    state.eaters = active().map((m) => m.id);
+    membersChanged();
+  }
+  function removeSampleMates() {
+    if (prefs.sampleMates !== 'sample') return;
+    prefs.members = prefs.members.filter((m) => !SAMPLE_MATES.some((x) => x.id === m.id));
+    prefs.sampleMates = false;
+    prefs.eatersBy = {};
+    state.eaters = ['you'];
+    membersChanged();
+  }
   const ALLERGY_WORD = { peanut: 'peanut', treenut: 'tree nut', dairy: 'milk', egg: 'egg', gluten: 'gluten', soy: 'soy', sesame: 'sesame', fish: 'fish', shellfish: 'shellfish' };
   const allergyWord = (a) => ALLERGY_WORD[a] || a;
   // Everything a meal has to satisfy: the diets and allergies of everyone eating, your never-show list,
@@ -2964,7 +3079,8 @@ if (demo) {
   }
   const amountFor = (item, r, servings) => describe(item, scaleQty(item, servings, r.base));
   // "Recipe by …", linking to the creator's page. Yolkie's own recipes have none.
-  const srcChip = (r, cls = '') => (r.src ? `<a class="src-chip ${cls}" href="${esc(r.src.url)}" target="_blank" rel="noopener"><span class="icon" aria-hidden="true">link</span>Recipe by ${esc(r.src.by)}<span class="sr-only"> (opens their site)</span></a>` : '');
+  const srcChip = (r, cls = '') => (r.src ? `<span class="src-row"><a class="src-chip ${cls}" href="${esc(r.src.url)}" target="_blank" rel="noopener"><span class="icon" aria-hidden="true">link</span>Recipe by ${esc(r.src.by)}<span class="sr-only"> (opens their site)</span></a>
+    <a class="src-own" href="request-removal.html?recipe=${encodeURIComponent(r.id)}">Is this your recipe?</a></span>` : '');
 
   // With something picked under "What do you already have?": on a Wiped or 15-minute day the
   // strict-matching chip, and on every suggestion a line for each main ingredient you didn't pick (not
@@ -3029,11 +3145,13 @@ if (demo) {
         ${state.fromCheckin ? `<div class="ready-list"><p><span class="icon" aria-hidden="true">shopping_cart</span><strong>Shopping list ready</strong>· ${plural(need.length, 'item')}</p>
           <ul>${need.map((i) => { const a = amountFor(i, r, state.servings); return `<li>${a.qty ? `${a.qty} ` : ''}${a.name}</li>`; }).join('')}</ul></div>` : ''}
         ${note ? `<p class="meal-note">${note}</p>` : ''}
+        ${groupFilter().allergies.length ? allergyNote() : ''}
         <div class="actions">
           <button type="button" class="btn btn--primary js-cook-this"><span class="btn__dot" aria-hidden="true"></span>Let's make this</button>
           <button type="button" class="btn btn--secondary js-another">Another one</button>
           ${active().length > 1 ? '<button type="button" class="btn btn--ghost js-vote-start"><span class="icon" aria-hidden="true">how_to_vote</span>Vote with the house</button>' : ''}
         </div>
+        <p class="meal-card__more"><button type="button" class="link-btn js-open-finder" aria-haspopup="dialog">Rather choose? Find by ingredient</button></p>
       </article>`;
   }
 
@@ -3178,8 +3296,9 @@ if (demo) {
     const pool = finderPool();
     const f = eff();
     $('.js-finder-count', finder).textContent = `${plural(pool.length, 'recipe')}${pool.length > FINDER_MAX ? `. Showing the quickest ${FINDER_MAX}; add an ingredient to narrow it down` : ''}.`;
-    $('.js-finder-diet', finder).textContent = eaters().length > 1 || summarize(f) !== 'No preferences'
-      ? `Only recipes that work for everyone eating. ${eaters().length > 1 ? '' : `Your diet: ${summarize(f)}.`}` : '';
+    $('.js-finder-diet', finder).textContent = [eaters().length > 1 || summarize(f) !== 'No preferences'
+      ? `Only recipes that work for everyone eating. ${eaters().length > 1 ? '' : `Your diet: ${summarize(f)}.`}` : '',
+    groupFilter().allergies.length ? ALLERGY_LABELS : ''].filter(Boolean).join(' ');
     $('.js-finder-list', finder).innerHTML = pool.length ? pool.slice(0, FINDER_MAX).map((r) => {
       const uses = finderState.items.length ? finderState.items : term && finds(r, term) ? [term] : [];
       return `<li><button type="button" class="finder-item" data-find-pick="${r.id}">
@@ -3320,7 +3439,13 @@ if (demo) {
       return bits.length ? `${rawName(id)}: ${bits.join(', ')}` : '';
     }).filter(Boolean);
     const who = ids.length === 1 && ids[0] === 'you' ? 'Just you this time. Everyone else is one tap away.' : `Picks work for ${listText(ids.map(rawName))}${rules.length ? ` (${rules.join('; ')})` : ''}.`;
-    return [who, ...outside.map((x) => `${x}.`)].join(' ');
+    // Allergies of anyone not eating are off for this meal (unless they keep it out of the house): say so.
+    const off = active().filter((m) => !ids.includes(m.id)).map((m) => {
+      const r = restrOf(m.id);
+      const list = r.allergies.filter((a) => !r.keepOut.includes(a)).map(allergyWord);
+      return list.length ? `${m.id === 'you' ? 'Your' : `${rawName(m.id)}’s`} ${listText(list)} ${list.length > 1 ? 'allergies aren’t' : 'allergy isn’t'} applied tonight.` : '';
+    }).filter(Boolean);
+    return [who, ...outside.map((x) => `${x}.`), ...off].join(' ');
   }
   function renderExtras() {
     const box = $('.js-pick-extras');
@@ -3341,6 +3466,7 @@ if (demo) {
     const ids = eaters();
     if (ids.includes(id) && ids.length === 1) { yolk('default', 'Someone has to eat it. That’s the rule.'); return; }
     state.eaters = ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id];
+    rememberEaters();
     refilter(['default', eaters().length === 1 ? `Just ${eaters()[0] === 'you' ? 'you' : rawName(eaters()[0])}. Got it.` : `Cooking for ${eaters().length}. I’ll keep everyone happy.`]);
     $(`[data-eat="${id}"]`).focus();
   });
@@ -3348,6 +3474,7 @@ if (demo) {
   const nextQuestion = () => (!state.meal ? 'Which meal is it?' : !state.energy ? 'And how’s your energy?' : 'And how much time have you got?');
   $$('input[name="meal"], input[name="energy"], input[name="time"]').forEach((input) => input.addEventListener('change', () => {
     state[input.name] = input.name === 'meal' ? input.value : Number(input.value);
+    if (input.name === 'meal') { state.eaters = slotEaters(); renderExtras(); }
     state.fromCheckin = false;
     savePick();
     let line = null;
@@ -3417,6 +3544,7 @@ if (demo) {
   /* 2. Check: servings, have/need, spice rack, shopping list */
   function startCheck(recipe) {
     state.recipe = recipe;
+    state.servings = Math.min(6, Math.max(1, eaters().length));
     state.marks = {};
     state.out = {};
     state.buy = {};
@@ -4012,15 +4140,14 @@ if (demo) {
       unlocked: CLOSET.filter((it) => before.cooked < it.at && after.cooked >= it.at),
       newCuisine: !before.cuisines.includes(r.cuisine),
       newRecipe: !before.recipes.includes(r.id),
-      askTakeout: !prefs.takeoutAsked,
+
     };
-    if (!prefs.takeoutAsked) { prefs.takeoutAsked = true; savePrefs(); }
     // "Just this meal" ends with the meal; what you had is used up, and the next meal starts with just you.
     state.temp = null;
     state.have = [];
     state.haveDone = false;
     state.fromCheckin = false;
-    state.eaters = ['you'];
+    state.eaters = slotEaters();
     state.memAsked = false;
     state.memEdit = false;
     savePick();
@@ -4031,6 +4158,7 @@ if (demo) {
     $('.js-done-title').textContent = `${cap(mealOf(r).label)}. Done.`;
     $('.js-done-meal').textContent = `${r.name}, for ${state.servings}.`;
     $('.js-goal-hit').hidden = !state.done.goalHit;
+    $('.js-done-more').open = false;
     $('.js-done-stats').innerHTML = `
       <div class="done-stat"><dt>Dishes used</dt><dd>${r.dishes.length}<small>${r.dishes.join(', ')}</small></dd></div>
       <div class="done-stat"><dt>Already rinsed</dt><dd>${meal.rinsed}<small>${meal.rinsed ? 'Thanks to clean-as-you-go.' : 'They’ll keep till tomorrow.'}</small></dd></div>
@@ -4088,6 +4216,7 @@ if (demo) {
     const col = renderDrop(a, meal);
     if (!meal) {
       gainsBox.innerHTML = '<h3>Removed</h3><p class="fine">That one isn’t counted anymore. No harm done.</p>';
+      $('.js-gains-more').innerHTML = '';
       who.hidden = true;
       rate.hidden = true;
       return;
@@ -4095,52 +4224,61 @@ if (demo) {
     const s = statsFor(a);
     const r = byId(meal.r);
     const mine = meal.cook === 'you';
+    // Each gain has a weight; the biggest one is the headline, everything else waits behind "See everything".
     const items = [];
-    items.push(gain('savings', mine ? `+$${prefs.takeout} kept in your pocket` : `+$${prefs.takeout} for the house`,
-      `Estimate, from your usual takeout cost.${mine ? ` <span class="js-kept-so-far">$${s.kept}</span> so far.` : ` The house: $${s.houseKept}.`}`, 'gain--money'));
-    if (meal.have.length) items.push(gain('kitchen', 'Fridge rescue!', `You used ${esc(listText(meal.have.map(haveLabel)))}.`));
-    if (mine && d.newCuisine) items.push(gain('approval', `New passport stamp: ${r.cuisine}`, 'Your first one here.'));
-    else if (mine && d.newRecipe) items.push(gain('approval', 'New recipe stamp', `${r.name}, first time.`));
-    if (meal.rinsed) items.push(gain('wash', `${plural(meal.rinsed, 'dish', 'dishes')} dodged`, 'Rinsed while something cooked, so they never hit the sink.'));
-    else if (meal.tidies) items.push(gain('wash', `${plural(meal.tidies, 'tidy-up')} done`, 'Clean as you go. Future you says thanks.'));
+    const push = (weight, html) => items.push({ weight, html });
+    push(1, gain('home', mine ? `Cooked at home: ${plural(s.cooked, 'meal')}` : `Cooked at home: ${plural(s.meals.length, 'meal')} for the house`,
+      `About <span class="js-kept-so-far">$${mine ? s.kept : s.houseKept}</span> saved on takeout so far, an estimate.`, 'gain--money'));
+    if (meal.have.length) push(3, gain('kitchen', 'Fridge rescue!', `You used ${esc(listText(meal.have.map(haveLabel)))}.`));
+    if (mine && d.newCuisine) push(4, gain('approval', `New passport stamp: ${r.cuisine}`, 'Your first one here.'));
+    else if (mine && d.newRecipe) push(2, gain('approval', 'New recipe stamp', `${r.name}, first time.`));
+    if (meal.rinsed) push(0, gain('wash', `${plural(meal.rinsed, 'dish', 'dishes')} dodged`, 'Rinsed while something cooked, so they never hit the sink.'));
+    else if (meal.tidies) push(0, gain('wash', `${plural(meal.tidies, 'tidy-up')} done`, 'Clean as you go. Future you says thanks.'));
     (meal.stickers || []).forEach((id) => {
       const st = stickerById(id);
       const dup = (a.stickers[id] || 0) > 1;
-      items.push(`<li class="gain gain--sticker">${stickerSvg(id, 'gain__sticker')}<p><strong>${dup ? 'Duplicate sticker' : 'New sticker'}: ${st.name}</strong><small>${dup ? 'Gift it to someone in the house, or turn it into crumbs.' : 'It’s in your sticker book. Stick it on the fridge!'}</small></p></li>`);
+      push(0, `<li class="gain gain--sticker">${stickerSvg(id, 'gain__sticker')}<p><strong>${dup ? 'Duplicate sticker' : 'New sticker'}: ${st.name}</strong><small>${dup ? 'Gift it to someone in the house, or turn it into crumbs.' : 'It’s in your sticker book. Stick it on the fridge!'}</small></p></li>`);
     });
     if (col.after) {
       FRIENDS.filter((f) => col.after.friends[f.id] && !col.before.friends[f.id]).forEach((f) => {
-        items.push(`<li class="gain gain--friend">${charArt(f.id, 'gain__art')}<p><strong>New friend: ${f.name}!</strong><small>${f.name} is on the kitchen shelf now, and drops by for a visit now and then.</small></p></li>`);
+        push(5, `<li class="gain gain--friend">${charArt(f.id, 'gain__art')}<p><strong>New friend: ${f.name}!</strong><small>${f.name} is on the kitchen shelf now, and drops by for a visit now and then.</small></p></li>`);
       });
       const fresh = PANTRY.filter((p) => col.after.pantry[p.id] && !col.before.pantry[p.id]);
-      if (fresh.length) items.push(gain('menu_book', `Pantry-dex: ${plural(fresh.length, 'new entry', 'new entries')}`, `${esc(listText(fresh.map((p) => p.name)))}.${fresh.some((p) => p.rare) ? ' Including a rare find!' : ''}`, fresh.some((p) => p.rare) ? 'gain--rare' : ''));
+      if (fresh.length) push(0, gain('menu_book', `Pantry-dex: ${plural(fresh.length, 'new entry', 'new entries')}`, `${esc(listText(fresh.map((p) => p.name)))}.${fresh.some((p) => p.rare) ? ' Including a rare find!' : ''}`, fresh.some((p) => p.rare) ? 'gain--rare' : ''));
     }
     if (mine) {
       const hit = s.week >= prefs.goal;
-      items.push(`<li class="gain gain--ring">${ring(s.week, prefs.goal, 'Weekly goal', 'ring--sm')}<p><strong>${hit ? 'Weekly goal hit!' : `${s.week} of ${prefs.goal} this week`}</strong><small>${hit ? 'Anything more is a bonus.' : 'Your weekly goal. No rush.'}</small></p></li>`);
+      push(hit ? 6 : 0, `<li class="gain gain--ring">${ring(s.week, prefs.goal, 'Weekly goal', 'ring--sm')}<p><strong>${hit ? 'Weekly goal hit!' : `${s.week} of ${prefs.goal} this week`}</strong><small>${hit ? 'Anything more is a bonus.' : 'Your weekly goal. No rush.'}</small></p></li>`);
     } else {
-      items.push(gain('home', `The house: ${plural(s.houseWeek, 'meal')} this week`, `House goal: ${prefs.houseGoal}.`));
+      push(0, gain('home', `The house: ${plural(s.houseWeek, 'meal')} this week`, `House goal: ${prefs.houseGoal}.`));
     }
     const active2 = a.challenge && CHALLENGES.find((c) => c.id === a.challenge.id);
-    if (d.finished) items.push(gain('military_tech', `Badge earned: ${d.finished.badge}`, `${d.finished.name}, done.`, 'gain--badge'));
-    else if (active2) items.push(gain(active2.icon, `${active2.name}: ${challengeProgress(a, s)} of ${active2.goal}`, active2.unit));
+    if (d.finished) push(7, gain('military_tech', `Badge earned: ${d.finished.badge}`, `${d.finished.name}, done.`, 'gain--badge'));
+    else if (active2) push(0, gain(active2.icon, `${active2.name}: ${challengeProgress(a, s)} of ${active2.goal}`, active2.unit));
     const unlocks = mine ? d.unlocked.map((it) => {
       const on = prefs.outfit[it.slot] === it.id;
       return `<div class="unlock-card">${yolkieArt('happy', '', { ...worn(), [it.slot]: it.id })}<p><small>New in Yolkie’s closet</small><strong>${it.name}</strong></p>
         <button type="button" class="btn btn--yolk btn--small" data-wear-now="${it.id}" aria-pressed="${on}">${on ? 'Wearing it' : 'Put it on'}</button></div>`;
     }).join('') : '';
-    const ask = d.askTakeout ? `<form class="takeout-ask js-takeout-ask"><label for="takeout-once"><strong>Quick one, just this once:</strong> what does takeout usually cost you?</label>
-        <span class="takeout-ask__row"><span class="money"><span aria-hidden="true">$</span><input id="takeout-once" type="number" min="1" max="200" step="1" value="${prefs.takeout}" inputmode="decimal"></span>
-        <button class="btn btn--primary btn--small">Save</button></span><span class="fine">Change it any time in Preferences.</span></form>` : '';
-    gainsBox.innerHTML = `<h3>This meal counts</h3>${sampleOn() ? '<p class="fine">Saved to the sample week, not your real stats.</p>' : ''}
-      <ul class="gains">${items.join('')}</ul>${ask}${unlocks}
+    const top = items.reduce((b, x) => (x.weight > b.weight ? x : b), items[0]);
+    const rest = items.filter((x) => x !== top);
+    gainsBox.innerHTML = `<h3 class="sr-only">This meal counts</h3>${sampleOn() ? '<p class="fine">Saved to the sample week, not your real stats.</p>' : ''}
+      <ul class="gains">${top.html}</ul>`;
+    const moreBox = $('.js-gains-more');
+    moreBox.innerHTML = `<h3>This meal counts</h3><ul class="gains">${rest.map((x) => x.html).join('')}</ul>${unlocks}
       <p class="done-undo"><button type="button" class="link-btn js-unlog">Didn’t actually cook it? Remove it</button></p>`;
+    const extra = rest.length + (unlocks ? d.unlocked.length : 0);
+    $('.js-done-more-label').textContent = extra ? `See everything you earned (${extra} more)` : 'See the details';
     // The first time this meal's summary shows, the running total counts up to include it.
-    if (mine && !d.counted) { d.counted = true; countTo($('.js-kept-so-far', gainsBox), 'kept', s.kept, '$', s.kept - prefs.takeout); }
+    if (mine && !d.counted) { d.counted = true; countTo($('.js-kept-so-far'), 'kept', s.kept, '$', s.kept - prefs.takeout); }
     rate.hidden = false;
     rate.innerHTML = rateHtml(meal);
-    who.hidden = false;
     who.innerHTML = whoHtml(meal);
+    who.hidden = !who.innerHTML;
+    // Once, after the first meal you really cook: point at the Kitchen behind Extras.
+    const nudge = $('.js-extras-nudge');
+    if (!prefs.extrasNudge && mine && !sampleOn()) { prefs.extrasNudge = 'shown'; savePrefs(); d.nudge = true; }
+    nudge.hidden = !d.nudge;
   }
   // Ratings: one tap per person who ate. Single device, so pass the phone.
   const FACES = [[1, '😕', 'Not for me'], [2, '🙂', 'Good'], [3, '😍', 'Loved it']];
@@ -4155,13 +4293,18 @@ if (demo) {
         : '<button type="button" class="link-btn js-hide-recipe" aria-pressed="false">Don’t suggest this again</button>'}</p>`;
   }
   function whoHtml(meal) {
-    const people = [...new Set([...active().map((m) => m.id), meal.cook])];
+    const ate = ateAt(meal);
+    const people = [...new Set([...ate, meal.cook])];
+    if (people.length < 2) return '';
     return `<h3>Who cooked?</h3><p class="fine">Demo: pass the phone.</p>
       <div class="tags" role="group" aria-label="Who cooked">${people.map((id) => tag('cook', id, rawName(id), meal.cook === id)).join('')}</div>
-      ${active().length > 1 ? `<p class="kudos-label">Everyone else: was it good?</p>${kudosRow(meal)}` : ''}`;
+      ${ate.some((id) => id !== meal.cook) ? `<p class="kudos-label">Everyone else: was it good?</p>${kudosRow(meal)}` : ''}`;
   }
+  // The people at the table for a meal (older meals without a list count the whole house).
+  const ateAt = (meal) => (meal.eaters && meal.eaters.length ? meal.eaters : active().map((m) => m.id))
+    .filter((id) => id === 'you' || active().some((m) => m.id === id));
   function kudosRow(meal, small = false) {
-    const others2 = active().map((m) => m.id).filter((id) => id !== meal.cook);
+    const others2 = ateAt(meal).filter((id) => id !== meal.cook);
     return `<div class="kudos-row">${others2.map((id) => {
       const on = meal.kudos.includes(id);
       // Once tapped, the button turns into that member's sticker.
@@ -4281,10 +4424,9 @@ if (demo) {
           <div class="count-choices" role="group" aria-label="Meals per week">${[2, 3, 4, 5].map((n) => `<button type="button" data-goal="${n}" aria-pressed="${n === goal}">${n}</button>`).join('')}</div></div>
       </section>
       <dl class="tiles">
-        <div class="tile tile--money"><dt><span class="icon" aria-hidden="true">savings</span>Takeout dodged</dt><dd><span data-count="kept" data-to="${s.kept}" data-pre="$">$${s.kept}</span><small>${s.cooked ? `You’ve kept $${s.kept} in your pocket. Estimate: ${s.cooked} × your usual $${prefs.takeout}.` : 'Each meal you cook adds your usual takeout cost. An estimate.'}</small></dd></div>
+        <div class="tile tile--money"><dt><span class="icon" aria-hidden="true">restaurant</span>Cooked at home</dt><dd><span data-count="cooked" data-to="${s.cooked}">${s.cooked}</span><small>${s.cooked ? `About <span data-count="kept" data-to="${s.kept}" data-pre="$">$${s.kept}</span> saved on takeout, an estimate (${s.cooked} × $${prefs.takeout}).` : 'All time, on this device.'}</small></dd></div>
         <div class="tile"><dt><span class="icon" aria-hidden="true">kitchen</span>Fridge rescues</dt><dd>${s.rescues}<small>Meals that used something you already had.</small></dd></div>
         <div class="tile"><dt><span class="icon" aria-hidden="true">wash</span>Dishes dodged</dt><dd>${s.dodged}<small>${s.tidies ? `Rinsed as you went, plus ${plural(s.tidies, 'tiny tidy-up')}.` : 'Dishes rinsed while something cooked.'}</small></dd></div>
-        <div class="tile"><dt><span class="icon" aria-hidden="true">restaurant</span>Meals cooked</dt><dd><span data-count="cooked" data-to="${s.cooked}">${s.cooked}</span><small>All time, on this device.</small></dd></div>
       </dl>
       <section class="panel" aria-labelledby="passport-title">
         <h3 id="passport-title">Passport</h3><p class="fine">A stamp for every new cuisine and every new recipe.</p>
@@ -4293,16 +4435,8 @@ if (demo) {
         <h4 class="mini-head">Recipes · ${s.recipes.length} of ${RECIPES.length}</h4>
         ${s.recipes.length ? `<ul class="stamps stamps--recipes">${s.recipes.map((id) => `<li class="stamp is-stamped">${byId(id).name}</li>`).join('')}</ul>` : '<p class="fine">No stamps yet. Your first meal gets one.</p>'}
       </section>
-      <section class="panel" aria-labelledby="ch-title">
-        <h3 id="ch-title">Challenges</h3><p class="fine">Optional, one at a time, no deadline. Stop whenever you like.</p>
-        ${active ? `<div class="challenge is-active"><span class="icon" aria-hidden="true">${active.icon}</span><div class="challenge__body"><span class="label tone-progress"><span class="icon" aria-hidden="true">pending</span>In progress</span><strong>${active.name}</strong><p class="fine">${active.blurb}</p>
-            <div class="bar" role="img" aria-label="${prog} of ${active.goal}"><span style="width:${Math.min(100, (prog / active.goal) * 100)}%"></span></div><p class="fine">${prog} of ${active.goal} ${active.unit}</p></div>
-            <button type="button" class="btn btn--ghost btn--small js-ch-stop">Stop</button></div>`
-          : CHALLENGES.map((c) => `<div class="challenge"><span class="icon" aria-hidden="true">${c.icon}</span><div class="challenge__body"><strong>${c.name}</strong><p class="fine">${c.blurb}</p></div>
-            <button type="button" class="btn btn--secondary btn--small" data-ch="${c.id}">Start</button></div>`).join('')}
-        <h4 class="mini-head">Badges</h4>
-        ${a.badges.length ? `<div class="badges">${a.badges.map((b) => { const c = CHALLENGES.find((x) => x.id === b.id); return `<span class="badge"><span class="icon" aria-hidden="true">military_tech</span>${c.badge}</span>`; }).join('')}</div>` : '<p class="fine">Finish a challenge to earn one.</p>'}
-      </section>
+      <button type="button" class="extras-card js-open-extras"><span class="extras-card__icons" aria-hidden="true"><span class="icon">countertops</span><span class="icon">kitchen</span><span class="icon">home</span></span>
+        <span class="extras-card__text"><strong>Extras</strong><small>Kitchen, Collection, House${a.challenge ? ' · a challenge in progress' : ''}</small></span><span class="icon" aria-hidden="true">chevron_right</span></button>
       <section class="panel" id="closet" aria-labelledby="closet-title">
         <h3 id="closet-title">Yolkie’s closet</h3><p class="fine">New things unlock as you cook. ${plural(s.cooked, 'meal')} so far. Yolkie wears them all over the demo.</p>
         <div class="closet-stage">${yolkieArt('happy')}</div>
@@ -4323,6 +4457,44 @@ if (demo) {
     countUps(meBox);
   }
   const refocus = (box, sel) => { const el = $(sel, box); if (el) el.focus(); return el; };
+
+  /* Extras: everything that's fun but not needed to get fed, behind one door on Me. */
+  const hubBox = $('.js-hub');
+  function renderHub() {
+    const a = activity();
+    const s = statsFor(a);
+    const col = collectionFor(a);
+    const tile = (id, icon, title, sub) => `<button type="button" class="hub-tile" data-hub="${id}"><span class="hub-tile__icon" aria-hidden="true"><span class="icon">${icon}</span></span><strong>${title}</strong><small>${sub}</small></button>`;
+    hubBox.innerHTML = `
+      <p class="back-row"><button type="button" class="link-btn js-hub-back"><span class="icon" aria-hidden="true">arrow_back</span>Me</button></p>
+      <div class="tab-head"><h2 class="stage__title" tabindex="-1">Extras</h2>
+        <p class="stage__sub">The fun stuff for after you’ve eaten. None of it is needed to cook.</p></div>
+      <div class="hub-tiles">
+        ${tile('kitchen', 'countertops', 'Yolkie’s Kitchen', 'Walk Yolkie around, and watch it fill up as you cook.')}
+        ${tile('collection', 'kitchen', 'Collection', `Stickers, friends, the Pantry-dex and gifts.${Object.keys(a.stickers || {}).length ? ` ${plural(Object.keys(a.stickers).length, 'sticker')} so far.` : ''}`)}
+        ${tile('house', 'home', 'House', active().length > 1 ? `${plural(active().length, 'person', 'people')}, a house goal and linking.` : 'Add who you live with, try it as a house, link phones.')}
+      </div>
+      ${challengesPanel(a, s)}`;
+    void col;
+  }
+  function challengesPanel(a, s) {
+    const active = a.challenge && CHALLENGES.find((c) => c.id === a.challenge.id);
+    const prog = active ? challengeProgress(a, s) : 0;
+    return `
+      <section class="panel js-me-challenges" aria-labelledby="ch-title">
+        <h3 id="ch-title">Challenges</h3><p class="fine">Optional, one at a time, no deadline. Stop whenever you like.</p>
+        ${active ? `<div class="challenge is-active"><span class="icon" aria-hidden="true">${active.icon}</span><div class="challenge__body"><span class="label tone-progress"><span class="icon" aria-hidden="true">pending</span>In progress</span><strong>${active.name}</strong><p class="fine">${active.blurb}</p>
+            <div class="bar" role="img" aria-label="${prog} of ${active.goal}"><span style="width:${Math.min(100, (prog / active.goal) * 100)}%"></span></div><p class="fine">${prog} of ${active.goal} ${active.unit}</p></div>
+            <button type="button" class="btn btn--ghost btn--small js-ch-stop">Stop</button></div>`
+          : CHALLENGES.map((c) => `<div class="challenge"><span class="icon" aria-hidden="true">${c.icon}</span><div class="challenge__body"><strong>${c.name}</strong><p class="fine">${c.blurb}</p></div>
+            <button type="button" class="btn btn--secondary btn--small" data-ch="${c.id}">Start</button></div>`).join('')}
+        <h4 class="mini-head">Badges</h4>
+        ${a.badges.length ? `<div class="badges">${a.badges.map((b) => { const c = CHALLENGES.find((x) => x.id === b.id); return `<span class="badge"><span class="icon" aria-hidden="true">military_tech</span>${c.badge}</span>`; }).join('')}</div>` : '<p class="fine">Finish a challenge to earn one.</p>'}
+      </section>
+    `;
+  }
+  hubBox.addEventListener('click', (e) => { if (e.target.closest('.js-hub-back')) { showTab('me'); $('.js-me .stage__title').focus({ preventScroll: true }); } });
+
   meBox.addEventListener('click', (e) => {
     const t = e.target;
     const g = t.closest('[data-goal]');
@@ -4333,23 +4505,29 @@ if (demo) {
       refocus(meBox, `[data-goal="${prefs.goal}"]`);
       yolk('happy', `${plural(prefs.goal, 'meal')} a week. Sounds doable.`);
     }
+  });
+  hubBox.addEventListener('click', (e) => {
+    const t = e.target;
     const ch = t.closest('[data-ch]');
     if (ch) {
       const a = activity();
       a.challenge = { id: ch.dataset.ch, start: Date.now() };
       saveActivity(a);
-      renderMe();
-      refocus(meBox, '.js-ch-stop');
+      renderHub();
+      refocus(hubBox, '.js-ch-stop');
       yolk('happy', `${CHALLENGES.find((c) => c.id === ch.dataset.ch).name}, starting now. No deadline.`);
     }
     if (t.closest('.js-ch-stop')) {
       const a = activity();
       a.challenge = null;
       saveActivity(a);
-      renderMe();
-      refocus(meBox, '[data-ch]');
+      renderHub();
+      refocus(hubBox, '[data-ch]');
       yolk('default', 'Stopped. Pick another whenever.');
     }
+  });
+  meBox.addEventListener('click', (e) => {
+    const t = e.target;
     const w = t.closest('[data-wear]');
     if (w) {
       const it = CLOSET.find((c) => c.id === w.dataset.wear);
@@ -4496,13 +4674,14 @@ if (demo) {
     const goal = prefs.houseGoal;
     const room = prefs.members.length < MAX_HOUSE;
     houseBox.innerHTML = `
+      <p class="back-row"><button type="button" class="link-btn js-open-extras"><span class="icon" aria-hidden="true">arrow_back</span>Extras</button></p>
       <div class="tab-head"><h2 class="stage__title" tabindex="-1">House</h2><p class="stage__sub">One goal for everyone, and a sticker when someone cooks something good.</p></div>
       <p class="vote-label"><span class="icon" aria-hidden="true">smartphone</span><span><strong>Demo: pass the phone.</strong> The whole house shares this one device here. In the app, everyone would join from their own phone.</span></p>
       <section class="panel" aria-labelledby="members-title">
         <div class="servings"><h3 id="members-title">Who’s in the house?</h3><span class="fine">${plural(prefs.members.length, 'person', 'people')}</span></div>
         <ul class="members">${prefs.members.map(memberCard).join('')}</ul>
         ${room ? (house.guest ? `<form class="add-row js-guest-form"><label class="sr-only" for="guest-name">Their name</label><input id="guest-name" class="text-input" type="text" placeholder="Their name" maxlength="16" autocomplete="off" required><button class="btn btn--primary btn--small">Add</button><button type="button" class="btn btn--ghost btn--small js-guest-cancel">Cancel</button></form>`
-          : '<button type="button" class="btn btn--secondary btn--small js-add-guest"><span class="icon" aria-hidden="true">person_add</span>Add someone without the app</button>')
+          : `<button type="button" class="btn btn--secondary btn--small js-add-guest"><span class="icon" aria-hidden="true">person_add</span>Add someone without the app</button>${prefs.members.length === 1 ? ' <button type="button" class="btn btn--ghost btn--small js-try-house"><span class="icon" aria-hidden="true">group_add</span>Try it as a house</button>' : ''}`)
           : `<p class="fine">That’s ${MAX_HOUSE}, as many as this demo holds.</p>`}
         <p class="fine members__note">Guests get a profile you look after. Members with the app edit their own.</p>
       </section>
@@ -4521,7 +4700,7 @@ if (demo) {
           <div class="count-choices" role="group" aria-label="House meals per week">${[5, 7, 10, 14].map((n) => `<button type="button" data-house-goal="${n}" aria-pressed="${n === goal}">${n}</button>`).join('')}</div></div>
       </section>
       <section class="panel house-kept" aria-labelledby="house-kept-title"><span class="icon" aria-hidden="true">savings</span>
-        <div><h3 id="house-kept-title">House takeout dodged</h3><p class="house-kept__big" data-count="houseKept" data-to="${s.houseKept}" data-pre="$">$${s.houseKept}</p><p class="fine">Estimate: ${plural(s.meals.length, 'meal')} × $${prefs.takeout}, everyone’s meals added together.</p></div></section>
+        <div><h3 id="house-kept-title">Cooked at home, together</h3><p class="house-kept__big" data-count="houseMeals" data-to="${s.meals.length}">${s.meals.length}</p><p class="fine">About $${s.houseKept} saved on takeout.</p><p class="fine">Estimate: ${plural(s.meals.length, 'meal')} × $${prefs.takeout}, everyone’s meals added together.</p></div></section>
       ${recentPanel(a, s)}`;
     countUps(houseBox);
   }
@@ -4592,6 +4771,7 @@ if (demo) {
       renderHouse();
       refocus(houseBox, '#members-title');
     }
+    if (t.closest('.js-try-house')) { addSampleMates('try'); renderHouse(); refocus(houseBox, '#members-title'); yolk('happy', 'Boyd and Scramble moved in. Remove them any time.'); return; }
     if (t.closest('.js-add-guest')) { house.guest = true; renderHouse(); refocus(houseBox, '#guest-name'); }
     if (t.closest('.js-guest-cancel')) { house.guest = false; renderHouse(); refocus(houseBox, '.js-add-guest'); }
     // Linking
@@ -5045,20 +5225,30 @@ if (demo) {
       if (kind === 'crumb') parts.push({ k: 'c', x: x + (Math.random() - 0.5) * 8, y, vx: (Math.random() - 0.5) * 20, vy: -10, life: 0.6, t: 0, r: 1.6, c: '#E9A44C', grow: 0, op: 1, g: 60 });
       if (kind === 'spark') for (let i = 0; i < 14; i++) { const an = (i / 14) * Math.PI * 2; parts.push({ k: 'c', x, y, vx: Math.cos(an) * 110, vy: Math.sin(an) * 70 - 30, life: 0.9, t: 0, r: 4, c: ['#FFC83D', '#6B4DE6', '#2E9E6A', '#FF8A7A'][i % 4], grow: 0, op: 1 }); }
     }
+    // Each particle gets one SVG node when it's born, which is moved every frame and removed when it fades.
+    function partNode(p) {
+      const tag = p.k === 'c' || p.k === 'o' ? 'circle' : p.k === 'd' ? 'ellipse' : 'text';
+      const n = document.createElementNS(NS, tag);
+      if (p.k === 'o') { n.setAttribute('fill', 'none'); n.setAttribute('stroke', p.c); n.setAttribute('stroke-width', '1.4'); n.setAttribute('r', p.r.toFixed(1)); } else n.setAttribute('fill', p.c);
+      if (p.k === 'd') { n.setAttribute('rx', '1.8'); n.setAttribute('ry', '3'); }
+      if (p.k === 't') { n.setAttribute('font-size', p.fs); n.setAttribute('font-weight', '700'); n.setAttribute('text-anchor', 'middle'); n.textContent = p.s; }
+      return n;
+    }
     function drawParts(dt) {
-      let s = '';
-      parts = parts.filter((p) => (p.t += dt) < p.life);
+      const fx = el('fx');
+      parts = parts.filter((p) => { p.t += dt; if (p.t < p.life) return true; if (p.node) p.node.remove(); return false; });
       parts.forEach((p) => {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
         if (p.g) p.vy += p.g * dt;
-        const k = p.t / p.life, o = (p.op * (1 - k)).toFixed(2);
-        if (p.k === 'c') s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(p.r + p.grow * k).toFixed(1)}" fill="${p.c}" opacity="${o}"/>`;
-        else if (p.k === 'o') s += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${p.r.toFixed(1)}" fill="none" stroke="${p.c}" stroke-width="1.4" opacity="${o}"/>`;
-        else if (p.k === 'd') s += `<ellipse cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" rx="1.8" ry="3" fill="${p.c}" opacity="${o}"/>`;
-        else s += `<text x="${p.x.toFixed(1)}" y="${p.y.toFixed(1)}" font-size="${p.fs}" font-weight="700" fill="${p.c}" opacity="${o}" text-anchor="middle">${p.s}</text>`;
+        if (!p.node || p.node.parentNode !== fx) { p.node = partNode(p); fx.appendChild(p.node); }
+        const k = p.t / p.life, n = p.node;
+        n.setAttribute('opacity', (p.op * (1 - k)).toFixed(2));
+        if (p.k === 't') { n.setAttribute('x', p.x.toFixed(1)); n.setAttribute('y', p.y.toFixed(1)); return; }
+        n.setAttribute('cx', p.x.toFixed(1));
+        n.setAttribute('cy', p.y.toFixed(1));
+        if (p.k === 'c') n.setAttribute('r', (p.r + p.grow * k).toFixed(1));
       });
-      el('fx').innerHTML = s;
     }
 
     /* Name tags: the house members' names. Yours is plum, because you steer Yolkie; visiting friends get yolk. */
@@ -5129,7 +5319,7 @@ if (demo) {
         return `<li class="decor-item${open ? ' is-open' : ''}"><strong>${d.name}</strong><small>${open ? 'Unlocked' : `Cook ${plural(d.at - meals, 'more meal')}`}</small></li>`;
       }).join('') + BONUS_DECOR.map(([id, name, set]) => `<li class="decor-item decor-item--bonus${bonus(id) ? ' is-open' : ''}"><strong>${name}</strong><small>${bonus(id) ? `Bonus: ${set}` : `Finish ${set} in your binder`}</small></li>`).join('')
         + `<li class="decor-item decor-item--bonus${postcards ? ' is-open' : ''}"><strong>Postcards</strong><small>${postcards ? `${postcards} of ${CUISINES.length} cuisines` : 'Finish a cuisine set'}</small></li>`;
-      $('.js-k-auto').setAttribute('aria-pressed', String(opts.auto));
+      $('.js-k-auto').setAttribute('aria-pressed', String(autoOn()));
       $('.js-k-visits').setAttribute('aria-pressed', String(opts.visits));
       $('.js-k-visits').hidden = !metFriends().length;
       $('.js-k-night').setAttribute('aria-pressed', String(opts.night));
@@ -5296,7 +5486,7 @@ if (demo) {
         else startVisit(met[Math.floor(Math.random() * met.length)]);
       }
       if (e.target.closest('.js-k-night')) { opts.night = !opts.night; saveOpts(); applyNight(); }
-      if (e.target.closest('.js-k-auto')) { opts.auto = !opts.auto; saveOpts(); renderControls(); }
+      if (e.target.closest('.js-k-auto')) { opts.auto = !autoOn(); opts.autoSet = true; saveOpts(); renderControls(); kick(); }
       // Friends dropping by on their own. Off sends anyone visiting home; "Invite a friend over" still works.
       if (e.target.closest('.js-k-visits')) {
         opts.visits = !opts.visits;
@@ -5337,17 +5527,25 @@ if (demo) {
       }
     });
 
-    /* Animation loop: runs only while the kitchen is on screen */
-    let running = false, last = 0, clock = 0;
-    const onScreen = () => !kBox.hidden && !kBox.closest('[role="tabpanel"]').hidden;
+    /* Animation loop: runs only while the kitchen is open, on screen and in a visible tab, at most 30 times
+       a second. With reduced motion nobody wanders off on their own, and the loop rests once everyone is still. */
+    let running = false, last = 0, clock = 0, inView = true, still = 0;
+    const viewOpen = () => !kBox.hidden && !kBox.closest('[role="tabpanel"]').hidden;
+    const onScreen = () => viewOpen() && inView && !document.hidden;
+    const kick = () => { still = 0; if (!running && onScreen()) { running = true; last = performance.now(); requestAnimationFrame(frame); } };
+    if ('IntersectionObserver' in window) new IntersectionObserver((es) => { inView = es[0].isIntersecting; if (inView) kick(); }).observe(svg);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) kick(); });
+    svg.addEventListener('pointerdown', kick);
+    const autoOn = () => opts.auto && (!RM || opts.autoSet);
     function frame(now) {
       if (!onScreen()) { running = false; return; }
+      if (now - last < 32) { requestAnimationFrame(frame); return; }
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       clock += dt;
       let cooking = false, washing = false, fridgeOn = false;
       // A friend drops by now and then, if you've met any and everyone's doing their own thing.
-      if (!visit && opts.auto && opts.visits && clock > nextVisit) {
+      if (!visit && autoOn() && opts.visits && clock > nextVisit) {
         const met = metFriends();
         if (met.length) startVisit(met[Math.floor(Math.random() * met.length)]); else nextVisit = clock + 10;
       }
@@ -5404,7 +5602,7 @@ if (demo) {
             a.sayT = a.sayT || 0.01;
           }
           if (a.actT >= a.actDur && !(a.act === 'chat' && a.partner && a.i > a.partner.i)) endAct(a);
-        } else if (!a.step && !a.path.length && !a.partner && opts.auto && a.manual <= 0 && !a.leaving) {
+        } else if (!a.step && !a.path.length && !a.partner && autoOn() && a.manual <= 0 && !a.leaving) {
           a.wait -= dt;
           if (a.wait <= 0) { a.wait = 2; startPlan(a); }
         }
@@ -5489,10 +5687,15 @@ if (demo) {
       });
       // Back to front, so whoever is nearer covers whoever is behind
       const og = el('objs');
-      objects.map((o) => ({ k: o.key, el: o.el })).concat(agents.map((a) => ({ k: a.key, el: a.el }))).sort((x, y) => x.k - y.k).forEach((x) => og.appendChild(x.el));
+      const order = objects.map((o) => ({ k: o.key, el: o.el })).concat(agents.map((a) => ({ k: a.key, el: a.el }))).sort((x, y) => x.k - y.k).map((x) => x.el);
+      if (order.some((n, i) => og.children[i] !== n)) order.forEach((n) => og.appendChild(n));
       const mh = el('mh'), hh = el('hh');
       if (mh) { const d = new Date(); mh.setAttribute('transform', `rotate(${d.getMinutes() * 6})`); hh.setAttribute('transform', `rotate(${(d.getHours() % 12) * 30 + d.getMinutes() / 2})`); }
       drawParts(dt);
+      // Reduced motion: once nobody has anywhere to go and nothing is floating, stop until the next tap.
+      const moving = parts.length || agents.some((a) => a.step || a.path.length || a.leaving);
+      still = moving ? 0 : still + dt;
+      if (RM && !autoOn() && still > 1) { running = false; return; }
       requestAnimationFrame(frame);
     }
 
@@ -5502,7 +5705,7 @@ if (demo) {
         const real = sync();
         build();
         renderControls();
-        if (!running) { running = true; last = performance.now(); requestAnimationFrame(frame); }
+        kick();
         // New decor since you last looked: celebrate it once (real meals only, not the sample).
         if (!sampleOn()) {
           const nw = DECOR.filter((d) => d.at > opts.seen && d.at <= real).map((d) => d.name);
@@ -5523,7 +5726,7 @@ if (demo) {
       },
       // A water tap: water the plant (or fill the counter bottle). Hitting the goal makes it bloom, with a sparkle.
       water(hit, undo = false) {
-        if (!onScreen()) { if (!undo) pendingWater += 1; return; }
+        if (!viewOpen()) { if (!undo) pendingWater += 1; return; }
         sync();
         const pl = objById('plant');
         const bt = objById('bottle');
@@ -5539,7 +5742,7 @@ if (demo) {
           saveOpts();
         }
       },
-      isOpen: onScreen,
+      isOpen: viewOpen,
     };
   })();
   // Me has two views: Progress and the Kitchen.
@@ -5563,8 +5766,10 @@ if (demo) {
   const GLASS_ML = 250;
   const OZ_ML = 29.5735;
   const WATER_UNITS = [['glasses', 'Glasses'], ['bottles', 'Bottles'], ['oz', 'oz'], ['ml', 'ml']];
-  const freshWater = () => ({ on: true, unit: 'glasses', tap: 'glass', bottle: 500, goal: 2000, remind: { on: false, from: '08:00', to: '21:00' }, notToday: '' });
-  prefs.water = Object.assign(freshWater(), prefs.water);
+  const freshWater = () => ({ on: false, unit: 'glasses', tap: 'glass', bottle: 500, goal: 2000, remind: { on: false, from: '08:00', to: '21:00' }, notToday: '' });
+  // Water used to start switched on. Keep it on only for people who have actually logged a glass.
+  if (prefs.water && !prefs.water.optIn) prefs.water.on = prefs.water.on && Object.keys(activity().water || {}).length > 0;
+  prefs.water = Object.assign(freshWater(), prefs.water, { optIn: true });
   prefs.water.remind = Object.assign(freshWater().remind, prefs.water.remind);
   const W = () => prefs.water;
   const waterLog = (a = activity()) => ((a.water || {})[dayKey()] || []);
@@ -5692,12 +5897,18 @@ if (demo) {
   function renderCollection() {
     const a = activity();
     const col = collectionFor(a);
-    const view = COL_VIEWS.some((v) => v[0] === prefs.colView) ? prefs.colView : 'binder';
+    // The Cards tab is the binder on its own; Extras → Collection is everything else (stickers, friends…).
+    const extrasViews = COL_VIEWS.filter((v) => v[0] !== 'binder');
+    const view = colMode === 'binder' ? 'binder' : extrasViews.some((v) => v[0] === prefs.colView) ? prefs.colView : 'stickers';
     const body = { binder: binderView, stickers: stickersView, friends: friendsView, pantry: pantryView, swap: swapView }[view](a, col);
-    colBox.innerHTML = `
+    colBox.innerHTML = colMode === 'binder' ? `
+      <div class="tab-head"><div class="title-row"><h2 class="stage__title" tabindex="-1">Your cards</h2>${helpDot('collection', 'Help: recipe cards')}</div>
+        <p class="stage__sub">A card for every recipe you cook. Nothing’s for sale, there are no random packs, and it’s private to you${sampleOn() ? '. Right now it’s the sample week' : ''}.</p></div>
+      ${body}` : `
+      <p class="back-row"><button type="button" class="link-btn js-open-extras"><span class="icon" aria-hidden="true">arrow_back</span>Extras</button></p>
       <div class="tab-head"><div class="title-row"><h2 class="stage__title" tabindex="-1">Collection</h2>${helpDot('collection', 'Help: the collection')}</div>
-        <p class="stage__sub">Earned by cooking and trying things. Nothing’s for sale, there are no random packs, and it’s private to you${sampleOn() ? '. Right now it’s the sample week' : ''}.</p></div>
-      <div class="col-nav" role="group" aria-label="Collection sections">${COL_VIEWS.map(([id, label, icon]) => `<button type="button" class="tag" data-col-view="${id}" aria-pressed="${id === view}"><span class="icon" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</div>
+        <p class="stage__sub">Stickers, friends and the Pantry-dex, earned by cooking and trying things. Nothing’s for sale, and it’s private to you${sampleOn() ? '. Right now it’s the sample week' : ''}.</p></div>
+      <div class="col-nav" role="group" aria-label="Collection sections">${extrasViews.map(([id, label, icon]) => `<button type="button" class="tag" data-col-view="${id}" aria-pressed="${id === view}"><span class="icon" aria-hidden="true">${icon}</span>${label}</button>`).join('')}</div>
       ${body}`;
   }
 
@@ -5706,7 +5917,7 @@ if (demo) {
     const got = Object.keys(col.cards).length;
     const mastered = Object.values(col.cards).filter((c) => c.n >= MASTER_AT).length;
     const set = SETS.find((x) => x.id === colState.set);
-    const ids = set ? set.ids : RECIPES.map((r) => r.id);
+    const ids = (set ? set.ids : RECIPES.map((r) => r.id)).filter((id) => !hiddenRecipes.has(id));
     const order = ['breakfast', 'lunch', 'dinner', 'snack'];
     const list = ids.map(byId).sort((x, y) => (set ? 0 : order.indexOf(x.meal) - order.indexOf(y.meal)));
     const chip = (id, label, n, total, done) => `<button type="button" class="tag tag--set${done ? ' is-done' : ''}" data-set="${id}" aria-pressed="${colState.set === id}">${done ? '<span class="icon" aria-hidden="true">check_circle</span>' : ''}${esc(label)} <small>${n}/${total}</small></button>`;
@@ -6006,12 +6217,15 @@ if (demo) {
         <div class="tags">${DISLIKE_IDEAS.filter((t) => !prefs.dislikes.includes(t)).map((t) => `<button type="button" class="tag tag--add" data-dislike="${t}"><span class="icon" aria-hidden="true">add</span>${t}</button>`).join('')}</div>
         <form class="add-row js-add-dislike"><label class="sr-only" for="dislike-input">Add something to never show</label><input id="dislike-input" class="text-input" type="text" placeholder="Add an ingredient" maxlength="30" autocomplete="off"><button class="btn btn--secondary btn--small">Add</button></form>`)
       + sec('Allergies', `<p class="allergy-note"><span class="icon" aria-hidden="true">info</span>We filter recipes, but always check labels.</p>
-        <p class="fine">Strict filters: when you’re eating, a recipe with any of these never shows up. Keep one out of the house and it’s filtered out of every suggestion, even when you’re not eating.</p>
+        <p class="fine">When you’re eating, recipes tagged with any of these are left out. Keep one out of the house and it’s filtered out of every suggestion, even when you’re not eating.</p>
         <div class="tags">${ALLERGENS.map((a) => tag('allergy', a.id, a.label, prefs.allergies.includes(a.id))).join('')}${customAllergies.map((x) => tag('allergy', x, x, true)).join('')}</div>
+        ${customAllergies.length ? `<p class="fine">${esc(cap(listText(customAllergies)))}: matched by ingredient name only, since it isn’t one of the tags above. Type “milk”, “wheat”, “nuts” and so on and Yolkie uses the tag instead.</p>` : ''}
         ${prefs.allergies.length ? `<div class="keep-list">${prefs.allergies.map((a) => keepSwitch('you', a, prefs.keepOut.includes(a))).join('')}</div>` : ''}
         <form class="add-row js-add-allergy"><label class="sr-only" for="allergy-input">Add another allergy</label><input id="allergy-input" class="text-input" type="text" placeholder="Another allergy, like mustard" maxlength="30" autocomplete="off"><button class="btn btn--secondary btn--small">Add</button></form>`)
       + sec('Household restrictions', `<p class="fine">Suggestions and house votes work for everyone eating: all their diets and allergies together. Dislikes only move a recipe down.${sampleOn() ? ' Right now these are the sample week’s.' : ''}</p>
+        ${allergyNote()}
         ${active().map(restrCard).join('')}`, 'prefs-house')
+      + `<details class="sheet-more js-prefs-more"${prefsMoreOpen ? ' open' : ''}><summary><span class="icon" aria-hidden="true">expand_more</span>More settings</summary>`
       + sec('Nutrition', `<label class="switch"><input type="checkbox" class="js-nutri-hide"${nutritionOn() ? '' : ' checked'}><span class="switch__track" aria-hidden="true"></span>Hide nutrition</label>
         <p class="fine">Hides every calorie, protein and nutrition number, here and on the home page.</p>`, 'prefs-nutrition')
       + sec('Sounds', `<label class="switch"><input type="checkbox" class="js-sound-timers"${prefs.sounds.timers ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Timer chime</label>
@@ -6028,6 +6242,7 @@ if (demo) {
         </div>
         <p class="fine">Today so far: ${esc(waterText(waterToday()))}. <button type="button" class="link-btn js-water-reset">Reset the goal to 8 glasses</button></p>
         <h4 class="mini-head">Water reminders</h4>
+        <p class="fine">Preview: real reminders arrive in the app. Nothing is sent from this demo.</p>
         <div class="remind-row"><label class="switch"><input type="checkbox" class="js-water-remind"${W().remind.on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Gentle reminders, at most every 3 hours</label></div>
         <div class="remind-row"><span>Only while I’m awake</span><span class="time-pair"><input class="time-input" type="time" data-wake="from" value="${W().remind.from}" aria-label="Awake from"> to <input class="time-input" type="time" data-wake="to" value="${W().remind.to}" aria-label="Awake until"></span></div>
         <div class="remind-row"><span>${W().notToday === dayKey() ? 'No water reminders today.' : 'Need a break from them?'}</span><button type="button" class="btn btn--secondary btn--small js-water-nottoday" aria-pressed="${W().notToday === dayKey()}">${W().notToday === dayKey() ? 'Undo' : 'Not today'}</button></div>
@@ -6046,15 +6261,19 @@ if (demo) {
         ? `<p class="fine">You said “Don’t suggest this again”. Bring any of them back.</p><ul class="hidden-list">${prefs.hidden.filter(byId).map((id) => `<li><span>${byId(id).name}</span><button type="button" class="btn btn--ghost btn--small" data-unhide="${id}">Suggest it again</button></li>`).join('')}</ul>`
         : '<p class="fine">None. Tap “Don’t suggest this again” on a meal and it lands here, so you can undo it.</p>', 'prefs-hidden')
       + sec('Takeout', `<label class="money-field" for="takeout-input">Your usual takeout meal costs <span class="money"><span aria-hidden="true">$</span><input id="takeout-input" class="js-takeout" type="number" min="1" max="200" step="1" value="${prefs.takeout}" inputmode="decimal"></span></label>
-        <p class="fine">Each meal you finish adds this to “takeout dodged”. It’s an estimate.</p>`)
-      + sec('Sample data for testers', sampleOn()
+        <p class="fine">Used for the “about $${prefs.takeout} saved” line under Cooked at home. It’s an estimate.</p>`)
+      + '</details>'
+      + ((TESTER || sampleOn()) ? sec('Sample data for testers', sampleOn()
         ? '<p>Sample data is on. Everything you see, and anything you cook, uses the sample weeks.</p><button type="button" class="btn btn--secondary btn--small js-clear-sample">Clear sample data</button>'
-        : '<p class="fine">Fills in a realistic, made-up few weeks: meals, ratings, cards, stickers, friends, Pantry-dex, the house’s profiles and remembered ingredients. It’s kept apart from your real stats and clears in one tap.</p><button type="button" class="btn btn--secondary btn--small js-load-sample">Load sample week</button>', 'prefs-sample')
+        : '<p class="fine">Fills in a realistic, made-up few weeks: meals, ratings, cards, stickers, friends, Pantry-dex, the house’s profiles and remembered ingredients. It’s kept apart from your real stats and clears in one tap.</p><button type="button" class="btn btn--secondary btn--small js-load-sample">Load sample week</button>', 'prefs-sample') : '')
       + sec('Start over', `<p class="fine">Clears every choice and meal this demo saved on this device.</p><button type="button" class="btn btn--ghost btn--small js-reset-all">${resetArmed ? 'Tap again to clear everything' : 'Clear all demo data'}</button>`, 'prefs-reset');
   }
+  let prefsMoreOpen = false;
   function openPrefs(section) {
     resetArmed = false;
     state.editing = null;
+    // Opening straight to a section that lives under "More settings" opens that too.
+    prefsMoreOpen = ['prefs-nutrition', 'prefs-sounds', 'prefs-water', 'prefs-reminders', 'prefs-memory', 'prefs-hidden'].includes(section);
     renderPrefs();
     openSheet(prefsSheet);
     if (section) {
@@ -6066,6 +6285,8 @@ if (demo) {
     }
   }
   prefsSheet.addEventListener('close', () => { state.editing = null; });
+  // Keep "More settings" open while you change things in it (each change redraws the sheet).
+  prefsSheet.addEventListener('toggle', (e) => { if (e.target.matches && e.target.matches('.js-prefs-more')) prefsMoreOpen = e.target.open; }, true);
   const afterPrefs = () => { savePrefs(); refilter(); if (prefs.tab === 'house') renderHouse(); };
   const rerenderPrefs = (sel) => { const top = prefsBody.scrollTop; renderPrefs(); prefsBody.scrollTop = top; const el = sel && $(sel, prefsSheet); if (el) el.focus({ preventScroll: true }); };
   const flip = (list, id) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
@@ -6112,6 +6333,7 @@ if (demo) {
     if (t.closest('.js-open-checkin')) { closeSheet(prefsSheet); openCheckin(); }
     if (t.closest('.js-load-sample')) {
       store.set(SAMPLE_KEY, sampleWeek());
+      addSampleMates('sample');
       dataChanged();
       rerenderPrefs('.js-clear-sample');
       yolk('happy', 'Sample weeks loaded. It’s all made up, and your real stats are safe.');
@@ -6129,7 +6351,7 @@ if (demo) {
     const v = lower(input.value).trim().replace(/\s+/g, ' ');
     if (!v) return;
     if (e.target.matches('.js-add-dislike') && !prefs.dislikes.includes(v)) prefs.dislikes = [...prefs.dislikes, v];
-    if (e.target.matches('.js-add-allergy') && !prefs.allergies.includes(v)) prefs.allergies = [...prefs.allergies, v];
+    if (e.target.matches('.js-add-allergy')) prefs.allergies = normAllergies([...prefs.allergies, v]);
     afterPrefs();
     rerenderPrefs(e.target.matches('.js-add-dislike') ? '#dislike-input' : '#allergy-input');
   });
@@ -6348,7 +6570,7 @@ if (demo) {
     return [
       { tone: 'plum', mood: 'happy', kicker: 'Meals cooked', big: String(s.cooked), title: s.cooked === 1 ? 'meal, cooked by you' : 'meals, cooked by you', sub: s.cooked < 3 ? fill : 'Every one of them from hungry to fed.' },
       { tone: 'yolk', mood: 'surprised', kicker: 'Top dish', big: top ? `${top[1].n}×` : '–', title: top ? byId(top[0]).name : 'No favourite yet', sub: top ? (top[1].n > 1 ? 'Your comfort pick.' : 'All tied at one, so here’s the latest.') : fill },
-      { tone: 'basil', mood: 'happy', kicker: 'Money kept', big: `$${s.kept}`, title: 'kept in your pocket', sub: s.cooked ? `Estimate: ${s.cooked} × your usual $${prefs.takeout} takeout.` : fill },
+      { tone: 'basil', mood: 'happy', kicker: 'Cooked at home', big: `${s.cooked}`, title: s.cooked === 1 ? 'meal cooked at home' : 'meals cooked at home', sub: s.cooked ? `About $${s.kept} saved on takeout, an estimate.` : fill },
       { tone: 'night', mood: 'default', kicker: 'Cuisines stamped', big: String(s.cuisines.length), title: s.cuisines.length === 1 ? 'cuisine in your passport' : 'cuisines in your passport', sub: s.cuisines.length ? s.cuisines.join(' · ') : fill },
       { tone: 'paper', mood: 'surprised', kicker: 'Chaos night', big: chaos ? clock12(when.getHours() * 60 + when.getMinutes()) : '?', title: chaos ? byId(chaos.r).name : 'No chaos yet', sub: chaos ? `Made from ${listText(chaos.have.map(haveLabel))} on a ${when.toLocaleDateString(undefined, { weekday: 'long' })}. Bold.` : `${fill} Fridge rescues count.` },
       { tone: 'yolk', mood: 'happy', kicker: 'Cards collected', big: String(got), title: `of ${RECIPES.length} recipe cards in your binder`, sub: got ? (mastered ? `${plural(mastered, 'card')} mastered and gone foil.` : `Cook one ${MASTER_AT} times and it turns foil.`) : `${fill} Every recipe you finish drops a card.` },
@@ -6551,6 +6773,7 @@ if (demo) {
   }
   function clearSample() {
     store.del(SAMPLE_KEY);
+    removeSampleMates();
     dataChanged();
     yolk('default', 'Sample data cleared. Back to your real stats.');
   }
@@ -6559,6 +6782,17 @@ if (demo) {
   demo.addEventListener('click', (e) => {
     const t = e.target;
     if (t.closest('.js-open-prefs')) openPrefs();
+    if (t.closest('.js-open-extras')) { yolk('happy', 'The fun stuff. No meal required.'); showTab('extras'); $('.js-hub .stage__title').focus({ preventScroll: true }); demo.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' }); }
+    const hub = t.closest('[data-hub]');
+    if (hub) {
+      const where = hub.dataset.hub;
+      if (where === 'kitchen') { prefs.extrasNudge = 'seen'; savePrefs(); showTab('me', false, 'kitchen'); yolk('happy', 'Welcome to the kitchen. Tap the floor and I’ll walk there.'); }
+      if (where === 'collection') showTab('collection', false, 'extras');
+      if (where === 'house') showTab('house');
+      const title = $(`[data-panel="${where === 'kitchen' ? 'me' : where}"] .stage__title:not([hidden])`);
+      if (where === 'kitchen') $('.js-kitchen .stage__title').focus({ preventScroll: true }); else if (title) title.focus({ preventScroll: true });
+      demo.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
     if (t.closest('.js-open-checkin') && !t.closest('.js-prefs-sheet')) openCheckin();
     if (t.closest('.js-nutri-open')) openNutrition();
     if (t.closest('.js-open-finder')) openFinder();
@@ -6600,7 +6834,8 @@ if (demo) {
       </div>
       <div class="panel">
         <h3>${short ? 'Not enough to vote on' : `${v.picks.length === 3 ? 'Three' : 'Two'} ${mealOf(state.recipe).label} picks`}</h3>
-        <p class="fine">Every pick works for everyone eating, and leaves out anything kept out of the house.</p>
+        <p class="fine">Every pick is filtered for everyone eating, and leaves out anything kept out of the house.</p>
+        ${allergyNote()}
         ${short ? `<p class="meal-note">Only ${v.picks.length ? `${v.picks[0].name} works` : 'nothing works'} for everyone right now. Check restrictions in <button type="button" class="link-btn js-open-prefs">Preferences</button>, or try fewer people.</p>` : ''}
         <div class="ballot">${v.picks.map((r) => `<div class="pick"><span class="pick__name">${r.name}</span><span class="pick__meta">${pickMeta(r)}</span></div>`).join('')}</div>
       </div>
@@ -6762,9 +6997,10 @@ if (demo) {
     water: () => { if (!W().on) { openPrefs('prefs-water'); return; } showTab('me'); bringUp('.js-water[data-where="me"]', '.js-water-plus'); yolk('happy', 'Tap +1 when you drink. The kitchen plant gets some too.'); },
     progress: () => { showTab('me'); showMeView('progress', true); },
     closet: () => { showTab('me'); showMeView('progress'); bringUp('#closet'); },
-    kitchen: () => { showTab('me'); showMeView('kitchen', true); yolk('happy', 'Welcome to the kitchen. Tap the floor and I’ll walk there.'); },
+    kitchen: () => { showTab('me', false, 'kitchen'); $('.js-kitchen .stage__title').focus({ preventScroll: true }); yolk('happy', 'Welcome to the kitchen. Tap the floor and I’ll walk there.'); },
     collection: () => { showTab('collection'); showColView('binder', true); },
-    stickers: () => { showTab('collection'); showColView('stickers', true); },
+    stickers: () => { showTab('collection', false, 'extras'); showColView('stickers', true); },
+    extras: () => { showTab('extras'); $('.js-hub .stage__title').focus({ preventScroll: true }); },
     favorites: () => { house.recent = 'mine'; showTab('house'); bringUp('#recent-title', '[data-recent="mine"]'); },
     household: () => { showTab('house'); bringUp('#link-title', '.js-link-create'); },
     checkin: () => { showTab('cook'); openCheckin(); },
@@ -6786,6 +7022,7 @@ if (demo) {
     state.time = Number(last.time) || 0;
     state.have = Array.isArray(last.have) ? last.have.slice(0, 3) : [];
     state.haveDone = !!last.haveDone;
+    state.eaters = slotEaters();
     checkRadios();
     renderDietBar();
     renderExtras();
@@ -6807,6 +7044,89 @@ if (demo) {
       yolk('surprised', 'An invite! Tap Join and the owner gets asked.');
       return;
     }
-    showTab(['cook', 'me', 'house', 'collection'].includes(prefs.tab) ? prefs.tab : 'cook');
+    showTab(['cook', 'me', 'collection', 'extras', 'house'].includes(prefs.tab) ? prefs.tab : 'cook');
+    // Recipes hidden since the last visit drop out; if one was on screen, Yolkie picks again.
+    refreshHiddenRecipes().then((changed) => { if (changed && state.shown) refilter(); }).catch(() => {});
   })();
+}
+
+/* ---------- The recipe removal page (request-removal.html) ---------- */
+
+// A creator asks for a recipe to come out of the demo. Same care as the feedback form: a spam trap, a
+// 30-second gap, kind messages under each field, and everything typed kept if it doesn't send. Opened from
+// a recipe (?recipe=id), the form fills in that recipe, its creator and the original link.
+const rr = document.querySelector('.js-rr');
+if (rr) {
+  const f = rr.elements;
+  const face = rr.querySelector('.js-rr-yolk');
+  const dir = face.getAttribute('src').replace(/[^/]+$/, '');
+  const status = rr.querySelector('.js-rr-status');
+  const submit = rr.querySelector('[type="submit"]');
+  const retry = rr.querySelector('.js-rr-retry');
+  const setFace = (m, cls) => { if (!face.getAttribute('src').endsWith(`yolk-${m}.svg`)) face.src = `${dir}yolk-${m}.svg`; replay(face, cls); };
+  const say = (text, isError = false) => { status.textContent = text; status.classList.toggle('is-error', isError); };
+  const val = (name) => f[name].value.trim();
+  const errFor = (name) => rr.querySelector(`[data-err="${name}"]`);
+  const flag = (name, msg) => { const err = errFor(name); err.textContent = msg; err.hidden = false; f[name].setAttribute('aria-invalid', 'true'); };
+  const unflag = (name) => { const err = errFor(name); if (!err || err.hidden) return; err.hidden = true; err.textContent = ''; f[name].removeAttribute('aria-invalid'); };
+  ['creator', 'recipes', 'link', 'email', 'message'].forEach((name) => f[name].addEventListener('input', () => unflag(name)));
+
+  // Pre-fill from the recipe it was opened from (only real creator recipes count).
+  const ids = (new URLSearchParams(location.search).get('recipe') || '').split(',')
+    .map((id) => ALL_RECIPES.find((r) => r.id === id && r.src)).filter(Boolean).slice(0, 20);
+  if (ids.length) {
+    f.recipes.value = ids.map((r) => r.name).join('\n');
+    f.creator.value = ids[0].src.by;
+    f.link.value = ids[0].src.url;
+    rr.querySelector('.js-rr-recipes-note').textContent = `Filled in from the recipe you came from. Add any others, one per line.`;
+  }
+
+  const finish = () => {
+    rr.querySelector('.js-rr-fields').hidden = true;
+    const done = rr.querySelector('.js-rr-done');
+    done.hidden = false;
+    done.querySelector('.js-rr-done-title').focus({ preventScroll: true });
+    setFace('happy');
+  };
+  rr.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    retry.hidden = true;
+    const problems = [];
+    if (!val('creator')) problems.push(['creator', 'Tell us who you are: your name, channel or brand.']);
+    if (!val('recipes')) problems.push(['recipes', 'Which recipe? The name as it shows in Yolkie is perfect.']);
+    if (!/^https?:\/\/\S+\.\S+/i.test(val('link'))) problems.push(['link', 'Add a link that starts with https://, to your profile or the original recipe.']);
+    if (!EMAIL_OK.test(val('email')) || val('email').length > 254) problems.push(['email', 'That email looks a little scrambled. Mind checking it?']);
+    if (val('message').length > 2000) problems.push(['message', 'That’s a little long. Keep it under 2,000 characters.']);
+    if (problems.length) {
+      problems.forEach(([name, msg]) => flag(name, msg));
+      f[problems[0][0]].focus();
+      setFace('meh');
+      say(problems.length === 1 ? 'One thing to fix before this can send.' : `${problems.length} things to fix before this can send.`, true);
+      return;
+    }
+    if (f.company.value) { finish(); return; } // filled spam trap: look successful, send nothing
+    if (sentRecently('removal')) { setFace('sleepy'); say('You sent a request a moment ago! Give it 30 seconds, then send this one.', true); return; }
+    submit.disabled = true;
+    say('Sending…');
+    try {
+      await sbInsert('removal_requests', {
+        creator: val('creator').slice(0, 120),
+        recipes: val('recipes').slice(0, 1000),
+        recipe_ids: ids.map((r) => r.id),
+        link: val('link').slice(0, 500),
+        email: val('email').toLowerCase(),
+        message: val('message') || null,
+      });
+      markSent('removal');
+      say('');
+      finish();
+    } catch (err) {
+      setFace('meh');
+      say(sendFailed(), true);
+      retry.hidden = false;
+    } finally {
+      submit.disabled = false;
+    }
+  });
+  retry.addEventListener('click', () => rr.requestSubmit());
 }

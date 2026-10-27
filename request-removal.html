@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://teavrtstsnemauatvdfo.supabase.co; media-src 'self' blob: https://teavrtstsnemauatvdfo.supabase.co; connect-src 'self' https://teavrtstsnemauatvdfo.supabase.co; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recipe removal · Yolkie</title>
+  <meta name="description" content="Is one of your recipes in the Yolkie demo? Ask us to take it out, and we'll review and remove it within 2 business days.">
+  <meta property="og:title" content="Recipe removal · Yolkie">
+  <meta property="og:description" content="Ask us to take your recipe out of the Yolkie demo.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://yolkie.isolatedideas.dev/request-removal.html">
+  <meta property="og:image" content="https://yolkie.isolatedideas.dev/og-image.png">
+  <link rel="canonical" href="https://yolkie.isolatedideas.dev/request-removal.html">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#F6F4FB" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1E1740" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="favicon.ico" sizes="32x32">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="theme.js"></script>
+</head>
+<body id="top">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="site-header__inner">
+      <a class="brand" href="./" aria-label="Yolkie, home">
+        <span class="brand__mark"><img src="assets/app-icon.svg" alt="" width="34" height="34"></span>
+        <span class="brand__name">Yolkie</span>
+      </a>
+      <nav class="site-nav" aria-label="Site">
+        <a href="./#problem">Why</a>
+        <a href="./#how">How it works</a>
+        <a href="./#features">Features</a>
+        <a href="./#faq">FAQ</a>
+        <a href="help.html">Help</a>
+        <a class="site-nav__account js-account-link" href="account.html"><span class="icon" aria-hidden="true">account_circle</span><span class="js-account-label">Sign in</span></a>
+        <a class="site-nav__try" href="try.html">Try the demo</a>
+      </nav>
+      <button class="theme-toggle" type="button" aria-label="Switch colour theme">
+        <span class="icon" aria-hidden="true">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="page-hero help-hero">
+      <div>
+        <p class="eyebrow">For recipe creators</p>
+        <h1>Is this your recipe?</h1>
+        <p class="lede">Some recipes in the Yolkie demo are based on creators’ published recipes, always credited with a link back. If one of them is yours and you’d rather it wasn’t here, tell us. We’ll review and remove it within 2 business days.</p>
+      </div>
+    </section>
+
+    <div class="fb-wrap">
+      <form class="signup fb js-rr" novalidate>
+        <div class="signup__yolk" aria-hidden="true"><img class="js-rr-yolk" src="assets/mascots/yolk-default.svg" alt="" width="220" height="220"></div>
+        <div class="js-rr-fields">
+          <p class="fb-note"><span class="icon" aria-hidden="true">schedule</span><span><strong>We’ll review and remove it within 2 business days.</strong> You don’t need to explain why, and we’ll email you when it’s done.</span></p>
+
+          <div class="field">
+            <label for="rr-creator">Your name, or your channel or brand <span class="field__req">(required)</span></label>
+            <input id="rr-creator" type="text" name="creator" autocomplete="name" maxlength="120" aria-describedby="rr-creator-err">
+            <p class="field__err" id="rr-creator-err" data-err="creator" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="rr-recipes">Which recipe or recipes? <span class="field__req">(required)</span></label>
+            <textarea id="rr-recipes" name="recipes" rows="3" maxlength="1000" placeholder="The recipe names as they appear in Yolkie" aria-describedby="rr-recipes-note rr-recipes-err"></textarea>
+            <p class="field__note js-rr-recipes-note" id="rr-recipes-note">One per line is fine.</p>
+            <p class="field__err" id="rr-recipes-err" data-err="recipes" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="rr-link">A link to your profile or the original recipe <span class="field__req">(required)</span></label>
+            <input id="rr-link" type="url" name="link" inputmode="url" maxlength="500" placeholder="https://" aria-describedby="rr-link-note rr-link-err">
+            <p class="field__note" id="rr-link-note">So we can check it’s yours.</p>
+            <p class="field__err" id="rr-link-err" data-err="link" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="rr-email">Your email <span class="field__req">(required)</span></label>
+            <input id="rr-email" type="email" name="email" autocomplete="email" inputmode="email" maxlength="254" aria-describedby="rr-email-note rr-email-err">
+            <p class="field__note" id="rr-email-note">Only used to tell you when it’s done, or to ask a question if we need to.</p>
+            <p class="field__err" id="rr-email-err" data-err="email" hidden></p>
+          </div>
+
+          <div class="field">
+            <label for="rr-message">Anything you’d like us to know? <span class="field__opt">(optional)</span></label>
+            <textarea id="rr-message" name="message" rows="3" maxlength="2000" aria-describedby="rr-message-err"></textarea>
+            <p class="field__err" id="rr-message-err" data-err="message" hidden></p>
+          </div>
+
+          <!-- Spam trap: people never see or fill this; bots often do. -->
+          <div class="signup__trap" aria-hidden="true"><label>Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
+          <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Send the request</button>
+          <p class="signup__status js-rr-status" role="status"></p>
+          <button type="button" class="btn btn--secondary btn--small signup__retry js-rr-retry" hidden><span class="icon" aria-hidden="true">refresh</span>Try again</button>
+        </div>
+        <div class="signup__done js-rr-done" hidden>
+          <h2 class="signup__title js-rr-done-title" tabindex="-1">Got it.</h2>
+          <p>Thanks for telling us. We’ll review it and remove the recipe within 2 business days, and email you when it’s done. Sorry for the bother.</p>
+          <a class="btn btn--secondary" href="./">Back to Yolkie</a>
+        </div>
+      </form>
+      <p class="fine rr-fine">What we keep: the details above, so we can act on your request and reply. See the <a href="privacy.html">privacy page</a>.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <p><strong>Pre-launch concept.</strong> Trademark clearance pending.</p>
+    <div class="site-footer__links">
+      <a href="./">Home</a>
+      <a href="try.html">Try the demo</a>
+      <a href="help.html">Help</a>
+      <a href="usage.html">Usage</a>
+      <a href="feedback.html">Send feedback</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="request-removal.html" aria-current="page">Recipe removal</a>
+      <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
+    </div>
+  </footer>
+
+  <script src="recipes-sourced.js" defer></script>
+  <script src="main.js" defer></script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://teavrtstsnemauatvdfo.supabase.co; media-src 'self' blob: https://teavrtstsnemauatvdfo.supabase.co; connect-src 'self' https://teavrtstsnemauatvdfo.supabase.co; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Admin · Yolkie</title>
   <meta name="robots" content="noindex, nofollow">
@@ -14,14 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    (function () {
-      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
-      r.classList.add('js');
-      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
-      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
-    })();
-  </script>
+  <script src="theme.js"></script>
 </head>
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -110,6 +104,7 @@
         <button type="button" role="tab" id="ad-tab-feedback" data-ad-tab="feedback" aria-controls="ad-panel-feedback" aria-selected="true"><span class="icon" aria-hidden="true">chat</span>Feedback</button>
         <button type="button" role="tab" id="ad-tab-waitlist" data-ad-tab="waitlist" aria-controls="ad-panel-waitlist" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">mail</span>Waitlist</button>
         <button type="button" role="tab" id="ad-tab-people" data-ad-tab="people" aria-controls="ad-panel-people" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">group</span>People</button>
+        <button type="button" role="tab" id="ad-tab-removals" data-ad-tab="removals" aria-controls="ad-panel-removals" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">block</span><span class="js-ad-rr-tab">Removals</span></button>
       </div>
 
       <section class="admin-panel" role="tabpanel" id="ad-panel-feedback" aria-labelledby="ad-tab-feedback">
@@ -164,6 +159,15 @@
         <p class="admin-count js-ad-pp-count" aria-live="polite"></p>
         <ul class="admin-list js-ad-pp-list"></ul>
       </section>
+
+      <section class="admin-panel" role="tabpanel" id="ad-panel-removals" aria-labelledby="ad-tab-removals" hidden>
+        <h2 class="admin-sub">Removal requests</h2>
+        <p class="fine">Creators asking for a recipe to come out of the demo. The page promises we’ll review and remove it within 2 business days. “Hide recipe” takes it out of the demo for everyone straight away (and marks the request Removed).</p>
+        <p class="admin-count js-ad-rr-count" aria-live="polite"></p>
+        <ul class="admin-list js-ad-rr-list"></ul>
+        <h3 class="mini-head">Hidden recipes</h3>
+        <ul class="admin-list js-ad-hidden-list"></ul>
+      </section>
     </div>
 
     <dialog class="sheet admin-sheet js-ad-detail" aria-labelledby="ad-detail-title">
@@ -206,6 +210,7 @@
     </div>
   </footer>
 
+  <script src="recipes-sourced.js" defer></script>
   <script src="main.js" defer></script>
   <script src="admin.js" defer></script>
 </body>

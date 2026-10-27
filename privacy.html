@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://teavrtstsnemauatvdfo.supabase.co; media-src 'self' blob: https://teavrtstsnemauatvdfo.supabase.co; connect-src 'self' https://teavrtstsnemauatvdfo.supabase.co; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy · Yolkie</title>
   <meta name="description" content="What Yolkie stores about you, where it lives, who helps us run it, and how to delete it.">
@@ -22,15 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    (function () {
-      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
-      r.classList.add('js');
-      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
-      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
-      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
-    })();
-  </script>
+  <script src="theme.js"></script>
 </head>
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -71,7 +65,7 @@
         <h2 id="short-title">The short version</h2>
         <ul class="usage-list">
           <li>The demo saves everything on your device. We never see it.</li>
-          <li>We only keep what you send us: a waitlist email, feedback, or an account.</li>
+          <li>We only keep what you send us (a waitlist email, feedback, or an account) and copies of any emails we send you.</li>
           <li>No ads, no tracking scripts, no selling your data. Ever.</li>
           <li>You can delete your account yourself, any time, from your <a href="account.html">account page</a>.</li>
         </ul>
@@ -88,9 +82,13 @@
         <h3 class="mini-head">The waitlist</h3>
         <p>Your email, your answer to “What would make Yolkie a must-have?”, and which page you joined from. We use your email only to tell you about Yolkie.</p>
         <h3 class="mini-head">Feedback</h3>
-        <p>Your rating and answers, any screenshots or videos you add, which page you came from and the site’s version. Your email too, if you give it, so we can reply. Please don’t include personal health details like your own allergies or conditions.</p>
+        <p>Your rating and answers, any screenshots or videos you add, which page you came from and the site’s version. Your email too, if you give it, so we can reply, and maybe invite you to test new things. Please don’t include personal health details like your own allergies or conditions.</p>
+        <h3 class="mini-head">A recipe removal request</h3>
+        <p>If you ask us to take one of your recipes out of the demo: your name or brand, which recipes, the link you give us, your email and your message. We use them to act on the request and to tell you when it’s done.</p>
+        <h3 class="mini-head">Emails we send you</h3>
+        <p>If the team emails you (a reply to your feedback, or a tester invite), we keep a copy of what we sent and when, so we don’t send it twice. If we invite you to test, we keep your email on a short invite list so your Tester badge is waiting when you sign up.</p>
         <h3 class="mini-head">An account</h3>
-        <p>Your email, the name you choose, how you sign in, when you joined, and your badges. If you use a password, it’s stored scrambled (hashed), so nobody can read it, us included. If you sign in with GitHub, Google or Apple, they tell us your email and name. We don’t get your password there or anything else from your account. With Apple, you can hide your real email.</p>
+        <p>Your email, the name you choose, how you sign in, when you joined, and your badges. If you use a password, it’s stored scrambled (hashed), so nobody can read it, us included. If you sign in with GitHub, Google or Apple, they tell us your email, your name, your username there and a link to your profile picture. We never get your password there. With Apple, you can hide your real email.</p>
         <p>If you turn on two-step sign-in, Supabase keeps the secret that links your authenticator app, and we keep your backup codes scrambled (hashed), so nobody can read them. A browser you ask us to remember gets a random pass that runs out after 30 days; we keep only a scrambled copy of it. Turning two-step sign-in off, or deleting your account, removes all of these.</p>
       </section>
 
@@ -108,14 +106,13 @@
 
       <section class="usage-sec" aria-labelledby="who-sees-title">
         <h2 id="who-sees-title">Who can see it</h2>
-        <p>If the team emails you, we keep a copy of what we sent and when, so we don’t send it twice.</p>
         <p>Only the small Yolkie team, on a private admin page. The website can add a waitlist email or a feedback note, but it can’t read them back, so nobody else can see what you sent. Your account details are visible to you and to the team.</p>
       </section>
 
       <section class="usage-sec" id="delete" aria-labelledby="delete-title">
         <h2 id="delete-title">Deleting your data</h2>
         <ul class="usage-list">
-          <li><strong>Your account:</strong> use “Delete my account” on your <a href="account.html">account page</a>. Your login, name and badges are erased straight away.</li>
+          <li><strong>Your account:</strong> use “Delete my account” on your <a href="account.html">account page</a>. Your login, name, badges, two-step sign-in data, any tester invite and our copies of emails we sent you are erased straight away.</li>
           <li><strong>The waitlist or feedback:</strong> these aren’t tied to an account. To have them removed, send a note on the feedback page with the email you used and ask. We’ll remove them and reply.</li>
         </ul>
         <p>We keep the waitlist and feedback while they help us build Yolkie, and remove them when they don’t, or when you ask.</p>
@@ -135,6 +132,7 @@
       <a href="usage.html">Usage</a>
       <a href="feedback.html">Send feedback</a>
       <a href="privacy.html" aria-current="page">Privacy</a>
+      <a href="request-removal.html">Recipe removal</a>
       <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
     </div>
   </footer>

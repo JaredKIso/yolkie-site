@@ -275,8 +275,10 @@ begin
     where user_id = auth.uid() and used_at is null and code_hash = extensions.crypt(clean, code_hash)
     limit 1;
   if hit is null then
+    -- Return instead of raising: an exception would roll back this insert, and the 5-tries limit
+    -- would never count. The page reads a null result as a wrong code.
     insert into public.mfa_attempts (user_id) values (auth.uid());
-    raise exception 'wrong_code';
+    return null;
   end if;
   update public.mfa_backup_codes set used_at = now() where id = hit;
   delete from public.mfa_attempts where user_id = auth.uid();
@@ -317,12 +319,23 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  who text;
 begin
   if auth.uid() is null then
     raise exception 'Not signed in';
   end if;
   if not public.yolkie_mfa_ok() then
     raise exception 'Pass 2FA first';
+  end if;
+  -- Things kept by email address rather than by account go too: a waiting tester invite, and the
+  -- team's copies of emails sent to this address (supabase/email.sql, if it's been run).
+  select lower(email) into who from auth.users where id = auth.uid();
+  if who is not null then
+    delete from public.badge_invites where lower(email) = who;
+    if to_regclass('public.email_log') is not null then
+      execute 'delete from public.email_log where lower(to_email) = $1' using who;
+    end if;
   end if;
   delete from auth.users where id = auth.uid();
 end;

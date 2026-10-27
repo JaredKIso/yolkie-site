@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://teavrtstsnemauatvdfo.supabase.co; media-src 'self' blob: https://teavrtstsnemauatvdfo.supabase.co; connect-src 'self' https://teavrtstsnemauatvdfo.supabase.co; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Try the demo · Yolkie</title>
   <meta name="description" content="Try the Yolkie demo: say who's eating and what you already have, get one meal for your energy and time, cook it step by step, and collect recipe cards, fridge stickers and friends as you go. Runs entirely in your browser.">
@@ -22,15 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    (function () {
-      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
-      r.classList.add('js');
-      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
-      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
-      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
-    })();
-  </script>
+  <script src="theme.js"></script>
 </head>
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -59,13 +53,13 @@
   <main id="main">
     <section class="page-hero">
       <p class="eyebrow">Demo</p>
-      <h1>What are we eating?</h1>
+      <h1>Try Yolkie</h1>
       <p class="lede">Simple recipes for breakfast, lunch, dinner and snacks, filtered to how you eat, one decision at a time. Pick, check, cook, done.</p>
     </section>
 
     <section class="demo" id="demo" aria-label="Yolkie demo">
       <div class="demo-meta">
-        <p class="demo-badge"><span class="icon" aria-hidden="true">lock</span>Runs in your browser. Everything is saved on this device only.</p>
+        <p class="demo-badge"><span class="icon" aria-hidden="true">lock</span>Saved on this device only</p>
         <a class="btn btn--ghost btn--small" href="feedback.html?from=try"><span class="icon" aria-hidden="true">chat</span>Send feedback</a>
       </div>
       <noscript><p class="panel">The demo needs JavaScript. The <a href="./#how">landing page</a> explains how Yolkie works.</p></noscript>
@@ -79,8 +73,7 @@
         <div class="demo-tabs" role="tablist" aria-label="Demo sections">
           <button type="button" role="tab" id="tab-cook" data-tab="cook" aria-controls="panel-cook" aria-selected="true"><span class="icon" aria-hidden="true">skillet</span>Cook</button>
           <button type="button" role="tab" id="tab-me" data-tab="me" aria-controls="panel-me" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">person</span>Me</button>
-          <button type="button" role="tab" id="tab-house" data-tab="house" aria-controls="panel-house" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">home</span>House</button>
-          <button type="button" role="tab" id="tab-collection" data-tab="collection" aria-controls="panel-collection" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">style</span>Collection</button>
+          <button type="button" role="tab" id="tab-collection" data-tab="collection" aria-controls="panel-collection" aria-selected="false" tabindex="-1"><span class="icon" aria-hidden="true">style</span>Cards</button>
         </div>
         <button type="button" class="icon-btn js-open-prefs" aria-label="Preferences"><span class="icon" aria-hidden="true">settings</span></button>
       </div>
@@ -105,8 +98,6 @@
         <div class="js-diet-bar" id="diets">
           <div class="pick-top">
             <button type="button" class="diet-chip js-diet-chip" aria-haspopup="dialog"><span class="icon" aria-hidden="true">tune</span><span class="diet-chip__label">Diet:</span><span class="diet-chip__text js-diet-summary">No preferences</span><span class="icon" aria-hidden="true">expand_more</span></button>
-            <button type="button" id="finder" class="btn btn--ghost btn--small js-open-finder" aria-haspopup="dialog"><span class="icon" aria-hidden="true">search</span>Find by ingredient</button>
-            <button type="button" class="btn btn--ghost btn--small js-open-checkin" aria-haspopup="dialog"><span class="icon" aria-hidden="true">notifications</span>Preview Yolkie's check-in</button>
           </div>
           <p class="diet-temp js-diet-temp"></p>
           <div class="js-diet-ask"></div>
@@ -140,9 +131,8 @@
         </fieldset>
 
         <div class="pick-extras js-pick-extras" id="who-eating"></div>
-        <p class="choice-hint js-pick-hint">Pick all three and Yolkie suggests one meal.</p>
+        <p class="choice-hint js-pick-hint">Pick all three and Yolkie suggests one meal. Rather choose yourself? <button type="button" id="finder" class="link-btn js-open-finder" aria-haspopup="dialog">Find by ingredient</button></p>
         <div class="js-meal-slot"></div>
-        <div class="js-water" data-where="cook" hidden></div>
       </div>
 
       <!-- 2. Check: servings, have/need, spice rack, shopping list -->
@@ -159,13 +149,14 @@
               <button type="button" class="js-serv-plus" aria-label="More servings"><span class="icon" aria-hidden="true">add</span></button>
             </div>
           </div>
+          <div class="check-top">
+            <span class="fine js-check-count"></span>
+            <button type="button" class="btn btn--secondary btn--small js-have-all"><span class="icon" aria-hidden="true">done_all</span>I've got all of it</button>
+          </div>
           <ul class="checklist js-checklist"></ul>
           <div class="check-tools">
-            <span class="fine js-check-count"></span>
-            <span class="check-tools__btns">
-              <button type="button" class="btn btn--ghost btn--small nutri js-nutri-open" aria-haspopup="dialog">Nutrition</button>
-              <button type="button" class="btn btn--ghost btn--small js-have-all">I've got all of it</button>
-            </span>
+            <span></span>
+            <button type="button" class="btn btn--ghost btn--small nutri js-nutri-open" aria-haspopup="dialog">Nutrition</button>
           </div>
         </div>
 
@@ -229,12 +220,19 @@
           <p class="done-card__meal js-done-meal"></p>
           <p class="goal-hit js-goal-hit" hidden><span class="icon" aria-hidden="true">trophy</span>Weekly goal hit!</p>
         </div>
-        <dl class="done-stats js-done-stats"></dl>
-        <p class="fine nutri done-note">Calories and protein are rough estimates per serving.</p>
+        <div class="panel done-panel done-headline js-gains"></div>
         <div class="panel card-drop js-card-drop" hidden></div>
-        <div class="panel done-panel js-gains"></div>
-        <div class="panel js-rate"></div>
-        <div class="panel js-who"></div>
+        <p class="extras-nudge js-extras-nudge" hidden><span class="icon" aria-hidden="true">countertops</span><span><strong>New in Extras:</strong> Yolkie’s Kitchen.</span><button type="button" class="link-btn" data-hub="kitchen">Take a look</button></p>
+        <details class="done-more js-done-more">
+          <summary><span class="icon" aria-hidden="true">expand_more</span><span class="js-done-more-label">See everything you earned</span></summary>
+          <div class="done-more__body">
+            <dl class="done-stats js-done-stats"></dl>
+            <p class="fine nutri done-note">Calories and protein are rough estimates per serving.</p>
+            <div class="panel done-panel js-gains-more"></div>
+            <div class="panel js-rate"></div>
+            <div class="panel js-who"></div>
+          </div>
+        </details>
         <div class="stage-actions">
           <button type="button" class="btn btn--secondary js-again">Pick another meal</button>
           <button type="button" class="btn btn--secondary js-see-me"><span class="icon" aria-hidden="true">person</span>See my progress</button>
@@ -251,13 +249,10 @@
       </div>
 
       <div role="tabpanel" id="panel-me" data-panel="me" aria-labelledby="tab-me" hidden>
-        <div class="seg" role="group" aria-label="Me views">
-          <button type="button" data-me-view="progress" aria-pressed="true"><span class="icon" aria-hidden="true">insights</span>Progress</button>
-          <button type="button" data-me-view="kitchen" aria-pressed="false"><span class="icon" aria-hidden="true">countertops</span>Kitchen</button>
-        </div>
         <div class="js-water water-slot" data-where="me" id="water" hidden></div>
         <div class="tab-stack js-me" id="progress"></div>
         <div class="tab-stack js-kitchen" id="kitchen" hidden>
+          <p class="back-row"><button type="button" class="link-btn js-open-extras"><span class="icon" aria-hidden="true">arrow_back</span>Extras</button></p>
           <div class="tab-head"><h2 class="stage__title" tabindex="-1">Yolkie's Kitchen</h2>
             <p class="stage__sub">Tap the floor to walk Yolkie around. Tap anyone to say hi. Everyone else lives their own life in here, and friends you’ve met drop by.</p></div>
           <div class="kitchen-stage">
@@ -278,7 +273,7 @@
           </div>
           <section class="panel" aria-labelledby="k-house-title">
             <h3 id="k-house-title">Who's home</h3>
-            <p class="fine">Everyone from the House tab. Tap someone to send them out or bring them home. Just you is a small room; with roommates it grows. You steer Yolkie.</p>
+            <p class="fine">Everyone in the house (Extras → House). Tap someone to send them out or bring them home. Just you is a small room; with roommates it grows. You steer Yolkie.</p>
             <div class="tags js-k-sizes" role="group" aria-label="Who's home"></div>
             <div class="kitchen-names js-k-names"></div>
           </section>
@@ -289,7 +284,7 @@
           </section>
           <section class="panel" aria-labelledby="k-meals-label">
             <div class="kitchen-count"><span class="js-k-count-label" id="k-meals-label">Meals cooked</span><strong class="js-k-count">0</strong></div>
-            <label class="switch kitchen-tester"><input type="checkbox" class="js-k-tester"><span class="switch__track" aria-hidden="true"></span>Tester preview slider</label>
+            <label class="switch kitchen-tester js-tester-only" hidden><input type="checkbox" class="js-k-tester"><span class="switch__track" aria-hidden="true"></span>Tester preview slider</label>
             <div class="js-k-slider-row" hidden><input class="kitchen-slider js-k-slider" type="range" min="0" max="20" step="1" value="0" aria-labelledby="k-meals-label"></div>
             <p class="fine js-k-hint"></p>
             <ul class="decor js-k-decor"></ul>
@@ -306,7 +301,8 @@
           </section>
         </div>
       </div>
-      <div role="tabpanel" id="panel-house" data-panel="house" aria-labelledby="tab-house" hidden><span class="anchor" id="favorites"></span><div class="tab-stack js-house" id="household"></div></div>
+      <div role="tabpanel" id="panel-extras" data-panel="extras" aria-label="Extras" hidden><div class="tab-stack js-hub" id="extras"></div></div>
+      <div role="tabpanel" id="panel-house" data-panel="house" aria-label="House" hidden><span class="anchor" id="favorites"></span><div class="tab-stack js-house" id="household"></div></div>
       <div role="tabpanel" id="panel-collection" data-panel="collection" aria-labelledby="tab-collection" hidden><div class="tab-stack js-collection" id="collection"></div></div>
       <p class="demo-toast js-toast" role="status" aria-live="polite"></p>
 
@@ -360,6 +356,7 @@
       <a href="usage.html">Usage</a>
       <a href="feedback.html">Send feedback</a>
       <a href="privacy.html">Privacy</a>
+      <a href="request-removal.html">Recipe removal</a>
       <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
     </div>
   </footer>

@@ -51,6 +51,8 @@
   /* ---------- Data ---------- */
   let feedback = [];
   let waitlist = [];
+  let removals = null; // null until supabase/removals.sql has been run
+  let hidden = [];
   let people = [];
   let invites = [];
   let emails = []; // what the admin page has sent (supabase/email.sql), newest first
@@ -67,12 +69,16 @@
   async function load() {
     say('Yolkie’s fetching the latest…');
     try {
-      const [fb, wl, pp, el] = await Promise.all([
+      const [fb, wl, pp, el, rq, hr] = await Promise.all([
         api('/rest/v1/feedback?select=*&order=created_at.desc&limit=5000').then((r) => r.json()),
         api('/rest/v1/waitlist?select=*&order=created_at.desc&limit=5000').then((r) => r.json()),
         loadPeople(),
         api('/rest/v1/email_log?select=to_email,subject,kind,ref_id,sent_at&order=sent_at.desc&limit=2000').then((r) => r.json()).catch(() => []),
+        api('/rest/v1/removal_requests?select=*&order=created_at.desc&limit=2000').then((r) => r.json()).catch(() => null),
+        api('/rest/v1/hidden_recipes?select=recipe_id').then((r) => r.json()).catch(() => []),
       ]);
+      removals = rq;
+      hidden = (hr || []).map((x) => x.recipe_id);
       emails = el;
       feedback = fb;
       waitlist = wl;
@@ -82,6 +88,7 @@
       renderFeedback();
       renderWaitlist();
       renderPeople();
+      renderRemovals();
     } catch (e) {
       $$('.skel__item').forEach((el) => el.remove());
       if (YolkieAuth.session) say('Yolkie couldn’t reach the kitchen. Check your connection, then tap Refresh.', true);
@@ -495,6 +502,80 @@
       if (again) again.focus();
     } catch (err) {
       say('Couldn’t change that badge. Check your connection and try again.', true);
+      b.disabled = false;
+    }
+  });
+
+  /* ---------- Removal requests and hidden recipes (supabase/removals.sql) ---------- */
+  const RR_STATUS = { new: ['New', 'new', 'fiber_new'], removed: ['Removed', 'done', 'check_circle'], declined: ['Declined', 'progress', 'block'] };
+  const recipeName = (id) => { const r = (typeof ALL_RECIPES !== 'undefined' ? ALL_RECIPES : []).find((x) => x.id === id); return r ? r.name : id; };
+  const creatorRecipes = () => (typeof ALL_RECIPES !== 'undefined' ? ALL_RECIPES : []).filter((r) => r.src);
+  const hideBtn = (id, req) => (hidden.includes(id)
+    ? `<button type="button" class="btn btn--ghost btn--small" data-unhide="${esc(id)}">Unhide</button>`
+    : `<button type="button" class="btn btn--secondary btn--small" data-hide="${esc(id)}"${req ? ` data-req="${esc(req)}"` : ''}><span class="icon" aria-hidden="true">visibility_off</span>Hide recipe</button>`);
+  function renderRemovals() {
+    const list = $('.js-ad-rr-list');
+    if (!removals) {
+      list.innerHTML = '<li class="admin-empty">Removal requests aren’t set up yet. Run supabase/removals.sql in Supabase.</li>';
+      $('.js-ad-hidden-list').innerHTML = '';
+      return;
+    }
+    const fresh = removals.filter((r) => r.status === 'new').length;
+    $('.js-ad-rr-tab').textContent = fresh ? `Removals (${fresh})` : 'Removals';
+    $('.js-ad-rr-count').textContent = `${removals.length} ${removals.length === 1 ? 'request' : 'requests'}${fresh ? `, ${fresh} new` : ''}`;
+    list.innerHTML = removals.length ? removals.map((r) => {
+      const [label, tone, icon] = RR_STATUS[r.status] || RR_STATUS.new;
+      const ids = r.recipe_ids || [];
+      return `<li class="admin-rr${r.status === 'new' ? ' is-fresh' : ''}" data-rr="${esc(r.id)}">
+        <p class="admin-row__top"><strong>${esc(r.creator)}</strong><span class="admin-badge tone-${tone}"><span class="icon" aria-hidden="true">${icon}</span>${label}</span><span class="admin-row__meta">${fmtWhen(r.created_at)}</span></p>
+        <p class="admin-rr__recipes">${esc(r.recipes).replace(/\n/g, '<br>')}</p>
+        <p class="fine"><a href="${esc(/^https?:\/\//i.test(r.link) ? r.link : '#')}" target="_blank" rel="noopener noreferrer">${esc(r.link)}</a> · ${esc(r.email)}</p>
+        ${r.message ? `<p class="admin-wl__answer">${esc(r.message)}</p>` : ''}
+        <div class="admin-rr__actions">
+          ${ids.map((id) => `<span class="admin-rr__recipe">${esc(recipeName(id))} ${hideBtn(id, r.id)}</span>`).join('')}
+          ${ids.length ? '' : `<label class="sr-only" for="rr-pick-${esc(r.id)}">Recipe to hide</label><select id="rr-pick-${esc(r.id)}" class="js-rr-pick"><option value="">Pick the recipe…</option>${creatorRecipes().filter((x) => !hidden.includes(x.id)).map((x) => `<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('')}</select><button type="button" class="btn btn--secondary btn--small js-rr-hide-picked" data-req="${esc(r.id)}"><span class="icon" aria-hidden="true">visibility_off</span>Hide recipe</button>`}
+        </div>
+        <div class="chips" role="group" aria-label="Status for ${esc(r.creator)}">${Object.entries(RR_STATUS).map(([v, [l]]) => `<button type="button" class="tag" data-rr-status="${v}" aria-pressed="${r.status === v}">${l}</button>`).join('')}</div>
+      </li>`;
+    }).join('') : '<li class="admin-empty">No removal requests. Every creator’s happy, as far as Yolkie knows.</li>';
+    $('.js-ad-hidden-list').innerHTML = hidden.length
+      ? hidden.map((id) => `<li class="admin-rr admin-rr--hidden"><span>${esc(recipeName(id))} <small class="fine">${esc(id)}</small></span>${hideBtn(id)}</li>`).join('')
+      : '<li class="admin-empty">No recipes hidden.</li>';
+  }
+  async function setRemovalStatus(id, status) {
+    await api(`/rest/v1/removal_requests?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ status, handled_at: status === 'new' ? null : new Date().toISOString() }) });
+    const r = removals.find((x) => x.id === id);
+    if (r) r.status = status;
+  }
+  async function hideRecipe(id, req) {
+    await api('/rest/v1/hidden_recipes', { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify({ recipe_id: id, request_id: req || null }) });
+    hidden = [...new Set([...hidden, id])];
+    if (req) await setRemovalStatus(req, 'removed');
+  }
+  $('#ad-panel-removals').addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-hide], [data-unhide], [data-rr-status], .js-rr-hide-picked');
+    if (!b) return;
+    b.disabled = true;
+    try {
+      if (b.dataset.hide) { await hideRecipe(b.dataset.hide, b.dataset.req); say(`${recipeName(b.dataset.hide)} is hidden from the demo now.`); }
+      if (b.matches('.js-rr-hide-picked')) {
+        const pick = b.parentElement.querySelector('.js-rr-pick').value;
+        if (!pick) { say('Pick the recipe first.', true); b.disabled = false; return; }
+        await hideRecipe(pick, b.dataset.req);
+        const r = removals.find((x) => x.id === b.dataset.req);
+        say(`${recipeName(pick)} is hidden from the demo now.`);
+        void r;
+      }
+      if (b.dataset.unhide) {
+        await api(`/rest/v1/hidden_recipes?recipe_id=eq.${encodeURIComponent(b.dataset.unhide)}`, { method: 'DELETE', headers: { Prefer: 'return=minimal' } });
+        hidden = hidden.filter((x) => x !== b.dataset.unhide);
+        say(`${recipeName(b.dataset.unhide)} is back in the demo.`);
+      }
+      if (b.dataset.rrStatus) { await setRemovalStatus(b.closest('[data-rr]').dataset.rr, b.dataset.rrStatus); say('Saved.'); }
+      renderRemovals();
+    } catch (err) {
+      if (err.signedOut) return;
+      say('That didn’t save. Check your connection, then try again.', true);
       b.disabled = false;
     }
   });

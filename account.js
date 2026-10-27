@@ -313,7 +313,10 @@
     codeStatus.textContent = 'Checking…';
     try {
       if (code.backup) {
-        A.setDevice(await rpc('use_backup_code', { code: val, remember }), remember ? 30 : 0.5, !remember);
+        // A wrong code comes back empty (so the database can count it towards the 5-tries limit).
+        const pass = await rpc('use_backup_code', { code: val, remember });
+        if (!pass) throw Object.assign(new Error('wrong_code'), { code: 'wrong_code' });
+        A.setDevice(pass, remember ? 30 : 0.5, !remember);
       } else {
         await verifyAppCode(code.factor, val.replace(/\s/g, ''));
         if (remember) A.setDevice(await rpc('trust_this_device'), 30);

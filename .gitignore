@@ -11,3 +11,7 @@ Yolkies-Kitchen.html
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Review notes and evidence: kept local, never published
+docs/council/
+docs/council-report.md

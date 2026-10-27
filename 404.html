@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://teavrtstsnemauatvdfo.supabase.co; media-src 'self' blob: https://teavrtstsnemauatvdfo.supabase.co; connect-src 'self' https://teavrtstsnemauatvdfo.supabase.co; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Page not found · Yolkie</title>
   <meta name="robots" content="noindex">
@@ -15,15 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
-  <script>
-    (function () {
-      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
-      r.classList.add('js');
-      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
-      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
-      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
-    })();
-  </script>
+  <script src="/theme.js"></script>
 </head>
 <body id="top" class="page-404">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -67,6 +61,7 @@
       <a href="/usage.html">Usage</a>
       <a href="/feedback.html">Send feedback</a>
       <a href="/privacy.html">Privacy</a>
+      <a href="/request-removal.html">Recipe removal</a>
       <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
     </div>
   </footer>

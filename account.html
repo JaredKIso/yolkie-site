@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://teavrtstsnemauatvdfo.supabase.co; media-src 'self' blob: https://teavrtstsnemauatvdfo.supabase.co; connect-src 'self' https://teavrtstsnemauatvdfo.supabase.co; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Your account · Yolkie</title>
   <meta name="description" content="Sign in to Yolkie, or make an account with GitHub, Google, Apple or your email.">
@@ -17,14 +18,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    (function () {
-      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
-      r.classList.add('js');
-      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
-      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
-    })();
-  </script>
+  <script src="theme.js"></script>
 </head>
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -196,7 +190,7 @@
           <h2 id="acct-2fa-title">Two-step sign-in</h2>
 
           <div class="js-2fa-off" hidden>
-            <p>Add a code from an authenticator app (like Google Authenticator, 1Password or Authy) when you sign in. Someone with your password still can’t get in without your phone.</p>
+            <p>Add a code from an authenticator app (like Google Authenticator, 1Password or Authy) when you sign in. Then Yolkie asks for the code before it opens your account, so a password on its own isn’t enough to use it here.</p>
             <button type="button" class="btn btn--secondary btn--small js-2fa-start"><span class="icon" aria-hidden="true">phonelink_lock</span>Set up two-step sign-in</button>
           </div>
 
@@ -270,7 +264,7 @@
       <div class="signup acct-card signup__done">
         <div class="signup__yolk" aria-hidden="true"><img src="assets/mascots/yolk-meh.svg" alt="" width="220" height="220"></div>
         <h2 class="signup__title" tabindex="-1">Your account is gone</h2>
-        <p>We’ve erased your login, name and badges. Thanks for trying Yolkie. You’re welcome back any time.</p>
+        <p>We’ve erased your login, name, badges and everything tied to your email. Thanks for trying Yolkie. You’re welcome back any time.</p>
         <a class="btn btn--secondary" href="./">Back to the home page</a>
       </div>
     </section>
@@ -301,6 +295,7 @@
       <a href="usage.html">Usage</a>
       <a href="feedback.html">Send feedback</a>
       <a href="privacy.html">Privacy</a>
+      <a href="request-removal.html">Recipe removal</a>
       <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
     </div>
   </footer>

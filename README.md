@@ -13,6 +13,8 @@ A three-page static site for Yolkie, a cooking app for every meal that gets you 
 | `usage.html` | Where the recipes come from, how creators are credited, and how a creator can reach us |
 | `account.html`, `account.js` | Sign in or make an account (GitHub, Google, Apple, or email and password; only the ones switched on in Supabase show), see your badges, change your name, sign out or delete your account. `noindex`. The sign-in code itself lives in `main.js` (`YolkieAuth`) so every page's header can say who's signed in |
 | `privacy.html` | What we keep (waitlist, feedback, accounts), who helps run it, and how to delete it. Linked from every footer |
+| `request-removal.html` | For recipe creators: ask for a recipe to come out of the demo (saved to `removal_requests`, see `supabase/removals.sql`). Linked from every footer, the help page and “Is this your recipe?” on each creator recipe |
+| `theme.js` | Runs first in every page's head: light or dark, and the `js` class. A file so the Content-Security-Policy can forbid inline scripts |
 | `admin.html`, `admin.js` | The private team page: sign in on the account page, then see feedback, sign-ups and accounts, change a note's status, add notes, give badges and download CSVs. Not linked, not in the sitemap, `noindex`, and disallowed in `robots.txt`. `admin.js` only loads on this page. Setup: `supabase/README.md` |
 | `404.html` | Not-found page. Links are root-relative (`/`); change them to `/repo/` if hosted at `username.github.io/repo/` |
 | `styles.css` | One stylesheet for every page. Section 1 is the design tokens, 3b is the demo, 3c its extras, 3d the collection and household |

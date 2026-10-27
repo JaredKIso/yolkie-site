@@ -194,6 +194,18 @@ Add record**: type `TXT`, name `_dmarc`, content `v=DMARC1; p=none;`. That only 
 report, and blocks nothing; once everything has been delivering fine for a few weeks you can tighten
 it to `p=quarantine`.
 
+## Recipe removal requests (request-removal.html)
+
+A creator can ask for one of their recipes to come out of the demo. The page promises we review and remove
+it within 2 business days.
+
+1. Run `removals.sql` in the SQL editor (after `setup.sql` and `accounts.sql`). It's safe to run again.
+2. Requests land in `removal_requests`. Visitors can only add one; admins (2FA passed) read them on the
+   admin page's **Removals** tab and set the status: New, Removed or Declined.
+3. **Hide recipe** adds the recipe's id to `hidden_recipes` and marks the request Removed. Anyone can read
+   that list (it's only ids), and the demo leaves those recipes out straight away. **Unhide** brings one back.
+4. To take a recipe out for good, delete it from `recipes-sourced.js` too, then reply to the creator.
+
 ## The admin page (admin.html)
 
 A private page for reading sign-ups and feedback, changing a note's status, adding private notes, and

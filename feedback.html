@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://teavrtstsnemauatvdfo.supabase.co; media-src 'self' blob: https://teavrtstsnemauatvdfo.supabase.co; connect-src 'self' https://teavrtstsnemauatvdfo.supabase.co; frame-src https://challenges.cloudflare.com; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Feedback · Yolkie</title>
   <meta name="description" content="Tried the Yolkie demo? Tell us how it went: a quick rating, plus any bugs or ideas. About two minutes.">
@@ -22,15 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <script>
-    (function () {
-      var r = document.documentElement, q = new URLSearchParams(location.search).get('theme');
-      r.classList.add('js');
-      try { if (localStorage.getItem('yolkie-nutrition') === 'off') r.classList.add('hide-nutrition'); } catch (e) {}
-      if (q === 'light' || q === 'dark') { r.dataset.theme = q; return; }
-      try { var t = localStorage.getItem('theme'); if (t) r.dataset.theme = t; } catch (e) {}
-    })();
-  </script>
+  <script src="theme.js"></script>
 </head>
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -128,14 +122,6 @@
                 <label class="chip"><input type="radio" name="device" value="Computer"><span>Computer</span></label>
               </div>
             </fieldset>
-            <div class="field">
-              <p class="field__label" id="fb-shots-label">Screenshots or a video <span class="field__opt">(optional)</span></p>
-              <p class="field__note" id="fb-shots-note">Up to 3 images or videos, 10 MB each.</p>
-              <label class="btn btn--secondary btn--small fb-upload js-fb-upload"><span class="icon" aria-hidden="true">add_photo_alternate</span>Add files<input class="js-fb-file" type="file" name="screenshots" multiple accept="image/png,image/jpeg,image/gif,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm" aria-describedby="fb-shots-note fb-shots-err"></label>
-              <p class="sr-only js-fb-shot-count" aria-live="polite"></p>
-              <ul class="fb-shots js-fb-shots" aria-labelledby="fb-shots-label"></ul>
-              <p class="field__err" id="fb-shots-err" data-err="screenshots" hidden></p>
-            </div>
           </div>
 
           <div class="fb-branch js-fb-idea" hidden>
@@ -147,13 +133,22 @@
           </div>
 
           <div class="field">
+            <p class="field__label" id="fb-shots-label">Screenshots or a video <span class="field__opt">(optional)</span></p>
+            <p class="field__note" id="fb-shots-note">Up to 3 images or videos, 10 MB each.</p>
+            <label class="btn btn--secondary btn--small fb-upload js-fb-upload"><span class="icon" aria-hidden="true">add_photo_alternate</span>Add files<input class="js-fb-file" type="file" name="screenshots" multiple accept="image/png,image/jpeg,image/gif,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm" aria-describedby="fb-shots-note fb-shots-err"></label>
+            <p class="sr-only js-fb-shot-count" aria-live="polite"></p>
+            <ul class="fb-shots js-fb-shots" aria-labelledby="fb-shots-label"></ul>
+            <p class="field__err" id="fb-shots-err" data-err="screenshots" hidden></p>
+          </div>
+
+          <div class="field">
             <label for="fb-else">Anything else? <span class="field__opt">(optional)</span></label>
             <textarea id="fb-else" name="anything_else" rows="3" maxlength="2000" aria-describedby="fb-else-err"></textarea>
             <p class="field__err" id="fb-else-err" data-err="anything_else" hidden></p>
           </div>
 
           <div class="field">
-            <label for="fb-email">Your email, if you’d like a reply <span class="field__opt">(optional)</span></label>
+            <label for="fb-email">Your email, if you’d like a reply <span class="field__opt">(optional: we’ll use it to reply, and maybe to invite you to test)</span></label>
             <input id="fb-email" type="email" name="email" autocomplete="email" inputmode="email" maxlength="254" aria-describedby="fb-email-err">
             <p class="field__err" id="fb-email-err" data-err="email" hidden></p>
           </div>
@@ -163,6 +158,7 @@
           <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Send feedback</button>
           <p class="signup__status js-fb-status" role="status"></p>
           <button type="button" class="btn btn--secondary btn--small signup__retry js-fb-retry" hidden><span class="icon" aria-hidden="true">refresh</span>Try again</button>
+          <button type="button" class="btn btn--ghost btn--small signup__retry js-fb-noshots" hidden>Send without the files</button>
         </div>
         <div class="signup__done js-fb-done" hidden>
           <h2 class="signup__title js-fb-done-title" tabindex="-1">Thank you!</h2>
@@ -182,6 +178,7 @@
       <a href="usage.html">Usage</a>
       <a href="feedback.html" aria-current="page">Send feedback</a>
       <a href="privacy.html">Privacy</a>
+      <a href="request-removal.html">Recipe removal</a>
       <a class="back-to-top" href="#top"><span class="icon" aria-hidden="true">arrow_upward</span>Back to top</a>
     </div>
   </footer>
