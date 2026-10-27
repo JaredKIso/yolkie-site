@@ -329,12 +329,79 @@ function confetti(box) {
   if (!box || reduceMotion) return;
   const colors = ['var(--yolk)', '#ffffff', 'var(--plum)', 'var(--ink)'];
   const shapes = ['50%', '2px', '999px 999px 0 0'];
-  box.innerHTML = Array.from({ length: 40 }, (_, k) => {
+  box.innerHTML = Array.from({ length: 32 }, (_, k) => {
     const size = 8 + Math.random() * 12;
-    return `<i style="--x:${(Math.random() * 100).toFixed(1)}%;--s:${size.toFixed(0)}px;--c:${colors[k % 4]};--r:${shapes[k % 3]};--d:${(1.3 + Math.random() * 1.2).toFixed(2)}s;--delay:${(Math.random() * 0.4).toFixed(2)}s;--rot:${Math.round(Math.random() * 720 - 360)}deg;--fall:${Math.round(260 + Math.random() * 220)}px"></i>`;
+    return `<i style="--x:${(Math.random() * 100).toFixed(1)}%;--s:${size.toFixed(0)}px;--c:${colors[k % 4]};--r:${shapes[k % 3]};--d:calc(var(--dur-l) * ${(3 + Math.random() * 2.5).toFixed(2)});--delay:calc(var(--dur-l) * ${Math.random().toFixed(2)});--rot:${Math.round(Math.random() * 720 - 360)}deg;--fall:${Math.round(260 + Math.random() * 220)}px"></i>`;
   }).join('');
   setTimeout(() => { box.innerHTML = ''; }, 3200);
 }
+
+// Motion tokens, read from the stylesheet so scripted motion matches the CSS.
+const durL = () => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-l')) || 400;
+
+// Numbers that count up to a new value (takeout dodged, meals cooked). `key` remembers the last value
+// shown, so a number only moves when it changed. Instant with reduced motion.
+const lastCount = {};
+function countTo(el, key, to, pre = '', from = lastCount[key]) {
+  if (!el) return;
+  cancelAnimationFrame(el.countRaf || 0);
+  // Off screen (a hidden tab): show the number, but keep the old one so it counts up when you look.
+  if (!el.getClientRects().length) { el.textContent = `${pre}${to}`; return; }
+  lastCount[key] = to;
+  if (from === undefined || from === to || reduceMotion) { el.textContent = `${pre}${to}`; return; }
+  const dur = durL() * 2;
+  const t0 = performance.now();
+  const step = (now) => {
+    const k = Math.min(1, (now - t0) / dur);
+    el.textContent = `${pre}${Math.round(from + (to - from) * (1 - (1 - k) ** 3))}`;
+    if (k < 1) el.countRaf = requestAnimationFrame(step);
+  };
+  el.textContent = `${pre}${from}`;
+  el.countRaf = requestAnimationFrame(step);
+}
+const countUps = (box) => box.querySelectorAll('[data-count]').forEach((el) => countTo(el, el.dataset.count, Number(el.dataset.to), el.dataset.pre || ''));
+
+// Sounds, made on the spot with the Web Audio API (no audio files). The demo decides when they play:
+// the timer chime is on by default, the celebration sound is off until it's turned on in Preferences.
+const Sound = (() => {
+  let ctx = null;
+  const get = () => {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    if (!ctx) ctx = new AC();
+    if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    return ctx;
+  };
+  // One soft bell: a triangle note with two quiet overtones, a quick start and a long, gentle fade.
+  function bell(ac, at, freq, len, vol) {
+    const out = ac.createGain();
+    out.gain.setValueAtTime(0.0001, at);
+    out.gain.exponentialRampToValueAtTime(vol, at + 0.015);
+    out.gain.exponentialRampToValueAtTime(0.0001, at + len);
+    out.connect(ac.destination);
+    [[1, 'triangle', 1], [2, 'sine', 0.3], [3, 'sine', 0.1]].forEach(([mult, type, level]) => {
+      const o = ac.createOscillator();
+      const g = ac.createGain();
+      o.type = type;
+      o.frequency.value = freq * mult;
+      g.gain.value = level;
+      o.connect(g).connect(out);
+      o.start(at);
+      o.stop(at + len + 0.05);
+    });
+  }
+  const play = (notes, len, vol) => {
+    const ac = get();
+    if (!ac) return;
+    const t = ac.currentTime + 0.03;
+    notes.forEach(([f, d]) => bell(ac, t + d, f, len, vol));
+  };
+  return {
+    unlock: get, // call it from a tap, so the browser lets later sounds play
+    chime: () => play([[659.25, 0], [830.61, 0.16], [987.77, 0.32], [1318.51, 0.5]], 1.6, 0.16), // E, G sharp, B, E: a rising bell
+    cheer: () => play([[523.25, 0], [659.25, 0.09], [783.99, 0.18], [1046.5, 0.3]], 0.9, 0.1),
+  };
+})();
 
 // Waitlist form: Yolkie watches you fill it in, then it saves to the `waitlist` table. Arriving from
 // the help page (./?from=help#early-access) marks the sign-up's source as "help".
@@ -2458,10 +2525,12 @@ if (demo) {
     houseGoal: 10, goal: 3, takeout: 15, takeoutAsked: false, outfit: {}, tab: 'cook', hidden: [], link: null,
     reminders: { breakfast: { on: false, time: '07:30' }, lunch: { on: false, time: '11:30' }, dinner: { on: true, time: '17:30' } },
     notToday: '', quiet: { on: true, from: '21:30', to: '07:00' }, dietAsk: { key: '', count: 0, never: false }, last: {},
+    sounds: { timers: true, cheer: false },
   });
   const saved = store.get(PREFS_KEY, {});
   const prefs = Object.assign(freshPrefs(), saved);
   prefs.reminders = Object.assign(freshPrefs().reminders, prefs.reminders);
+  prefs.sounds = Object.assign(freshPrefs().sounds, prefs.sounds);
   // Earlier versions had four fixed members (You, Yolkie, Boyd, Scramble) by number. You are Yolkie now,
   // so the house becomes you plus Boyd and Scramble, keeping their names and allergies.
   if (!saved.members && Array.isArray(saved.names)) {
@@ -2621,6 +2690,14 @@ if (demo) {
 
   /* Tabs: Cook, Me, House, Collection */
   const tabs = $$('[role="tab"]');
+  // A screen that just appeared slides in (fades in with reduced motion: see the CSS).
+  function enter(el) {
+    if (!el) return;
+    el.classList.remove('is-entering');
+    void el.offsetWidth;
+    el.classList.add('is-entering');
+    el.addEventListener('animationend', () => el.classList.remove('is-entering'), { once: true });
+  }
   function showTab(name, focus = false) {
     tabs.forEach((t) => {
       const on = t.dataset.tab === name;
@@ -2628,7 +2705,7 @@ if (demo) {
       t.tabIndex = on ? 0 : -1;
       if (on && focus) t.focus();
     });
-    $$('[data-panel]').forEach((p) => { p.hidden = p.dataset.panel !== name; });
+    $$('[data-panel]').forEach((p) => { const was = p.hidden; p.hidden = p.dataset.panel !== name; if (was && !p.hidden) enter(p); });
     if (prefs.tab !== name) { prefs.tab = name; savePrefs(); }
     if (name === 'me') showMeView(prefs.meView === 'kitchen' ? 'kitchen' : 'progress');
     if (name === 'house') renderHouse();
@@ -2655,6 +2732,9 @@ if (demo) {
   function go(name) {
     if (prefs.tab !== 'cook') showTab('cook');
     $$('[data-stage]').forEach((s) => { s.hidden = s.dataset.stage !== name; });
+    enter($(`[data-stage="${name}"]`));
+    // While cooking, the cook tracker (Prep → Plate) takes over from the demo's own progress bar.
+    $('.demo-track').hidden = name === 'cook';
     const pos = ORDER.indexOf(name === 'vote' ? 'pick' : name);
     $$('[data-track]').forEach((li, i) => {
       li.classList.toggle('is-done', i < pos);
@@ -2681,7 +2761,9 @@ if (demo) {
     snack: { label: 'snack', plural: 'snacks', at: 'snack time', say: ['happy', 'Snack time. A very serious meal.'] },
   };
   // The meal a recipe is being cooked as: the one you chose, when the recipe suits it (`also`).
-  const mealOf = (r = state.recipe) => MEALS[state.meal && forMeal(r, state.meal) ? state.meal : r.meal];
+  const mealKeyOf = (r = state.recipe) => (state.meal && forMeal(r, state.meal) ? state.meal : r.meal);
+  const mealOf = (r = state.recipe) => MEALS[mealKeyOf(r)];
+  const MEAL_ICON = { breakfast: 'egg_alt', lunch: 'lunch_dining', dinner: 'dinner_dining', snack: 'cookie' };
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const ENERGY = { 1: ['sleepy', 'Same. Let’s keep it lazy.'], 2: ['default', 'Okay is plenty.'], 3: ['happy', 'Ooh, energy. Look at you.'] };
   const PICKED = ['%s. Decided.', '%s. That’s %m sorted.', '%M: %s. You just have to show up.'];
@@ -2922,8 +3004,8 @@ if (demo) {
     state.shown = true;
     $('.js-pick-hint').hidden = true;
     slot.innerHTML = `
-      <article class="meal-card${reduceMotion ? '' : ' is-new'}">
-        <div class="meal-card__top"><p class="eyebrow">Yolkie's pick · ${cap(mealOf(r).label)} · ${r.cuisine}</p>
+      <article class="meal-card tone-${mealKeyOf(r)}${reduceMotion ? '' : ' is-new'}">
+        <div class="meal-card__top"><span class="meal-icon" aria-hidden="true"><span class="icon">${MEAL_ICON[mealKeyOf(r)]}</span></span><p class="eyebrow">Yolkie's pick · ${cap(mealOf(r).label)} · ${r.cuisine}</p>
           ${state.comfort(r) ? '<span class="pick-badge"><span class="icon" aria-hidden="true">favorite</span>Comfort pick</span>' : ''}
           ${haveBadge(r)}</div>
         ${strictBits(r)}
@@ -3526,7 +3608,13 @@ if (demo) {
 
   function beginCook() {
     stopCook();
-    state.cook = { r: state.recipe, i: -1, timers: new Map(), rinsed: new Set(), tidies: 0, last: performance.now(), loop: setInterval(tick, 200) };
+    state.cook = { r: state.recipe, i: -1, timers: new Map(), rinsed: new Set(), tidies: 0, last: performance.now(), loop: setInterval(tick, 200), stages: cookStages(state.recipe) };
+    // Timer rings fill smoothly while the page is visible; the interval keeps time when it isn't.
+    const frame = () => { if (!state.cook) return; tick(); state.cook.raf = requestAnimationFrame(frame); };
+    state.cook.raf = requestAnimationFrame(frame);
+    if (prefs.sounds.timers || prefs.sounds.cheer) Sound.unlock();
+    $('.js-cook-track').classList.remove('is-complete');
+    $('.js-cook-yolk img').src = 'assets/mascots/yolk-default.svg';
     $('.js-cook-title').textContent = state.recipe.name;
     $('.js-cook-src').innerHTML = srcChip(state.recipe);
     $('.js-timers').innerHTML = '';
@@ -3546,7 +3634,7 @@ if (demo) {
   }
 
   function stopCook() {
-    if (state.cook) clearInterval(state.cook.loop);
+    if (state.cook) { clearInterval(state.cook.loop); cancelAnimationFrame(state.cook.raf); }
     keepAwake(false);
   }
 
@@ -3564,6 +3652,69 @@ if (demo) {
   // Time left before a wait step can move on: until its timer ends, or reaches `until` minutes.
   const waitLeft = (step, t) => (t ? t.remaining - (step.until || 0) * MIN : 0);
   const timerFor = (id) => state.cook.r.steps.find((s) => s.timer && s.timer.id === id).timer;
+
+  /* The stage tracker: Prep → Cook → Finish → Plate. Worked out from the steps: everything before the
+     first timer is prep, the timers and the waits on them are cooking, what's left is finishing, and the
+     last step is plating. Step zero (i = -1) is prep. */
+  function cookStages(r) {
+    const steps = r.steps;
+    const last = steps.length - 1;
+    const first = steps.findIndex((s) => s.timer);
+    let lastTimer = -1;
+    steps.forEach((s, k) => { if (s.timer) lastTimer = k; });
+    let cookEnd = lastTimer;
+    while (cookEnd + 1 < last && steps[cookEnd + 1].wait) cookEnd += 1;
+    return steps.map((s, k) => (k === last ? 3 : first < 0 ? (k === 0 ? 0 : 1) : k < first ? 0 : k <= cookEnd ? 1 : 2));
+  }
+  const STAGE_LINES = ['Prep first. Small jobs, big head start.', 'Cooking now. The heat does the work.', 'Nearly there. Finishing touches.', 'Plate it up. You did this.'];
+  function renderTrack(done = false) {
+    const c = state.cook;
+    const at = done ? 3 : c.i < 0 ? 0 : c.stages[c.i];
+    // How far through this stage you are, so the line keeps filling between stops.
+    const ids = [...(at === 0 ? [-1] : []), ...c.stages.map((st, k) => (st === at ? k : null)).filter((k) => k !== null)];
+    const into = done ? 0 : Math.max(0, ids.indexOf(c.i)) / ids.length;
+    const track = $('.js-cook-track');
+    $$('[data-cstage]', track).forEach((li, k) => {
+      li.classList.toggle('is-done', done || k < at);
+      if (k === at && !done) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
+    });
+    track.style.setProperty('--at', at / 3);
+    $('.js-cook-fill').style.setProperty('--fill', done ? 1 : Math.min(1, (at + (at < 3 ? into : 0)) / 3));
+    c.newStage = c.stage !== undefined && c.stage !== at && !done;
+    if (c.newStage) { replay($('.js-cook-yolk'), 'is-wobbling'); yolk('default', STAGE_LINES[at]); }
+    c.stage = at;
+  }
+
+  // Roughly how long until you eat: walk the steps that are left, counting a minute for a quick task,
+  // the step's own minutes when it has them, and waiting for any timer the step waits on.
+  function msLeft() {
+    const c = state.cook;
+    const steps = c.r.steps;
+    const ends = new Map();
+    c.timers.forEach((t, id) => ends.set(id, t.done ? 0 : t.remaining));
+    let t = 0;
+    for (let k = c.i; k < steps.length; k += 1) {
+      if (k < 0) { t += MIN; continue; }
+      const s = steps[k];
+      if (s.wait) { t = Math.max(t, (ends.get(s.wait) || 0) - (s.until || 0) * MIN); continue; }
+      t += (s.mins || (s.timer ? 0.5 : 1)) * MIN;
+      if (s.timer && !c.timers.has(s.timer.id)) ends.set(s.timer.id, t + s.timer.mins * MIN);
+    }
+    return t;
+  }
+  const clockAt = (ms) => new Date(Date.now() + ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  function renderEta() {
+    const c = state.cook;
+    const speed = speedToggle.checked ? 10 : 1;
+    const ms = msLeft() / speed;
+    const text = `${cap(mealOf(c.r).label)} at ${clockAt(ms)}`;
+    const mins = Math.max(1, Math.round(ms / MIN));
+    const left = `about ${plural(mins, 'min')} to go${speed > 1 ? ' at demo speed' : ''}`;
+    const a = $('.js-cook-eta');
+    const b = $('.js-cook-left');
+    if (a.textContent !== text) a.textContent = text;
+    if (b.textContent !== left) b.textContent = left;
+  }
 
   // The amounts this step needs, as small labels under it, scaled to the servings.
   function stepAmts(r, i) {
@@ -3619,6 +3770,8 @@ if (demo) {
     else upNext = next.do;
     $('.js-up-next').innerHTML = `<strong>Up next:</strong> ${upNext}`;
     $('.js-step-announce').textContent = announce;
+    renderTrack();
+    renderEta();
     if (focus) { const b = $('.js-now-done, .js-cleaned, .js-skip-wait', card); if (b) b.focus({ preventScroll: true }); }
   }
 
@@ -3630,18 +3783,37 @@ if (demo) {
       c.timers.set(step.timer.id, { label: step.timer.label, total: step.timer.mins * MIN, remaining: step.timer.mins * MIN, done: false });
     }
     c.i += 1;
-    if (c.i >= c.r.steps.length) { finishCook(); return; }
+    if (c.i >= c.r.steps.length) { plated(); return; }
     const next = c.r.steps[c.i];
     if (next.wait && waitLeft(next, c.timers.get(next.wait)) <= 0) { advance(false); return; }
     renderTimers();
     renderNow(true);
+    if (c.newStage) return;
     if (next.wait) yolk('default', 'Nothing to do but wait. Tiny tidy?');
     else if (c.i > 0) yolk('default', 'One thing at a time.');
   }
 
+  // The last step is done: the tracker fills, Yolkie cheers once, and the Done screen takes over.
+  function plated() {
+    const c = state.cook;
+    if (c.ending) return;
+    c.ending = true;
+    clearInterval(c.loop);
+    cancelAnimationFrame(c.raf);
+    renderTrack(true);
+    $('.js-cook-track').classList.add('is-complete');
+    $('.js-cook-yolk img').src = 'assets/mascots/yolk-happy.svg';
+    replay($('.js-cook-yolk'), 'is-celebrating');
+    $$('button', $('.js-now')).forEach((b) => { b.disabled = true; });
+    $('.js-cook-eta').textContent = `${cap(mealOf(c.r).label)} is ready`;
+    $('.js-cook-left').textContent = '';
+    if (prefs.sounds.cheer) Sound.cheer();
+    setTimeout(() => { if (state.cook === c) finishCook(); }, reduceMotion ? 0 : durL() * 3);
+  }
+
   $('.js-now').addEventListener('click', (e) => {
     const c = state.cook;
-    if (!c) return;
+    if (!c || c.ending) return;
     if (e.target.closest('.js-now-done')) advance(true);
     if (e.target.closest('.js-cleaned')) {
       const step = c.r.steps[c.i];
@@ -3672,13 +3844,18 @@ if (demo) {
         el = document.createElement('div');
         el.className = 'timer';
         el.dataset.id = id;
-        el.innerHTML = `<p class="timer__label">${t.label}</p><p class="timer__time"></p><div class="timer__bar" aria-hidden="true"><span></span></div>
+        el.innerHTML = `<svg class="timer__ring" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><circle class="timer__track" cx="32" cy="32" r="27"/><circle class="timer__fill" cx="32" cy="32" r="27" pathLength="100"/></svg>
+          <div class="timer__text"><p class="timer__label">${t.label}</p><p class="timer__time"></p></div>
           <button type="button" class="timer__skip" aria-label="End the ${t.label.toLowerCase()} timer now"><span class="icon" aria-hidden="true">skip_next</span></button>`;
         box.appendChild(el);
       }
       el.classList.toggle('is-done', t.done);
-      el.querySelector('.timer__time').textContent = t.done ? 'Done' : fmtClock(t.remaining);
-      el.querySelector('.timer__bar span').style.transform = `scaleX(${t.remaining / t.total})`;
+      el.classList.toggle('is-final', !t.done && t.remaining <= 10000);
+      const time = t.done ? 'Done' : fmtClock(t.remaining);
+      const tx = el.querySelector('.timer__time');
+      if (tx.textContent !== time) tx.textContent = time;
+      // The ring fills as time passes: empty at the start, full at zero.
+      el.querySelector('.timer__fill').style.strokeDashoffset = (100 * t.remaining / t.total).toFixed(2);
       el.querySelector('.timer__skip').hidden = t.done;
     });
   }
@@ -3711,12 +3888,15 @@ if (demo) {
       if (navigator.vibrate) navigator.vibrate(200);
       replay($(`.timer[data-id="${id}"]`), 'is-ringing');
     });
+    if (rang.length && prefs.sounds.timers) Sound.chime();
     const step = c.r.steps[c.i];
     if (step && step.wait) {
       const left = waitLeft(step, c.timers.get(step.wait));
-      if (left <= 0) advance(false);
-      else { const w = $('.js-wait-time'); if (w) w.textContent = fmtClock(left); }
+      if (left <= 0) { advance(false); return; }
+      const w = $('.js-wait-time');
+      if (w && w.textContent !== fmtClock(left)) w.textContent = fmtClock(left);
     }
+    if (state.cook && !state.cook.ending) renderEta();
   }
 
   /* Collection: everything is worked out from the meals you cooked, so removing a meal takes it back out.
@@ -3758,15 +3938,17 @@ if (demo) {
     }
     const foil = c.n >= MASTER_AT;
     const rar = RARITY[c.rar];
-    return `<article class="rcard rcard--${rar.id}${foil ? ' is-foil' : ''}">
+    const tone = foil ? 'mastered' : rar.id;
+    return `<article class="rcard rcard--${rar.id} tone-${tone}${foil ? ' is-foil' : ''}">
       <span class="rcard__gem" role="img" aria-label="${rar.name}">${gemSvg(c.rar)}</span>
       <div class="rcard__art">${dishArt(r)}${yolkieArt(foil ? 'happy' : CARD_MOOD[r.meal], 'rcard__yolk', {})}</div>
       ${foil ? '<p class="rcard__ribbon">Mastered</p>' : ''}
       <h4 class="rcard__name">${r.name}</h4>
-      <p class="rcard__meta">${r.cuisine} · ${meal} · ${rar.name}</p>
+      <p class="rcard__meta">${r.cuisine} · ${meal}</p>
       <p class="rcard__fact">${info.fact}</p>
       ${r.src ? `<p class="rcard__src">Recipe by ${esc(r.src.by)}</p>` : ''}
-      <p class="rcard__count">Cooked ${c.n}×${foil ? '' : ` · ${MASTER_AT - c.n} more to master`}</p>
+      <div class="rcard__foot"><span class="label"><span class="icon" aria-hidden="true">${foil ? 'workspace_premium' : 'diamond'}</span>${foil ? 'Mastered' : rar.name}</span>
+        <p class="rcard__count">Cooked ${c.n}×${foil ? '' : ` · ${MASTER_AT - c.n} more to master`}</p></div>
     </article>`;
   }
   const cardBack = () => `<div class="rcard rcard--back">${yolkieArt('happy', 'rcard__yolk', {})}<p>Yolkie</p></div>`;
@@ -3915,7 +4097,7 @@ if (demo) {
     const mine = meal.cook === 'you';
     const items = [];
     items.push(gain('savings', mine ? `+$${prefs.takeout} kept in your pocket` : `+$${prefs.takeout} for the house`,
-      `Estimate, from your usual takeout cost.${mine ? ` $${s.kept} so far.` : ` The house: $${s.houseKept}.`}`, 'gain--money'));
+      `Estimate, from your usual takeout cost.${mine ? ` <span class="js-kept-so-far">$${s.kept}</span> so far.` : ` The house: $${s.houseKept}.`}`, 'gain--money'));
     if (meal.have.length) items.push(gain('kitchen', 'Fridge rescue!', `You used ${esc(listText(meal.have.map(haveLabel)))}.`));
     if (mine && d.newCuisine) items.push(gain('approval', `New passport stamp: ${r.cuisine}`, 'Your first one here.'));
     else if (mine && d.newRecipe) items.push(gain('approval', 'New recipe stamp', `${r.name}, first time.`));
@@ -3953,6 +4135,8 @@ if (demo) {
     gainsBox.innerHTML = `<h3>This meal counts</h3>${sampleOn() ? '<p class="fine">Saved to the sample week, not your real stats.</p>' : ''}
       <ul class="gains">${items.join('')}</ul>${ask}${unlocks}
       <p class="done-undo"><button type="button" class="link-btn js-unlog">Didn’t actually cook it? Remove it</button></p>`;
+    // The first time this meal's summary shows, the running total counts up to include it.
+    if (mine && !d.counted) { d.counted = true; countTo($('.js-kept-so-far', gainsBox), 'kept', s.kept, '$', s.kept - prefs.takeout); }
     rate.hidden = false;
     rate.innerHTML = rateHtml(meal);
     who.hidden = false;
@@ -4097,10 +4281,10 @@ if (demo) {
           <div class="count-choices" role="group" aria-label="Meals per week">${[2, 3, 4, 5].map((n) => `<button type="button" data-goal="${n}" aria-pressed="${n === goal}">${n}</button>`).join('')}</div></div>
       </section>
       <dl class="tiles">
-        <div class="tile tile--money"><dt><span class="icon" aria-hidden="true">savings</span>Takeout dodged</dt><dd>$${s.kept}<small>${s.cooked ? `You’ve kept $${s.kept} in your pocket. Estimate: ${s.cooked} × your usual $${prefs.takeout}.` : 'Each meal you cook adds your usual takeout cost. An estimate.'}</small></dd></div>
+        <div class="tile tile--money"><dt><span class="icon" aria-hidden="true">savings</span>Takeout dodged</dt><dd><span data-count="kept" data-to="${s.kept}" data-pre="$">$${s.kept}</span><small>${s.cooked ? `You’ve kept $${s.kept} in your pocket. Estimate: ${s.cooked} × your usual $${prefs.takeout}.` : 'Each meal you cook adds your usual takeout cost. An estimate.'}</small></dd></div>
         <div class="tile"><dt><span class="icon" aria-hidden="true">kitchen</span>Fridge rescues</dt><dd>${s.rescues}<small>Meals that used something you already had.</small></dd></div>
         <div class="tile"><dt><span class="icon" aria-hidden="true">wash</span>Dishes dodged</dt><dd>${s.dodged}<small>${s.tidies ? `Rinsed as you went, plus ${plural(s.tidies, 'tiny tidy-up')}.` : 'Dishes rinsed while something cooked.'}</small></dd></div>
-        <div class="tile"><dt><span class="icon" aria-hidden="true">restaurant</span>Meals cooked</dt><dd>${s.cooked}<small>All time, on this device.</small></dd></div>
+        <div class="tile"><dt><span class="icon" aria-hidden="true">restaurant</span>Meals cooked</dt><dd><span data-count="cooked" data-to="${s.cooked}">${s.cooked}</span><small>All time, on this device.</small></dd></div>
       </dl>
       <section class="panel" aria-labelledby="passport-title">
         <h3 id="passport-title">Passport</h3><p class="fine">A stamp for every new cuisine and every new recipe.</p>
@@ -4111,7 +4295,7 @@ if (demo) {
       </section>
       <section class="panel" aria-labelledby="ch-title">
         <h3 id="ch-title">Challenges</h3><p class="fine">Optional, one at a time, no deadline. Stop whenever you like.</p>
-        ${active ? `<div class="challenge is-active"><span class="icon" aria-hidden="true">${active.icon}</span><div class="challenge__body"><strong>${active.name}</strong><p class="fine">${active.blurb}</p>
+        ${active ? `<div class="challenge is-active"><span class="icon" aria-hidden="true">${active.icon}</span><div class="challenge__body"><span class="label tone-progress"><span class="icon" aria-hidden="true">pending</span>In progress</span><strong>${active.name}</strong><p class="fine">${active.blurb}</p>
             <div class="bar" role="img" aria-label="${prog} of ${active.goal}"><span style="width:${Math.min(100, (prog / active.goal) * 100)}%"></span></div><p class="fine">${prog} of ${active.goal} ${active.unit}</p></div>
             <button type="button" class="btn btn--ghost btn--small js-ch-stop">Stop</button></div>`
           : CHALLENGES.map((c) => `<div class="challenge"><span class="icon" aria-hidden="true">${c.icon}</span><div class="challenge__body"><strong>${c.name}</strong><p class="fine">${c.blurb}</p></div>
@@ -4136,6 +4320,7 @@ if (demo) {
         <div><h3 id="wrapped-title">Yolkie Wrapped</h3><p class="fine">Your cooking so far, as a seven-card story. Save any card as an image.</p></div>
         <button type="button" class="btn btn--primary js-open-wrapped"><span class="btn__dot" aria-hidden="true"></span>Preview Yolkie Wrapped</button>
       </section>`;
+    countUps(meBox);
   }
   const refocus = (box, sel) => { const el = $(sel, box); if (el) el.focus(); return el; };
   meBox.addEventListener('click', (e) => {
@@ -4336,8 +4521,9 @@ if (demo) {
           <div class="count-choices" role="group" aria-label="House meals per week">${[5, 7, 10, 14].map((n) => `<button type="button" data-house-goal="${n}" aria-pressed="${n === goal}">${n}</button>`).join('')}</div></div>
       </section>
       <section class="panel house-kept" aria-labelledby="house-kept-title"><span class="icon" aria-hidden="true">savings</span>
-        <div><h3 id="house-kept-title">House takeout dodged</h3><p class="house-kept__big">$${s.houseKept}</p><p class="fine">Estimate: ${plural(s.meals.length, 'meal')} × $${prefs.takeout}, everyone’s meals added together.</p></div></section>
+        <div><h3 id="house-kept-title">House takeout dodged</h3><p class="house-kept__big" data-count="houseKept" data-to="${s.houseKept}" data-pre="$">$${s.houseKept}</p><p class="fine">Estimate: ${plural(s.meals.length, 'meal')} × $${prefs.takeout}, everyone’s meals added together.</p></div></section>
       ${recentPanel(a, s)}`;
+    countUps(houseBox);
   }
   // Somebody new asks to join with a code: they wait until the owner approves.
   function joinWith(raw) {
@@ -4927,7 +5113,7 @@ if (demo) {
       }
       const sample = sampleOn();
       const sliding = sample || opts.tester;
-      $('.js-k-count').textContent = meals;
+      countTo($('.js-k-count'), 'kitchen', meals);
       $('.js-k-count-label').textContent = sample ? 'Meals cooked (sample preview)' : opts.tester ? 'Meals cooked (tester preview)' : 'Meals cooked';
       $('.js-k-tester').checked = !!opts.tester;
       $('.js-k-slider-row').hidden = !sliding;
@@ -5828,6 +6014,9 @@ if (demo) {
         ${active().map(restrCard).join('')}`, 'prefs-house')
       + sec('Nutrition', `<label class="switch"><input type="checkbox" class="js-nutri-hide"${nutritionOn() ? '' : ' checked'}><span class="switch__track" aria-hidden="true"></span>Hide nutrition</label>
         <p class="fine">Hides every calorie, protein and nutrition number, here and on the home page.</p>`, 'prefs-nutrition')
+      + sec('Sounds', `<label class="switch"><input type="checkbox" class="js-sound-timers"${prefs.sounds.timers ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Timer chime</label>
+        <label class="switch"><input type="checkbox" class="js-sound-cheer"${prefs.sounds.cheer ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>A little cheer when a meal is done</label>
+        <p class="fine">Made by your browser, no downloads. The chime is on so a timer gets your attention; the cheer is off unless you want it. <button type="button" class="link-btn js-sound-test">Play the chime</button></p>`, 'prefs-sounds')
       + sec('Water', `<label class="switch"><input type="checkbox" class="js-water-on"${W().on ? ' checked' : ''}><span class="switch__track" aria-hidden="true"></span>Water tracker</label>
         <p class="allergy-note"><span class="icon" aria-hidden="true">info</span>Everyone’s needs are different. If a doctor has given you a fluid limit, follow that.</p>
         ${W().on ? `<p class="fine">Private to you: water is never shared with the house. It starts fresh every day, with no streaks.</p>
@@ -5882,6 +6071,7 @@ if (demo) {
   const flip = (list, id) => (list.includes(id) ? list.filter((x) => x !== id) : [...list, id]);
   prefsSheet.addEventListener('click', (e) => {
     const t = e.target;
+    if (t.closest('.js-sound-test')) { Sound.unlock(); Sound.chime(); return; }
     const tg = t.closest('[data-group]');
     if (tg) {
       const { group, id } = tg.dataset;
@@ -5951,6 +6141,13 @@ if (demo) {
       afterPrefs();
       rerenderPrefs(`[data-keep="${id}"][data-a="${CSS.escape(t.dataset.a)}"]`);
       yolk('default', t.checked ? `No ${allergyWord(t.dataset.a)} in any suggestion now, whoever’s eating.` : `${cap(allergyWord(t.dataset.a))} only counts when ${id === 'you' ? 'you’re' : `${rawName(id)}’s`} eating again.`);
+      return;
+    }
+    if (t.matches('.js-sound-timers, .js-sound-cheer')) {
+      prefs.sounds[t.matches('.js-sound-timers') ? 'timers' : 'cheer'] = t.checked;
+      savePrefs();
+      if (t.checked) { Sound.unlock(); (t.matches('.js-sound-timers') ? Sound.chime : Sound.cheer)(); }
+      yolk('default', t.matches('.js-sound-timers') ? (t.checked ? 'Timer chime on. Ding!' : 'Timer chime off. I’ll just wave.') : (t.checked ? 'Cheer on. Prepare to be celebrated.' : 'Cheer off. I’ll cheer quietly.'));
       return;
     }
     if (t.matches('.js-water-on')) {

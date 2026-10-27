@@ -39,7 +39,16 @@
   </header>
 
   <main id="main" class="admin">
-    <p class="admin-loading js-ad-loading" role="status">Checking who you are…</p>
+    <div class="skel js-ad-loading" role="status">
+      <p class="skel__say"><img src="assets/mascots/yolk-sleepy.svg" alt="" width="44" height="44">Yolkie’s checking who you are…</p>
+      <span class="skel__bone skel__bone--title" aria-hidden="true"></span>
+      <div class="skel__grid" aria-hidden="true">
+        <div class="skel__card"><span class="skel__bone skel__bone--short"></span><span class="skel__bone skel__bone--title"></span></div>
+        <div class="skel__card"><span class="skel__bone skel__bone--short"></span><span class="skel__bone skel__bone--title"></span></div>
+        <div class="skel__card"><span class="skel__bone skel__bone--short"></span><span class="skel__bone skel__bone--title"></span></div>
+      </div>
+      <ul class="admin-list" aria-hidden="true"><li class="skel__item"><span class="skel__bone skel__bone--mid"></span><span class="skel__bone"></span></li><li class="skel__item"><span class="skel__bone skel__bone--mid"></span><span class="skel__bone"></span></li></ul>
+    </div>
 
     <!-- Signed out: the way to sign in and nothing else -->
     <section class="admin-gate js-ad-signin" hidden aria-labelledby="ad-signin-title">
@@ -123,7 +132,7 @@
           </div>
         </form>
         <p class="admin-count js-ad-fb-count" aria-live="polite"></p>
-        <ul class="admin-list js-ad-fb-list"></ul>
+        <ul class="admin-list js-ad-fb-list"><li class="skel__item" aria-hidden="true"><span class="skel__bone skel__bone--mid"></span><span class="skel__bone"></span></li><li class="skel__item" aria-hidden="true"><span class="skel__bone skel__bone--mid"></span><span class="skel__bone"></span></li><li class="skel__item" aria-hidden="true"><span class="skel__bone skel__bone--mid"></span><span class="skel__bone"></span></li></ul>
       </section>
 
       <section class="admin-panel" role="tabpanel" id="ad-panel-waitlist" aria-labelledby="ad-tab-waitlist" hidden>

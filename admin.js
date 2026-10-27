@@ -65,7 +65,7 @@
   };
 
   async function load() {
-    say('Loading…');
+    say('Yolkie’s fetching the latest…');
     try {
       const [fb, wl, pp, el] = await Promise.all([
         api('/rest/v1/feedback?select=*&order=created_at.desc&limit=5000').then((r) => r.json()),
@@ -83,7 +83,8 @@
       renderWaitlist();
       renderPeople();
     } catch (e) {
-      if (YolkieAuth.session) say('Couldn’t load the latest submissions. Check your connection, then tap Refresh.', true);
+      $$('.skel__item').forEach((el) => el.remove());
+      if (YolkieAuth.session) say('Yolkie couldn’t reach the kitchen. Check your connection, then tap Refresh.', true);
     }
   }
   $('.js-ad-refresh').addEventListener('click', load);
@@ -134,7 +135,12 @@
   const fbForm = $('.js-ad-fb-filters');
   const preview = (r) => (r.what_happened || r.idea || r.anything_else || '').replace(/\s+/g, ' ').trim();
   const stars = (n) => `<span class="admin-stars" aria-label="${n} out of 5">${'★'.repeat(n)}<span aria-hidden="true">${'★'.repeat(5 - n)}</span></span>`;
-  const badge = (s) => `<span class="admin-badge admin-badge--${esc(s)}">${STATUS[s] || esc(s)}</span>`;
+  // Status labels: a tone, an icon and the word, so colour is never the only signal.
+  const STATUS_LOOK = { new: ['new', 'fiber_new'], reviewing: ['progress', 'pending'], done: ['done', 'check_circle'] };
+  const badge = (s) => { const [tone, icon] = STATUS_LOOK[s] || ['attention', 'help']; return `<span class="admin-badge admin-badge--${esc(s)} tone-${tone}"><span class="icon" aria-hidden="true">${icon}</span>${STATUS[s] || esc(s)}</span>`; };
+  const kind = (k) => (k === 'bug' || k === 'both'
+    ? `<span class="admin-kind admin-kind--bug"><span class="icon" aria-hidden="true">bug_report</span>${KIND[k]}</span>`
+    : `<span class="admin-kind">${KIND[k] || 'Not said'}</span>`);
 
   function fbFiltered() {
     const f = Object.fromEntries(new FormData(fbForm));
@@ -157,10 +163,10 @@
     $('.js-ad-fb-count').textContent = `${rows.length} of ${feedback.length} ${feedback.length === 1 ? 'note' : 'notes'}`;
     $('.js-ad-fb-list').innerHTML = rows.length ? rows.map((r) => `
       <li><button type="button" class="admin-row${isFresh(r) ? ' is-fresh' : ''}" data-fb="${esc(r.id)}">
-        <span class="admin-row__top">${stars(r.rating)}<span class="admin-kind">${KIND[r.kind] || 'Not said'}</span>${badge(r.status || 'new')}</span>
+        <span class="admin-row__top">${stars(r.rating)}${kind(r.kind)}${badge(r.status || 'new')}</span>
         <span class="admin-row__text">${esc(preview(r).slice(0, 140)) || '<em>No written answer</em>'}</span>
         <span class="admin-row__meta">${isFresh(r) ? '<span class="admin-new">New</span>' : ''}${fmtDate(r.created_at)} · from ${esc(r.page || 'unknown')}${(r.screenshot_paths || []).length ? ` · <span class="icon" aria-hidden="true">image</span>${r.screenshot_paths.length}` : ''}</span>
-      </button></li>`).join('') : '<li class="admin-empty">Nothing matches these filters.</li>';
+      </button></li>`).join('') : '<li class="admin-empty">Nothing matches these filters. Yolkie checked under the fridge too.</li>';
   }
   fbForm.addEventListener('input', renderFeedback);
   fbForm.addEventListener('change', renderFeedback);
@@ -187,7 +193,7 @@
     const qa = (q, a) => (a ? `<div class="admin-qa"><dt>${q}</dt><dd>${a}</dd></div>` : '');
     const text = (v) => (v ? esc(v).replace(/\n/g, '<br>') : '');
     $('.js-ad-detail-body').innerHTML = `
-      <p class="admin-detail__top">${stars(r.rating)}<span class="admin-kind">${KIND[r.kind] || 'Not said'}</span>${badge(r.status || 'new')}</p>
+      <p class="admin-detail__top">${stars(r.rating)}${kind(r.kind)}${badge(r.status || 'new')}</p>
       <dl class="admin-qa-list">
         ${qa('Sent', esc(fmtWhen(r.created_at)))}
         ${qa('What they tried', (r.tried || []).map(esc).join(', ') || '<em>Nothing ticked</em>')}
@@ -427,7 +433,7 @@
         <span class="admin-row__meta">${isFresh(r) ? '<span class="admin-new">New</span>' : ''}${fmtDate(r.created_at)}${r.source === 'help' ? ' · via the help page' : ''}</span>
         ${r.must_have ? `<span class="admin-wl__answer">${esc(r.must_have)}</span>` : ''}
         ${testerControls(r.email)}
-      </li>`).join('') : '<li class="admin-empty">Nobody matches that search.</li>';
+      </li>`).join('') : '<li class="admin-empty">Nobody matches that search. Try fewer letters?</li>';
   }
   wlForm.addEventListener('input', renderWaitlist);
   wlForm.addEventListener('submit', (e) => e.preventDefault());

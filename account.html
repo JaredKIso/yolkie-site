@@ -51,7 +51,14 @@
   </header>
 
   <main id="main" class="acct">
-    <p class="admin-loading js-acct-loading" role="status">Checking who you are…</p>
+    <div class="skel js-acct-loading" role="status">
+      <p class="skel__say"><img src="assets/mascots/yolk-sleepy.svg" alt="" width="44" height="44">Yolkie’s checking who you are…</p>
+      <div class="skel__row" aria-hidden="true"><span class="skel__bone skel__bone--round"></span><span class="skel__lines"><span class="skel__bone skel__bone--title"></span><span class="skel__bone skel__bone--short"></span></span></div>
+      <div class="skel__grid" aria-hidden="true">
+        <div class="skel__card"><span class="skel__bone skel__bone--mid"></span><span class="skel__bone"></span><span class="skel__bone skel__bone--short"></span><span class="skel__bone skel__bone--btn"></span></div>
+        <div class="skel__card"><span class="skel__bone skel__bone--mid"></span><span class="skel__bone"></span><span class="skel__bone"></span><span class="skel__bone skel__bone--short"></span></div>
+      </div>
+    </div>
 
     <!-- Signed out: every way in that's switched on -->
     <section class="acct-wrap js-acct-signin" hidden aria-labelledby="acct-title">

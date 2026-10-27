@@ -28,7 +28,7 @@
     access_denied: 'Signing in was cancelled. Pick a way in to try again.',
   };
   const say = (el, code) => {
-    el.textContent = code ? MSG[code] || 'That didn’t go through. Check your connection and try again.' : '';
+    el.textContent = code ? MSG[code] || 'Hmm, that didn’t go through. Check your connection and give it another go.' : '';
     el.classList.toggle('is-error', !!code);
   };
 
