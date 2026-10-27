@@ -4637,7 +4637,7 @@ if (demo) {
   /* Yolkie's Kitchen: an isometric kitchen in the Me tab. You steer Yolkie; whoever else is home cooks,
      washes up, raids the fridge, eats, chats, makes coffee, waters the plant and dances at night on their own.
      Decor unlocks as you cook, finished binder sets add a bonus, friends you've met sit on the shelf and
-     drop by, and your stickers go on the fridge. Ported from the Yolkies-Kitchen.html prototype. */
+     drop by, and your stickers go on the fridge. */
   const kitchen = (() => {
     const kBox = $('.js-kitchen');
     const NS = 'http://www.w3.org/2000/svg';

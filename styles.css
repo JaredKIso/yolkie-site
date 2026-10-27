@@ -1268,7 +1268,7 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 .kitchen-names .text-input { width: 100%; font-weight: 700; }
 .kitchen-count { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font-weight: 700; }
 .kitchen-count strong { font: 800 var(--fs-4xl)/1 var(--font-display); color: var(--accent); }
-.kitchen-slider { width: 100%; margin: 12px 0 4px; accent-color: var(--plum); }
+.kitchen-slider { display: block; width: 100%; height: var(--tap); margin: 4px 0 0; accent-color: var(--plum); cursor: pointer; }
 .decor { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin: 14px 0 0; padding: 0; list-style: none; }
 .decor-item { padding: 12px 14px; border-radius: 12px; border: 2px dashed var(--line); color: var(--text-dim); }
 .decor-item strong { display: block; font-size: var(--fs-base-s); }
