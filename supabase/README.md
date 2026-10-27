@@ -182,8 +182,17 @@ Supabase's emails are plain by default. `email-templates/` has Yolkie-styled one
 | Change email address | `change-email.html` | Confirm your new email |
 
 The site doesn't use magic links or email changes yet, so those two are just there in case. Leave
-**Reauthentication** as it is. Each file keeps Supabase's `{{ .ConfirmationURL }}` placeholder; don't
-change it. The logo loads from the live site, so it shows once the site is published.
+**Reauthentication** as it is.
+
+The links in these emails go to `{{ .SiteURL }}/account.html?token_hash={{ .TokenHash }}&type=…`, not to
+Supabase's own address, so they match the domain the email comes from (spam filters check that). The
+account page swaps the one-time code for a sign-in. Keep the placeholders as they are, and keep
+**Authentication → URL Configuration → Site URL** set to `https://yolkie.isolatedideas.dev`.
+
+**DMARC.** Mail providers trust your emails more with a DMARC record. In Cloudflare, **DNS → Records →
+Add record**: type `TXT`, name `_dmarc`, content `v=DMARC1; p=none;`. That only asks providers to
+report, and blocks nothing; once everything has been delivering fine for a few weeks you can tighten
+it to `p=quarantine`.
 
 ## The admin page (admin.html)
 

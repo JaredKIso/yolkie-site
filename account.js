@@ -483,11 +483,28 @@
   });
 
   /* ---------- Start ---------- */
+  // The emails link here with a one-time code (?token_hash=…&type=…) rather than to Supabase's own
+  // address, so the links match the domain the email is sent from. Swap the code for a sign-in.
+  const EMAIL_LINK = { signup: 'signup', email: 'signup', recovery: 'recovery', invite: 'invite', magiclink: 'signin', email_change: 'email_change' };
+  async function takeFromEmail() {
+    const q = new URLSearchParams(location.search);
+    const hash = q.get('token_hash');
+    const type = q.get('type');
+    if (!hash || !EMAIL_LINK[type]) return null;
+    history.replaceState(null, '', location.pathname);
+    try {
+      const r = await A.call('verify', { type, token_hash: hash });
+      if (!r.ok || !A.session) return { error: r.code === 'otp_expired' || r.status === 403 ? 'otp_expired' : r.code || 'x' };
+      return { type: EMAIL_LINK[type] };
+    } catch (e) { return { error: 'x' }; }
+  }
+
   async function start() {
     if (new URLSearchParams(location.search).get('next') === 'admin') {
       try { sessionStorage.setItem('yolkie-next', 'admin'); } catch (e) {}
     }
-    const link = A.takeFromLink();
+    if (new URLSearchParams(location.search).get('token_hash')) show('loading');
+    const link = (await takeFromEmail()) || A.takeFromLink();
     if (link && link.error) { showSignin(MSG[link.error] ? link.error : 'otp_expired'); return; }
     if (link && link.type === 'recovery') {
       try {
@@ -504,7 +521,7 @@
       focusIn('.js-acct-newpass');
       return;
     }
-    if (A.session) { enter(link && link.type === 'signup' ? 'Your email is confirmed. Welcome to Yolkie!' : ''); return; }
+    if (A.session) { enter(link && link.type === 'signup' ? 'Your email is confirmed. Welcome to Yolkie!' : link && link.type === 'email_change' ? 'Your new email is confirmed.' : ''); return; }
     showSignin();
   }
 
