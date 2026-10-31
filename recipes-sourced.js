@@ -1,4 +1,4 @@
-/* Recipes based on creators' published recipes. try.html loads this before main.js.
+/* Recipes based on creators' published recipes. try.html loads this before main.js and demo.js.
    Ingredients, amounts, servings, temperatures, the order of the steps and their timings follow the
    creator's recipe. The step wording is Yolkie's own, shortened for cook mode. Photos, videos, stories
    and tips stay on the creator's site, linked from `src`. Diet and allergen tags are worked out from the

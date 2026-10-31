@@ -163,6 +163,8 @@ button { font: inherit; color: inherit; }
   font-size: var(--fs-xl); line-height: 1; font-weight: normal; font-style: normal;
   display: inline-block; width: 1em; overflow: hidden; white-space: nowrap;
   font-feature-settings: "liga"; user-select: none; flex: none;
+  /* The icon font (a subset) only knows lower-case names, so never inherit capitals or spacing. */
+  text-transform: none; letter-spacing: normal;
 }
 
 .skip-link {
@@ -997,9 +999,22 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
   width: min(100% - 32px, 580px); max-width: none; max-height: min(90vh, 900px); padding: 0; border: 0;
   border-radius: var(--radius-l); background: var(--surface); color: var(--text); box-shadow: var(--shadow);
 }
-.sheet[open] { display: flex; flex-direction: column; animation: sheet-in var(--dur-m) var(--ease); }
-@keyframes sheet-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
-.sheet::backdrop { background: rgba(18, 14, 42, .6); }
+.sheet[open] { display: flex; flex-direction: column; }
+/* Sheets slide in and out, and the dim behind them fades. Browsers without @starting-style or
+   allow-discrete just open and close them straight away. */
+.sheet {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity var(--dur-m) var(--ease), transform var(--dur-m) var(--ease),
+    overlay var(--dur-m) allow-discrete, display var(--dur-m) allow-discrete;
+}
+.sheet[open] { opacity: 1; transform: none; }
+@starting-style { .sheet[open] { opacity: 0; transform: translateY(24px); } }
+.sheet::backdrop {
+  background: rgba(18, 14, 42, 0);
+  transition: background-color var(--dur-m) var(--ease), overlay var(--dur-m) allow-discrete, display var(--dur-m) allow-discrete;
+}
+.sheet[open]::backdrop { background: rgba(18, 14, 42, .6); }
+@starting-style { .sheet[open]::backdrop { background: rgba(18, 14, 42, 0); } }
 .sheet__head {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; flex: none;
   padding: 14px 14px 12px 24px; border-bottom: 1px solid var(--line);
@@ -1962,8 +1977,7 @@ ol.recent { padding-left: 0; }
 .admin-msg.is-error, .admin-saved.is-error { padding: 8px 12px; border-radius: 10px; background: var(--yolk-soft); }
 
 .admin-stats { display: grid; gap: 16px; margin-top: 20px; }
-@media (min-width: 900px) { .admin-stats { grid-template-columns: 1.3fr 1fr; align-items: start; } }
-.admin-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.admin-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
 .admin-card { display: grid; gap: 2px; padding: 16px; border-radius: var(--radius-l); background: var(--surface); border: 2px solid var(--line); }
 .admin-card.has-new { border-color: var(--text); box-shadow: 4px 4px 0 var(--yolk); }
 .admin-card .icon { font-size: 22px; color: var(--accent); }
@@ -1973,13 +1987,17 @@ ol.recent { padding-left: 0; }
 .admin-card.has-new .admin-card__new { color: var(--text); font-weight: 700; }
 .admin-chart { margin: 0; padding: 16px; border-radius: var(--radius-l); background: var(--surface); border: 2px solid var(--line); }
 .admin-chart figcaption { font-weight: 800; margin-bottom: 10px; }
-.admin-chart svg { display: block; width: 100%; max-width: 480px; height: auto; overflow: visible; }
-.admin-chart__label { font: 600 var(--fs-sm) var(--font-body); fill: var(--text); }
-.admin-chart__n { font: 700 var(--fs-sm) var(--font-body); fill: var(--text); }
-.admin-chart__track { fill: var(--surface-2); }
-.admin-chart__bar { fill: var(--yolk); stroke: var(--text); stroke-width: 1.5; }
+.admin-bars { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 10px 28px; margin: 0; padding: 0; list-style: none; }
+.admin-bars__row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 10px; }
+.admin-bars__label { grid-column: 1 / -1; font-size: var(--fs-sm); font-weight: 600; }
+.admin-bars__track { display: block; height: 14px; border-radius: 7px; background: var(--surface-2); overflow: hidden; }
+.admin-bars__bar { display: block; height: 100%; border-radius: 7px; background: var(--yolk); box-shadow: inset 0 0 0 1.5px var(--text); }
+.admin-bars__n { min-width: 2ch; font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
 
-.admin-tabs { margin-top: 28px; max-width: 420px; }
+/* Fits its tabs (one line each); scrolls sideways on the narrowest phones instead of spilling out. */
+.admin-tabs { width: fit-content; max-width: 100%; margin-top: 28px; overflow-x: auto; scrollbar-width: none; }
+.admin-tabs::-webkit-scrollbar { display: none; }
+.admin-tabs [role="tab"] { flex: none; white-space: nowrap; }
 .admin-panel { margin-top: 16px; }
 .admin-filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; align-items: end; padding: 16px; border-radius: var(--radius-l); background: var(--surface-2); }
 .admin-filters label { display: block; font-size: var(--fs-base-s); font-weight: 700; margin-bottom: 4px; }
@@ -1989,9 +2007,11 @@ ol.recent { padding-left: 0; }
 }
 .admin-filters input:focus-visible, .admin-filters select:focus-visible { outline: 3px solid var(--yolk); outline-offset: 1px; border-color: var(--text); }
 .admin-filters__search { grid-column: 1 / -1; }
+/* Dates need the room for "mm/dd/yyyy" and the calendar button. */
+.admin-filters input[type="date"] { padding-inline: 8px; font-size: var(--fs-base-s); font-variant-numeric: tabular-nums; }
 .admin-filters__actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
 .admin-count { margin: 14px 0 8px; font-size: var(--fs-base-s); font-weight: 600; color: var(--text-dim); }
-.admin-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.admin-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin: 0; padding: 0; list-style: none; }
 .admin-row {
   display: grid; gap: 8px; width: 100%; padding: 14px 16px; text-align: left; cursor: pointer;
   border: 2px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--text); font: inherit;
@@ -2488,11 +2508,31 @@ button.badge:disabled { opacity: .6; cursor: progress; }
 
 /* Admin: removal requests */
 .admin-sub { font-size: var(--fs-2xl); margin-bottom: var(--sp-1); }
-.admin-rr { display: grid; gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); border: 2px solid var(--line); border-radius: 12px; background: var(--surface); }
+.admin-rr { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-2); padding: var(--sp-3) var(--sp-4); border: 2px solid var(--line); border-radius: 12px; background: var(--surface); }
 .admin-rr.is-fresh { border-color: var(--status-new); }
 .admin-rr--hidden { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--sp-2); }
 .admin-rr__recipes { font-weight: 600; }
 .admin-rr__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
 .admin-rr__recipe { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
-.admin-rr select { min-height: var(--tap); max-width: 100%; padding: 0 var(--sp-3); border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: 500 var(--fs-base-s) var(--font-body); }
+.admin-rr select { flex: 1 1 220px; min-width: 0; min-height: var(--tap); max-width: 100%; padding: 0 var(--sp-3); border: 2px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--text); font: 500 var(--fs-base-s) var(--font-body); }
 .admin-list + .mini-head { margin-top: var(--sp-5); }
+
+/* Fluid motion between and within pages. All of it is skipped under reduced motion, and browsers
+   that don't support a piece simply do what they did before. */
+@media (prefers-reduced-motion: no-preference) {
+  /* Moving between pages: the header stays put and the page cross-fades. */
+  @view-transition { navigation: auto; }
+  ::view-transition-group(root) { animation-duration: var(--dur-m); }
+  /* Expanding sections (FAQs, "More settings", "See everything you earned") slide open and shut. */
+  :root { interpolate-size: allow-keywords; }
+  details::details-content {
+    block-size: 0; overflow: clip; overflow-clip-margin: 8px;
+    transition: block-size var(--dur-m) var(--ease), content-visibility var(--dur-m) allow-discrete;
+  }
+  details[open]::details-content { block-size: auto; }
+}
+.site-header { view-transition-name: site-header; }
+/* Account and admin swap a short loading state for the real page once Supabase answers. Filling the
+   screen keeps the footer below the fold, so nothing on screen jumps when that happens. */
+body:has(.acct-wrap, .admin-gate) #main { display: flow-root; min-height: calc(100svh - var(--header-h, 72px)); }
+/* (flow-root keeps the sign-in card's top margin inside main, so main itself never drops when the card appears.) */

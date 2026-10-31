@@ -124,17 +124,12 @@
     const counts = TRIED.map((t) => ({ t, n: feedback.filter((r) => (r.tried || []).includes(t)).length }))
       .sort((a, b) => b.n - a.n);
     const max = Math.max(1, ...counts.map((c) => c.n));
-    const W = 360, ROW = 40, BAR = 14, LABEL_W = 300;
-    const rows = counts.map((c, i) => {
-      const y = i * ROW;
-      const w = Math.max(c.n ? 4 : 0, Math.round((c.n / max) * LABEL_W));
-      return `<g transform="translate(0 ${y})"><text class="admin-chart__label" x="0" y="14">${esc(c.t.replace("'", '’'))}</text>`
-        + `<rect class="admin-chart__track" x="0" y="20" width="${LABEL_W}" height="${BAR}" rx="7"></rect>`
-        + (w ? `<rect class="admin-chart__bar" x="0" y="20" width="${w}" height="${BAR}" rx="7"></rect>` : '')
-        + `<text class="admin-chart__n" x="${LABEL_W + 10}" y="32">${c.n}</text></g>`;
-    }).join('');
+    // An HTML list, so the bars flow into columns on wide screens instead of one tall stack.
+    const rows = counts.map((c) => `<li class="admin-bars__row"><span class="admin-bars__label">${esc(c.t.replace("'", '’'))}</span>`
+      + `<span class="admin-bars__track" aria-hidden="true">${c.n ? `<span class="admin-bars__bar" style="width:${Math.max(3, Math.round((c.n / max) * 100))}%"></span>` : ''}</span>`
+      + `<span class="admin-bars__n"><span class="sr-only">: </span>${c.n}</span></li>`).join('');
     const total = counts.reduce((a, c) => a + c.n, 0);
-    $('.js-ad-chart').innerHTML = `<svg viewBox="0 0 ${W} ${counts.length * ROW}" role="img" aria-label="How many notes ticked each feature: ${counts.map((c) => `${c.t} ${c.n}`).join(', ')}">${rows}</svg>`
+    $('.js-ad-chart').innerHTML = `<ul class="admin-bars">${rows}</ul>`
       + (total ? '' : '<p class="fine">Nobody has ticked any features yet.</p>');
   }
 
@@ -539,7 +534,7 @@
       </li>`;
     }).join('') : '<li class="admin-empty">No removal requests. Every creator’s happy, as far as Yolkie knows.</li>';
     $('.js-ad-hidden-list').innerHTML = hidden.length
-      ? hidden.map((id) => `<li class="admin-rr admin-rr--hidden"><span>${esc(recipeName(id))} <small class="fine">${esc(id)}</small></span>${hideBtn(id)}</li>`).join('')
+      ? hidden.map((id) => `<li class="admin-rr admin-rr--hidden"><span>${esc(recipeName(id))}${recipeName(id) === id ? '' : ` <small class="fine">${esc(id)}</small>`}</span>${hideBtn(id)}</li>`).join('')
       : '<li class="admin-empty">No recipes hidden.</li>';
   }
   async function setRemovalStatus(id, status) {
