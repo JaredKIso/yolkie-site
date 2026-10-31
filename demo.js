@@ -888,7 +888,7 @@ const RECIPES = [
     cuisine: 'American', diet: ['vegetarian', 'gluten-free'], allergens: ['egg', 'dairy'],
     nut: { carbs: 2, fiber: 0, fat: 29, sugar: 1, sodium: 520 },
     blurb: 'Eggs, cheese and one pan. Stir low and slow until they’re soft and melty.',
-    tip: 'Great on toast if you have bread!',
+    tip: 'Great on toast if you have bread.',
     dishes: ['non-stick pan', 'bowl'],
     ingredients: [
       { q: 3, n: 'egg', p: 'eggs', s: 'Dairy', step: 1 },
@@ -994,7 +994,7 @@ const RECIPES = [
     cuisine: 'American', diet: ['vegan'], allergens: ['peanut', 'gluten'],
     nut: { carbs: 34, fiber: 5, fat: 22, sugar: 6, sodium: 420 },
     blurb: 'Hot toast, peanut butter spread right to the edges so it melts in. Sometimes simple wins.',
-    tip: 'Sliced banana on top if you have one!',
+    tip: 'Sliced banana on top if you have one.',
     dishes: ['toaster'],
     ingredients: [
       { q: 2, u: 'slice', n: 'sandwich bread', s: 'Pantry', step: 1 },
@@ -1500,7 +1500,7 @@ const STICKERS = [
   { id: 'cozy', name: 'Cozy bowl', how: 'Cook a soup in Soup Season (October to March)', art: `<path d="M18,48 Q20,82 50,82 Q80,82 82,48 Z" fill="#6B4DE6" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><ellipse cx="50" cy="48" rx="32" ry="8" fill="#E8553E" stroke="${INK}" stroke-width="4"/><path d="M38,36 q-6,-7 0,-14 q6,-7 0,-14 M50,36 q-6,-7 0,-14 M62,36 q-6,-7 0,-14 q6,-7 0,-14" stroke="#B9A8FF" stroke-width="4" fill="none" stroke-linecap="round"/>` },
   { id: 'goal', name: 'Goal getter', how: 'Hit your weekly goal', art: `<circle cx="50" cy="50" r="32" fill="none" stroke="#E6E0FB" stroke-width="12"/><path d="M50,18 A32 32 0 1 1 18,50" fill="none" stroke="#2E9E6A" stroke-width="12" stroke-linecap="round"/><path d="M36,50 L46,60 L66,40" stroke="${INK}" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` },
   { id: 'team', name: 'Team kitchen', how: 'Everyone in the house cooks in one week', art: `<path d="M18,48 L50,20 L82,48 V82 H18 Z" fill="#6B4DE6" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><circle cx="34" cy="62" r="9" fill="#FFC83D" stroke="${INK}" stroke-width="3"/><ellipse cx="50" cy="60" rx="8" ry="11" fill="#fff" stroke="${INK}" stroke-width="3"/><circle cx="66" cy="62" r="9" fill="#FFDD6E" stroke="${INK}" stroke-width="3"/>` },
-  { id: 'foil', name: 'Shiny!', how: 'Master your first card', art: `<defs><linearGradient id="holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB3D9"/><stop offset=".5" stop-color="#B9A8FF"/><stop offset="1" stop-color="#9FE0BC"/></linearGradient></defs><path d="M50,14 L60,38 L86,40 L66,57 L72,83 L50,69 L28,83 L34,57 L14,40 L40,38 Z" fill="url(#holo)" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M78,16 l2,6 6,2 -6,2 -2,6 -2,-6 -6,-2 6,-2z" fill="#FFC83D"/>` },
+  { id: 'foil', name: 'Shiny', how: 'Master your first card', art: `<defs><linearGradient id="holo" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB3D9"/><stop offset=".5" stop-color="#B9A8FF"/><stop offset="1" stop-color="#9FE0BC"/></linearGradient></defs><path d="M50,14 L60,38 L86,40 L66,57 L72,83 L50,69 L28,83 L34,57 L14,40 L40,38 Z" fill="url(#holo)" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M78,16 l2,6 6,2 -6,2 -2,6 -2,-6 -6,-2 6,-2z" fill="#FFC83D"/>` },
   { id: 'hydro', name: 'Hydration station', how: 'Reach your water goal for the first time', art: `<path d="M50,12 C62,32 76,46 76,62 A26 26 0 0 1 24,62 C24,46 38,32 50,12 Z" fill="#7CC4FF" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/><path d="M38,58 Q38,72 50,76" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="44" cy="54" r="3" fill="${INK}"/><circle cx="58" cy="54" r="3" fill="${INK}"/><path d="M45,64 Q51,69 57,64" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M80,18 l2,6 6,2 -6,2 -2,6 -2,-6 -6,-2 6,-2z" fill="#FFC83D"/>` },
 ];
 const SEASONS = [
@@ -3402,7 +3402,7 @@ if (demo) {
     const was = before.cards[r.id];
     const mastered = c.n >= MASTER_AT && (!was || was.n < MASTER_AT);
     const up = was && c.rar > was.rar;
-    const title = !was ? 'New card!' : mastered ? 'Mastered! It’s foil now.' : up ? `Upgraded to ${RARITY[c.rar].name}!` : `Card +1: ${MASTER_AT - c.n} more to master`;
+    const title = !was ? 'New card' : mastered ? 'Mastered. It’s foil now.' : up ? `Upgraded to ${RARITY[c.rar].name}` : `Card +1: ${MASTER_AT - c.n} more to master`;
     const sets = after.done.filter((x) => !before.done.some((y) => y.id === x.id));
     const flip = !state.done.flipped && (!was || mastered || up);
     state.done.flipped = true;
@@ -3412,7 +3412,7 @@ if (demo) {
       <div class="card-drop__stage"><div class="flip${flip && !reduceMotion ? ' is-flipping' : ''}"><div class="flip__inner">
         <div class="flip__face flip__back" aria-hidden="true">${cardBack()}</div>
         <div class="flip__face flip__front">${cardHtml(r, c)}</div></div></div></div>
-      ${sets.map((set) => `<div class="set-done"><span class="icon" aria-hidden="true">auto_awesome</span><p><strong>Set complete: ${esc(set.name)}!</strong><small>Bonus for the kitchen: ${esc(set.bonusName)}.</small></p></div>`).join('')}
+      ${sets.map((set) => `<div class="set-done"><span class="icon" aria-hidden="true">auto_awesome</span><p><strong>Set complete: ${esc(set.name)}</strong><small>Bonus for the kitchen: ${esc(set.bonusName)}.</small></p></div>`).join('')}
       <p class="card-drop__more"><button type="button" class="link-btn js-see-binder">Open your binder</button></p>`;
     if (flip && sets.length) setTimeout(() => confetti($('.js-confetti')), reduceMotion ? 0 : 1000);
     return { before, after };
@@ -3440,7 +3440,7 @@ if (demo) {
     const push = (weight, html) => items.push({ weight, html });
     push(1, gain('home', mine ? `Cooked at home: ${plural(s.cooked, 'meal')}` : `Cooked at home: ${plural(s.meals.length, 'meal')} for the house`,
       `About <span class="js-kept-so-far">$${mine ? s.kept : s.houseKept}</span> saved on takeout so far, an estimate.`, 'gain--money'));
-    if (meal.have.length) push(3, gain('kitchen', 'Fridge rescue!', `You used ${esc(listText(meal.have.map(haveLabel)))}.`));
+    if (meal.have.length) push(3, gain('kitchen', 'Fridge rescue', `You used ${esc(listText(meal.have.map(haveLabel)))}.`));
     if (mine && d.newCuisine) push(4, gain('approval', `New passport stamp: ${r.cuisine}`, 'Your first one here.'));
     else if (mine && d.newRecipe) push(2, gain('approval', 'New recipe stamp', `${r.name}, first time.`));
     if (meal.rinsed) push(0, gain('wash', `${plural(meal.rinsed, 'dish', 'dishes')} dodged`, 'Rinsed while something cooked, so they never hit the sink.'));
@@ -3452,14 +3452,14 @@ if (demo) {
     });
     if (col.after) {
       FRIENDS.filter((f) => col.after.friends[f.id] && !col.before.friends[f.id]).forEach((f) => {
-        push(5, `<li class="gain gain--friend">${charArt(f.id, 'gain__art')}<p><strong>New friend: ${f.name}!</strong><small>${f.name} is on the kitchen shelf now, and drops by for a visit now and then.</small></p></li>`);
+        push(5, `<li class="gain gain--friend">${charArt(f.id, 'gain__art')}<p><strong>New friend: ${f.name}</strong><small>${f.name} is on the kitchen shelf now, and drops by for a visit now and then.</small></p></li>`);
       });
       const fresh = PANTRY.filter((p) => col.after.pantry[p.id] && !col.before.pantry[p.id]);
       if (fresh.length) push(0, gain('menu_book', `Pantry-dex: ${plural(fresh.length, 'new entry', 'new entries')}`, `${esc(listText(fresh.map((p) => p.name)))}.${fresh.some((p) => p.rare) ? ' Including a rare find!' : ''}`, fresh.some((p) => p.rare) ? 'gain--rare' : ''));
     }
     if (mine) {
       const hit = s.week >= prefs.goal;
-      push(hit ? 6 : 0, `<li class="gain gain--ring">${ring(s.week, prefs.goal, 'Weekly goal', 'ring--sm')}<p><strong>${hit ? 'Weekly goal hit!' : `${s.week} of ${prefs.goal} this week`}</strong><small>${hit ? 'Anything more is a bonus.' : 'Your weekly goal. No rush.'}</small></p></li>`);
+      push(hit ? 6 : 0, `<li class="gain gain--ring">${ring(s.week, prefs.goal, 'Weekly goal', 'ring--sm')}<p><strong>${hit ? 'Weekly goal hit' : `${s.week} of ${prefs.goal} this week`}</strong><small>${hit ? 'Anything more is a bonus.' : 'Your weekly goal. No rush.'}</small></p></li>`);
     } else {
       push(0, gain('home', `The house: ${plural(s.houseWeek, 'meal')} this week`, `House goal: ${prefs.houseGoal}.`));
     }
@@ -3621,7 +3621,7 @@ if (demo) {
     const s = statsFor(a);
     const goal = prefs.goal;
     const hit = s.week >= goal;
-    const line = hit ? 'Goal hit this week! Anything more is a bonus.'
+    const line = hit ? 'Goal hit this week. Anything more is a bonus.'
       : s.week === 0 ? 'New week, fresh start. One meal gets the ring moving.'
         : `${s.week} down, ${goal - s.week} to go. No rush.`;
     const active = a.challenge && CHALLENGES.find((c) => c.id === a.challenge.id);
@@ -3907,7 +3907,7 @@ if (demo) {
       <section class="panel goal-panel" aria-labelledby="house-goal-title">
         ${ring(s.houseWeek, goal, 'House meals this week')}
         <div><h3 id="house-goal-title">House goal</h3><p class="goal-line">The house cooked ${plural(s.houseWeek, 'meal')} this week</p>
-          <p class="fine">${s.houseWeek >= goal ? 'Goal hit! Everyone gets a gold star.' : s.houseWeek ? `${goal - s.houseWeek} more and the house hits ${goal}.` : 'New week, fresh start. Every meal counts, whoever cooks it.'}</p>
+          <p class="fine">${s.houseWeek >= goal ? 'Goal hit. Everyone gets a gold star.' : s.houseWeek ? `${goal - s.houseWeek} more and the house hits ${goal}.` : 'New week, fresh start. Every meal counts, whoever cooks it.'}</p>
           <div class="count-choices" role="group" aria-label="House meals per week">${[5, 7, 10, 14].map((n) => `<button type="button" data-house-goal="${n}" aria-pressed="${n === goal}">${n}</button>`).join('')}</div></div>
       </section>
       <section class="panel house-kept" aria-labelledby="house-kept-title"><span class="icon" aria-hidden="true">savings</span>
@@ -4410,7 +4410,7 @@ if (demo) {
       a.sayT = 2;
       a.wait = 1;
       drawLabels();
-      toast(`${f.name} dropped by!`);
+      toast(`${f.name} dropped by`);
       return true;
     }
     function endVisit(a) {
@@ -4571,7 +4571,7 @@ if (demo) {
       return real;
     }
     function celebrate(names) {
-      toast(`New for the kitchen: ${names[names.length - 1]}!`);
+      toast(`New for the kitchen: ${names[names.length - 1]}`);
       agents.forEach((a) => { a.happy = 1.6; a.jump = RM ? 0 : 0.45; });
       const c = P(agents[0].u, agents[0].v, 60);
       emit('spark', c[0], c[1]);
@@ -4592,7 +4592,7 @@ if (demo) {
       saveFridge();
       drawFridge();
       renderTray();
-      toast(`${stickerById(id).name}, on the fridge!`);
+      toast(`${stickerById(id).name}, on the fridge`);
     }
 
     /* Tap the floor to walk Yolkie; tap anyone to say hi; tap a figurine to meet them; drag stickers on the fridge */
@@ -4685,7 +4685,7 @@ if (demo) {
         build();
         renderControls();
         $(`[data-k-home="${id}"]`).focus();
-        toast(size > 1 && was === 1 ? 'The kitchen got bigger!' : size === 1 ? 'Just you and the kitchen' : opts.away.includes(id) ? `${rawName(id)} headed out` : `${rawName(id)} is home!`);
+        toast(size > 1 && was === 1 ? 'The kitchen got bigger' : size === 1 ? 'Just you and the kitchen' : opts.away.includes(id) ? `${rawName(id)} headed out` : `${rawName(id)} is home`);
       }
       const rot = e.target.closest('[data-k-rot]');
       if (rot) { const k = Number(rot.dataset.kRot); fridge[k].r = Math.max(-24, Math.min(24, fridge[k].r + Number(rot.dataset.d))); picked = k; saveFridge(); drawFridge(); renderTray(); $(`[data-k-rot="${k}"][data-d="${rot.dataset.d}"]`).focus(); }
@@ -4931,7 +4931,7 @@ if (demo) {
           const fresh = water.bloom && opts.bloomDay !== dayKey();
           setTimeout(() => {
             sway = 1.4;
-            if (fresh) { const c = has('plant') ? P(N - 0.55, 1.45, 90) : P(3.5, 0.42, 100); emit('spark', c[0], c[1]); toast(has('plant') ? 'The plant bloomed!' : 'Bottle full!'); opts.bloomDay = dayKey(); saveOpts(); }
+            if (fresh) { const c = has('plant') ? P(N - 0.55, 1.45, 90) : P(3.5, 0.42, 100); emit('spark', c[0], c[1]); toast(has('plant') ? 'The plant bloomed' : 'Bottle full'); opts.bloomDay = dayKey(); saveOpts(); }
           }, 500);
         }
       },
@@ -4948,7 +4948,7 @@ if (demo) {
         if (hit) {
           const c = has('plant') ? P(N - 0.55, 1.45, 90) : P(3.5, 0.42, 100);
           emit('spark', c[0], c[1]);
-          toast(has('plant') ? 'The plant bloomed!' : 'Bottle full!');
+          toast(has('plant') ? 'The plant bloomed' : 'Bottle full');
           opts.bloomDay = dayKey();
           saveOpts();
         }
@@ -5140,7 +5140,7 @@ if (demo) {
         <ul class="gem-key">${[1, 2, 3].map((k) => `<li>${gemSvg(k)}<span><strong>${RARITY[k].name}</strong> ${['', 'Quick recipes', 'Longer recipes, or your first of a cuisine', 'The whole house ate together'][k]}</span></li>`).join('')}</ul>
         <h4 class="mini-head">Sets</h4>
         <div class="tags set-tags">${chip('all', 'All cards', got, RECIPES.length, false)}${col.sets.map((x) => chip(x.id, x.name, x.got, x.ids.length, x.got === x.ids.length)).join('')}</div>
-        ${info ? `<p class="set-line${info.got === info.ids.length ? ' is-done' : ''}">${info.got === info.ids.length ? `<span class="icon" aria-hidden="true">auto_awesome</span>Complete! Bonus in the kitchen: ${esc(info.bonusName)}.` : `${info.got} of ${info.ids.length}. Finish the set for a kitchen bonus: ${esc(info.bonusName)}.`}</p>` : ''}
+        ${info ? `<p class="set-line${info.got === info.ids.length ? ' is-done' : ''}">${info.got === info.ids.length ? `<span class="icon" aria-hidden="true">auto_awesome</span>Complete. Bonus in the kitchen: ${esc(info.bonusName)}.` : `${info.got} of ${info.ids.length}. Finish the set for a kitchen bonus: ${esc(info.bonusName)}.`}</p>` : ''}
         <div class="binder">${list.map((r) => cardHtml(r, col.cards[r.id])).join('')}</div>
       </section>`;
   }
@@ -5364,7 +5364,7 @@ if (demo) {
           <div class="gift__box" aria-hidden="true"><span class="gift__lid"></span><span class="gift__base"></span></div>
           <div class="gift__prize">${stickerSvg(gift.id)}<span class="gift__tag">From ${memberName('you')}</span></div>
         </div>
-        <h3 class="gift__title" tabindex="-1">${esc(st.name)}, for ${memberName(gift.to)}!</h3>
+        <h3 class="gift__title" tabindex="-1">${esc(st.name)}, for ${memberName(gift.to)}</h3>
         <p class="fine">It’s in ${memberName(gift.to)}’s sticker book now. Sticker books are private, so only ${memberName(gift.to)} sees it there.</p>
         <div class="sheet-actions"><button type="button" class="btn btn--primary js-close">Pass the phone back</button></div>`
       : `<div class="gift"><div class="gift__box" aria-hidden="true"><span class="gift__lid"></span><span class="gift__base"></span></div></div>
@@ -6316,7 +6316,7 @@ if (rr) {
       return;
     }
     if (f.company.value) { finish(); return; } // filled spam trap: look successful, send nothing
-    if (sentRecently('removal')) { setFace('sleepy'); say('You sent a request a moment ago! Give it 30 seconds, then send this one.', true); return; }
+    if (sentRecently('removal')) { setFace('sleepy'); say('You sent a request a moment ago. Give it 30 seconds, then send this one.', true); return; }
     submit.disabled = true;
     say('Sending…');
     try {

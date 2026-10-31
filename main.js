@@ -476,7 +476,7 @@ if (signup) {
     if (signup.elements.company.value) { finish(); return; } // filled spam trap: look successful, send nothing
     if (sentRecently('waitlist')) {
       setFace('sleepy');
-      say('You just signed up a moment ago! Give it 30 seconds, then try again.', true);
+      say('You just signed up a moment ago. Give it 30 seconds, then try again.', true);
       return;
     }
     submit.disabled = true;
@@ -485,7 +485,7 @@ if (signup) {
       const result = await sbInsert('waitlist', { email: email.value.trim().toLowerCase(), must_have: mustHave.value.trim() || null, source });
       markSent('waitlist');
       say('');
-      if (result === 'duplicate') finish('You’re already on the list!', 'No need to sign up twice. We’ll email you when Yolkie has something to tap.');
+      if (result === 'duplicate') finish('You’re already on the list', 'No need to sign up twice. We’ll email you when Yolkie has something to tap.');
       else finish();
     } catch (err) {
       setFace('meh');
@@ -757,7 +757,7 @@ if (fb) {
     if (f.company.value) { finish(); return; } // filled spam trap: look successful, send nothing
     if (sentRecently('feedback')) {
       setFace('sleepy');
-      say('You sent a note a moment ago! Give it 30 seconds, then send this one.', true);
+      say('You sent a note a moment ago. Give it 30 seconds, then send this one.', true);
       return;
     }
     // Files go with every kind of note. If uploading them fails, the note can still go without them.
