@@ -1,3 +1,14 @@
+/* Fonts, served from this site (SIL Open Font License, see assets/fonts/OFL-*.txt). Only what the site uses:
+   Bricolage at 800 for headings, DM Sans 400 to 700 for text, latin and latin-ext. The icons still come from Google. */
+@font-face { font-family: 'Bricolage Grotesque'; font-style: normal; font-weight: 800; font-stretch: 75% 100%; font-display: swap;
+  src: url(assets/fonts/bricolage-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Bricolage Grotesque'; font-style: normal; font-weight: 800; font-stretch: 75% 100%; font-display: swap;
+  src: url(assets/fonts/bricolage-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url(assets/fonts/dmsans-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url(assets/fonts/dmsans-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
 /* ==========================================================================
    1. TOKENS: Modernist, in the Yolkie brand-kit palette.
       Plum is structure, yolk is the one thing to look at, basil means done.
@@ -594,6 +605,7 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
   background: var(--surface-2); font-size: var(--fs-base-s); font-weight: 600; color: var(--text);
 }
 .demo-badge .icon { font-size: 18px; color: var(--accent); }
+.demo-meta__short { display: none; }
 
 /* Progress track: four stops, like the landing page's steps */
 .demo-track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 24px 0 0; padding: 0; list-style: none; position: relative; }
@@ -1297,12 +1309,12 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 
 /* The landing page's short feature lines */
 .feature-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 16px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
-.feature-list li { display: grid; gap: 12px; align-content: start; padding: 24px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.feature-list li { display: grid; grid-template-rows: auto 1fr auto; gap: 12px; padding: 24px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .feature-list .icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--yolk); color: var(--ink); font-size: 24px; }
 .feature-list p { color: var(--text-dim); }
 .feature-list strong { display: block; margin-bottom: 4px; color: var(--text); font: 800 var(--fs-xl)/1.15 var(--font-display); font-stretch: 86%; }
-.feature-list__try { background: var(--yolk-soft); }
-.feature-list__try a { color: var(--text); font-weight: 700; text-decoration-color: var(--accent); text-decoration-thickness: 2px; }
+/* Each feature opens its own view in the demo */
+.feature-list__try { justify-self: start; display: inline-flex; align-items: center; min-height: var(--tap); color: var(--text); font-weight: 700; text-decoration-color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 4px; }
 
 /* ==========================================================================
    3d. COLLECTION, HOUSEHOLD AND FRIENDS: cards, stickers, figurines, the Pantry-dex,
@@ -1829,9 +1841,19 @@ ol.recent { padding-left: 0; }
   .page-hero .eyebrow, .page-hero .lede { display: none; }
   .page-hero h1 { font-size: var(--fs-2xl); letter-spacing: -0.02em; }
   .demo { padding-top: var(--sp-2); }
-  .demo-meta { gap: var(--sp-1) var(--sp-2); }
+  .demo .demo-meta { gap: var(--sp-1) var(--sp-2); }   /* .demo: outranks the base rule further down */
+  .demo-meta .btn { padding-inline: var(--sp-3); }
+  .demo-meta__long { display: none; }   /* "Feedback" fits beside the badge, one row instead of two */
+  .demo-meta__short { display: inline; }
   .demo-badge { padding: 4px 12px; font-size: var(--fs-xs); }
-  .demo-track { margin-top: var(--sp-3); }
+  .demo-track { margin: var(--sp-2) 0 var(--sp-3); }
+  .stage__sub { margin-bottom: var(--sp-3); }
+  .demo-track::before { top: 11px; }
+  .demo-track li { gap: var(--sp-1); }
+  .demo-track li::before { width: 24px; height: 24px; }
+  /* Meal tiles lie flat (icon beside the word) so all four fit on the first screen */
+  .choices--meal .choice__face { flex-direction: row; min-height: 56px; gap: var(--sp-2); }
+  .choices--meal .choice__face .icon { font-size: 24px; }
   .yolk-bar { margin: var(--sp-3) 0 var(--sp-2); }
   .stage[data-stage="check"] .stage-actions { margin-inline: calc(-1 * var(--sp-4)); }
   .now-card { padding: 24px 20px; min-height: 230px; }
@@ -2415,6 +2437,7 @@ button.badge:disabled { opacity: .6; cursor: progress; }
 @media (max-width: 360px) {
   .ad__frame::before { left: -2%; width: 104%; }
   .demo-bar { gap: var(--sp-2); }
+  .demo-badge .icon { display: none; }   /* keeps the badge and Feedback on one row */
   .demo-tabs { min-width: 0; gap: 2px; }
   .demo-tabs [role="tab"] { min-width: 0; padding: 0 2px; font-size: var(--fs-sm); }
 }
