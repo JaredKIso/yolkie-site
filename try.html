@@ -108,7 +108,7 @@
         </div>
         <div class="js-remember"></div>
         <fieldset class="choice-group">
-          <legend>Meal</legend>
+          <legend>Meal<span class="choice-group__picked js-picked" aria-hidden="true"></span></legend>
           <div class="choices choices--4 choices--meal">
             <label class="choice"><input type="radio" name="meal" value="breakfast"><span class="choice__face"><span class="icon" aria-hidden="true">egg_alt</span>Breakfast</span></label>
             <label class="choice"><input type="radio" name="meal" value="lunch"><span class="choice__face"><span class="icon" aria-hidden="true">lunch_dining</span>Lunch</span></label>
@@ -117,7 +117,7 @@
           </div>
         </fieldset>
         <fieldset class="choice-group">
-          <legend>Energy</legend>
+          <legend>Energy<span class="choice-group__picked js-picked" aria-hidden="true"></span></legend>
           <div class="choices">
             <label class="choice"><input type="radio" name="energy" value="1"><span class="choice__face"><span class="icon" aria-hidden="true">battery_1_bar</span>Wiped</span></label>
             <label class="choice"><input type="radio" name="energy" value="2"><span class="choice__face"><span class="icon" aria-hidden="true">battery_4_bar</span>Okay</span></label>
@@ -125,7 +125,7 @@
           </div>
         </fieldset>
         <fieldset class="choice-group">
-          <legend>Time</legend>
+          <legend>Time<span class="choice-group__picked js-picked" aria-hidden="true"></span></legend>
           <div class="choices choices--4">
             <label class="choice"><input type="radio" name="time" value="15"><span class="choice__face">15 min<small>quick</small></span></label>
             <label class="choice"><input type="radio" name="time" value="30"><span class="choice__face">30 min<small>normal</small></span></label>
@@ -235,12 +235,34 @@
             <div class="panel done-panel js-gains-more"></div>
             <div class="panel js-rate"></div>
             <div class="panel js-who"></div>
+            <p><button type="button" class="btn btn--secondary btn--small js-see-me"><span class="icon" aria-hidden="true">person</span>See my progress</button></p>
           </div>
         </details>
+        <!-- The waitlist, right where the demo pays off. Hidden once this browser has joined. -->
+        <form class="panel signup signup--short js-signup" data-source="demo" novalidate aria-labelledby="done-signup-title">
+          <div class="signup__fields">
+            <h3 class="signup__title" id="done-signup-title">Want this every day?</h3>
+            <p class="signup__lede">Yolkie is still being built. Leave your email and we'll tell you when there's something to tap.</p>
+            <div class="field">
+              <label for="done-email">Your email</label>
+              <div class="signup__row">
+                <input id="done-email" type="email" name="email" autocomplete="email" inputmode="email" required maxlength="254" aria-describedby="done-email-note done-signup-status">
+                <button type="submit" class="btn btn--primary signup__submit"><span class="btn__dot" aria-hidden="true"></span>Save me a seat</button>
+              </div>
+              <p class="field__note" id="done-email-note">We'll only use your email for Yolkie updates.</p>
+            </div>
+            <!-- Spam trap: people never see or fill this; bots often do. -->
+            <div class="signup__trap" aria-hidden="true"><label>Company <input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
+            <p class="signup__status js-signup-status" id="done-signup-status" role="status"></p>
+            <button type="button" class="btn btn--secondary btn--small signup__retry js-signup-retry" hidden><span class="icon" aria-hidden="true">refresh</span>Try again</button>
+          </div>
+          <div class="signup__done js-signup-done" hidden>
+            <h3 class="signup__title js-signup-done-title" tabindex="-1">You're on the list</h3>
+            <p class="js-signup-done-text">We'll email you when Yolkie has something to tap. Keep cooking in the meantime.</p>
+          </div>
+        </form>
         <div class="stage-actions">
           <button type="button" class="btn btn--secondary js-again">Pick another meal</button>
-          <button type="button" class="btn btn--secondary js-see-me"><span class="icon" aria-hidden="true">person</span>See my progress</button>
-          <a class="btn btn--primary" href="./#early-access"><span class="btn__dot" aria-hidden="true"></span>Get early access</a>
         </div>
       </div>
 

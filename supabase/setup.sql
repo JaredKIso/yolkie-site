@@ -17,8 +17,9 @@ create table if not exists public.waitlist (
               check (email = lower(email) and char_length(email) between 6 and 254 and email ~ '^[^@\s]+@[^@\s]+\.[^@\s]{2,}$'),
   -- "What would make Yolkie a must-have for you?" (optional)
   must_have   text check (char_length(must_have) <= 2000),
-  -- Where the sign-up came from: the landing page form, or the landing page reached from the help page.
-  source      text not null default 'landing' check (source in ('landing', 'help'))
+  -- Where the sign-up came from: the landing page form, the landing page reached from the help page,
+  -- or the short form on the demo's Done screen.
+  source      text not null default 'landing' check (source in ('landing', 'help', 'demo'))
 );
 
 

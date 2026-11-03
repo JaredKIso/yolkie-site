@@ -194,6 +194,12 @@ Add record**: type `TXT`, name `_dmarc`, content `v=DMARC1; p=none;`. That only 
 report, and blocks nothing; once everything has been delivering fine for a few weeks you can tighten
 it to `p=quarantine`.
 
+## Demo sign-ups
+
+The demo's Done screen has a short waitlist form. Run `demo-source.sql` once (after `setup.sql`) so those
+sign-ups are saved with source `demo`; the admin page marks them "from the demo". Until then they're
+saved as `landing`.
+
 ## Recipe removal requests (request-removal.html)
 
 A creator can ask for one of their recipes to come out of the demo. The page promises we review and remove

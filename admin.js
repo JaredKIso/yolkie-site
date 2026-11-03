@@ -432,7 +432,7 @@
     $('.js-ad-wl-list').innerHTML = rows.length ? rows.map((r) => `
       <li class="admin-wl${isFresh(r) ? ' is-fresh' : ''}">
         <span class="admin-wl__email">${esc(r.email)}</span>
-        <span class="admin-row__meta">${isFresh(r) ? '<span class="admin-new">New</span>' : ''}${fmtDate(r.created_at)}${r.source === 'help' ? ' · via the help page' : ''}</span>
+        <span class="admin-row__meta">${isFresh(r) ? '<span class="admin-new">New</span>' : ''}${fmtDate(r.created_at)}${r.source === 'help' ? ' · via the help page' : r.source === 'demo' ? ' · from the demo' : ''}</span>
         ${r.must_have ? `<span class="admin-wl__answer">${esc(r.must_have)}</span>` : ''}
         ${testerControls(r.email)}
       </li>`).join('') : '<li class="admin-empty">Nobody matches that search. Try fewer letters?</li>';

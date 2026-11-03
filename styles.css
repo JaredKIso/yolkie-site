@@ -569,6 +569,17 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 .signup__done { text-align: center; padding: 8px 0 4px; }
 .signup__done p { margin: 0 auto 20px; max-width: 32ch; color: var(--text-dim); }
 .signup .confetti { border-radius: var(--radius-l); }
+/* The short waitlist form on the demo's Done screen: no Yolkie peeking, email and button on one row */
+.signup--short { margin-top: 16px; padding: 24px; box-shadow: none; }
+.signup--short .signup__title { margin-bottom: var(--sp-2); font-size: var(--fs-2xl); text-align: left; }
+.signup--short .signup__lede { margin-bottom: var(--sp-4); color: var(--text-dim); }
+.signup__row { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: end; }
+.signup__row input[type="email"] { flex: 1 1 220px; width: auto; }
+.signup--short .signup__submit { flex: 0 0 auto; width: auto; margin-top: 0; }
+.signup--short .signup__status { text-align: left; }
+.signup--short .signup__status:empty { min-height: 0; margin: 0; }
+.signup--short .signup__done { text-align: left; }
+.signup--short .signup__done p { margin: 0; max-width: none; }
 
 /* Footer */
 .site-footer {
@@ -610,7 +621,12 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 /* Progress track: four stops, like the landing page's steps */
 .demo-track { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 24px 0 0; padding: 0; list-style: none; position: relative; }
 .demo-track::before { content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 15px; height: 2px; background: var(--line); }
-.demo-track li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
+/* The line fills in green up to the current step (go() sets --track from 0 to 1) */
+.demo-track::after {
+  content: ""; position: absolute; left: 12.5%; right: 12.5%; top: 15px; height: 2px; background: var(--basil);
+  transform: scaleX(var(--track, 0)); transform-origin: left; transition: transform var(--dur-l) var(--ease);
+}
+.demo-track li { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: var(--fs-sm); font-weight: 600; color: var(--text-dim); }
 .demo-track li::before {
   content: ""; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--line); background: var(--bg);
   transition: background var(--dur-m) var(--ease), border-color var(--dur-m) var(--ease);
@@ -645,6 +661,13 @@ main { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
 /* Choice tiles (radio buttons) */
 .choice-group { margin: 0 0 24px; padding: 0; border: 0; min-width: 0; }
 .choice-group legend { padding: 0; margin-bottom: 12px; font: 800 var(--fs-xl)/1.2 var(--font-display); font-stretch: 86%; }
+/* Your answer, repeated beside the question */
+.choice-group__picked:not(:empty) { margin-left: var(--sp-2); font: 600 var(--fs-base-s)/1.2 var(--font-body); color: var(--text-dim); animation: fade-in var(--dur-m) var(--ease); }
+.choice-group__picked:not(:empty)::before { content: "· "; }
+/* The next question to answer gets a brief outline after a tap, once */
+.choice-group .choices { border-radius: var(--radius-l); outline: 2px solid transparent; outline-offset: 6px; }
+.choice-group.is-next .choices { animation: next-up 1.2s var(--ease) 1; }
+@keyframes next-up { 0%, 50% { outline-color: var(--accent); } 100% { outline-color: transparent; } }
 .choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .choices--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .choice { position: relative; display: block; cursor: pointer; }
@@ -1848,7 +1871,8 @@ ol.recent { padding-left: 0; }
   .demo-badge { padding: 4px 12px; font-size: var(--fs-xs); }
   .demo-track { margin: var(--sp-2) 0 var(--sp-3); }
   .stage__sub { margin-bottom: var(--sp-3); }
-  .demo-track::before { top: 11px; }
+  .demo-track::before, .demo-track::after { top: 11px; }
+  .signup--short .signup__submit { flex-basis: 100%; }
   .demo-track li { gap: var(--sp-1); }
   .demo-track li::before { width: 24px; height: 24px; }
   /* Meal tiles lie flat (icon beside the word) so all four fit on the first screen */
@@ -2319,6 +2343,8 @@ button.badge:disabled { opacity: .6; cursor: progress; }
 
 /* Stage changes: a short slide and fade (a plain fade with reduced motion) */
 .is-entering { animation: stage-in var(--dur-m) var(--ease); }
+.is-entering.is-back { animation-name: stage-back; }   /* going back slides down instead of up */
+@keyframes stage-back { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 @keyframes stage-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 

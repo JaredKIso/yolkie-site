@@ -421,20 +421,26 @@ const Sound = (() => {
   };
 })();
 
-// Waitlist form: Yolkie watches you fill it in, then it saves to the `waitlist` table. Arriving from
-// the help page (./?from=help#early-access) marks the sign-up's source as "help".
-const signup = document.querySelector('.js-signup');
-if (signup) {
+// Waitlist forms: Yolkie watches you fill them in, then they save to the `waitlist` table. The source is
+// the form's data-source ("demo" for the one on the demo's Done screen), else ?from=help or ?from=demo on
+// the landing page's URL, else "landing". The full form has Yolkie's face and a must-have question; the
+// short one on the Done screen has neither.
+const SOURCES = ['landing', 'help', 'demo'];
+document.querySelectorAll('.js-signup').forEach((signup) => {
   const face = signup.querySelector('.js-signup-yolk');
-  const dir = face.getAttribute('src').replace(/[^/]+$/, '');
+  const dir = face ? face.getAttribute('src').replace(/[^/]+$/, '') : '';
   const email = signup.querySelector('input[type="email"]');
   const mustHave = signup.querySelector('[name="must_have"]');
   const status = signup.querySelector('.js-signup-status');
   const submit = signup.querySelector('[type="submit"]');
   const retry = signup.querySelector('.js-signup-retry');
-  const source = new URLSearchParams(location.search).get('from') === 'help' ? 'help' : 'landing';
-  ['happy', 'meh', 'sleepy', 'surprised'].forEach((m) => { new Image().src = `${dir}yolk-${m}.svg`; });
+  const from = signup.dataset.source || new URLSearchParams(location.search).get('from');
+  const source = SOURCES.includes(from) ? from : 'landing';
+  // The demo's short form steps aside once this browser has joined from either form.
+  if (signup.dataset.source === 'demo') { try { if (localStorage.getItem('yolkie-joined')) signup.hidden = true; } catch (e) {} }
+  if (face) ['happy', 'meh', 'sleepy', 'surprised'].forEach((m) => { new Image().src = `${dir}yolk-${m}.svg`; });
   const setFace = (m, cls) => {
+    if (!face) return;
     if (!face.getAttribute('src').endsWith(`yolk-${m}.svg`)) face.src = `${dir}yolk-${m}.svg`;
     replay(face, cls);
   };
@@ -448,11 +454,12 @@ if (signup) {
   email.addEventListener('input', () => {
     if (email.getAttribute('aria-invalid')) { email.removeAttribute('aria-invalid'); say(''); }
     const mood = looksValid() ? 'happy' : 'surprised';
-    if (!face.getAttribute('src').endsWith(`yolk-${mood}.svg`)) setFace(mood);
+    if (face && !face.getAttribute('src').endsWith(`yolk-${mood}.svg`)) setFace(mood);
   });
   email.addEventListener('blur', () => { if (!email.value) setFace('default'); });
 
   const finish = (title, text) => {
+    try { localStorage.setItem('yolkie-joined', '1'); } catch (e) {}
     signup.querySelector('.signup__fields').hidden = true;
     const done = signup.querySelector('.js-signup-done');
     done.hidden = false;
@@ -460,7 +467,8 @@ if (signup) {
     if (text) done.querySelector('.js-signup-done-text').textContent = text;
     done.querySelector('.js-signup-done-title').focus({ preventScroll: true });
     setFace('happy', 'is-celebrating');
-    confetti(signup.querySelector('.js-signup-confetti'));
+    const burst = signup.querySelector('.js-signup-confetti');
+    if (burst) confetti(burst);
   };
 
   signup.addEventListener('submit', async (e) => {
@@ -481,8 +489,15 @@ if (signup) {
     }
     submit.disabled = true;
     say('Sending…');
+    const row = { email: email.value.trim().toLowerCase(), must_have: (mustHave && mustHave.value.trim()) || null, source };
     try {
-      const result = await sbInsert('waitlist', { email: email.value.trim().toLowerCase(), must_have: mustHave.value.trim() || null, source });
+      let result;
+      try { result = await sbInsert('waitlist', row); }
+      catch (err) {
+        // Until supabase/demo-source.sql has run, the table only accepts "landing" and "help".
+        if (err.message !== 'HTTP 400' || source !== 'demo') throw err;
+        result = await sbInsert('waitlist', { ...row, source: 'landing' });
+      }
       markSent('waitlist');
       say('');
       if (result === 'duplicate') finish('You’re already on the list', 'No need to sign up twice. We’ll email you when Yolkie has something to tap.');
@@ -498,10 +513,10 @@ if (signup) {
   retry.addEventListener('click', () => signup.requestSubmit());
 
   // "Get early access" links on this page: scroll to the card, then put the cursor in the email field.
-  document.querySelectorAll('a[href="#early-access"]').forEach((a) => a.addEventListener('click', () => {
+  if (signup.closest('#early-access')) document.querySelectorAll('a[href="#early-access"]').forEach((a) => a.addEventListener('click', () => {
     setTimeout(() => { if (!email.closest('[hidden]')) email.focus({ preventScroll: true }); }, reduceMotion ? 0 : 450);
   }));
-}
+});
 
 // Calories and protein: one switch, shared by both pages, remembered on this device.
 const nutritionOn = () => !root.classList.contains('hide-nutrition');

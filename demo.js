@@ -1972,12 +1972,13 @@ if (demo) {
   /* Tabs: Cook, Me, House, Collection */
   const tabs = $$('[role="tab"]');
   // A screen that just appeared slides in (fades in with reduced motion: see the CSS).
-  function enter(el) {
+  function enter(el, back = false) {
     if (!el) return;
-    el.classList.remove('is-entering');
+    el.classList.remove('is-entering', 'is-back');
     void el.offsetWidth;
     el.classList.add('is-entering');
-    el.addEventListener('animationend', () => el.classList.remove('is-entering'), { once: true });
+    el.classList.toggle('is-back', back);
+    el.addEventListener('animationend', () => el.classList.remove('is-entering', 'is-back'), { once: true });
   }
   // Tester tools (the sample week, the Kitchen's preview slider) show only with ?tester=1, for this visit.
   const TESTER = (() => { try { if (/[?&]tester=1/.test(location.search)) sessionStorage.setItem('yolkie-tester', '1'); return sessionStorage.getItem('yolkie-tester') === '1'; } catch (e) { return /[?&]tester=1/.test(location.search); } })();
@@ -2018,13 +2019,18 @@ if (demo) {
 
   // Stages: one visible at a time; the track shows how far along you are.
   const ORDER = ['pick', 'check', 'cook', 'done'];
+  // Yolkie's picks is a side trip from Pick: going there is forward, coming back from it is back.
+  const place = (name) => (name === 'vote' ? 0.5 : ORDER.indexOf(name));
+  let stageNow = 'pick';
   function go(name) {
     if (prefs.tab !== 'cook') showTab('cook');
     $$('[data-stage]').forEach((s) => { s.hidden = s.dataset.stage !== name; });
-    enter($(`[data-stage="${name}"]`));
+    enter($(`[data-stage="${name}"]`), place(name) < place(stageNow));
+    stageNow = name;
     // While cooking, the cook tracker (Prep → Plate) takes over from the demo's own progress bar.
     $('.demo-track').hidden = name === 'cook';
     const pos = ORDER.indexOf(name === 'vote' ? 'pick' : name);
+    $('.demo-track').style.setProperty('--track', pos / (ORDER.length - 1));
     $$('[data-track]').forEach((li, i) => {
       li.classList.toggle('is-done', i < pos);
       if (i === pos) li.setAttribute('aria-current', 'step'); else li.removeAttribute('aria-current');
@@ -2352,7 +2358,7 @@ if (demo) {
         <p class="fine nutri">Per serving, estimated.</p>
         <p class="have-line">${state.have.length
           ? `You have ${esc(listText(state.have.map(haveLabel)))}. <button type="button" class="link-btn js-have-change">Change</button>`
-          : '<button type="button" class="link-btn js-have-change">Add what you already have</button>'}</p>
+          : 'Got something in the fridge? <button type="button" class="link-btn js-have-change">Use it</button>'}</p>
         ${state.fromCheckin ? `<div class="ready-list"><p><span class="icon" aria-hidden="true">shopping_cart</span><strong>Shopping list ready</strong>· ${plural(need.length, 'item')}</p>
           <ul>${need.map((i) => { const a = amountFor(i, r, state.servings); return `<li>${a.qty ? `${a.qty} ` : ''}${a.name}</li>`; }).join('')}</ul></div>` : ''}
         ${note ? `<p class="meal-note">${note}</p>` : ''}
@@ -2688,10 +2694,14 @@ if (demo) {
     if (input.name === 'meal') { state.eaters = slotEaters(); renderExtras(); }
     state.fromCheckin = false;
     savePick();
+    markPicked(input.name);
     let line = null;
     if (state.meal && state.energy && state.time) {
-      if (state.haveDone) { rank(); line = suggest(false); }
-      else { renderHave(false); line = ['default', 'Before I pick: anything already in the fridge?']; }
+      // Three taps, one meal: what's in the fridge is an option on the card, not a step before it.
+      const fresh = !state.shown;
+      rank();
+      line = suggest(false);
+      if (fresh) revealSlot();
     }
     const first = input.name === 'meal' ? MEALS[state.meal].say : input.name === 'energy' ? ENERGY[state.energy] : null;
     if (first) yolk(...first, line ? { then: line, after: 1500 } : {});
@@ -2702,7 +2712,35 @@ if (demo) {
     $$('input[name="meal"]').forEach((i) => { i.checked = i.value === state.meal; });
     $$('input[name="energy"]').forEach((i) => { i.checked = Number(i.value) === state.energy; });
     $$('input[name="time"]').forEach((i) => { i.checked = Number(i.value) === state.time; });
+    markPicked();
   };
+  // Each question's heading repeats your answer ("Energy · Okay"). After a tap, the next unanswered
+  // question gets a brief outline, so you know where to look.
+  const PICK_ROWS = ['meal', 'energy', 'time'];
+  function markPicked(tapped) {
+    PICK_ROWS.forEach((name) => {
+      const on = $(`input[name="${name}"]:checked`);
+      const out = on && on.closest('.choice-group').querySelector('.js-picked');
+      $$(`input[name="${name}"]`)[0].closest('.choice-group').querySelector('.js-picked').textContent = '';
+      if (out) out.textContent = [...on.nextElementSibling.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim();
+    });
+    if (!tapped) return;
+    const next = PICK_ROWS.find((name) => !$(`input[name="${name}"]:checked`));
+    if (!next || reduceMotion) return;
+    const row = $(`input[name="${next}"]`).closest('.choice-group');
+    row.classList.remove('is-next');
+    void row.offsetWidth;
+    row.classList.add('is-next');
+    row.addEventListener('animationend', () => row.classList.remove('is-next'), { once: true });
+  }
+  // A first suggestion slides up to just under the header, unless its top is already comfortably on screen.
+  function revealSlot() {
+    const head = document.querySelector('.site-header');
+    const top = head ? head.getBoundingClientRect().bottom + 8 : 8;
+    const box = slot.getBoundingClientRect();
+    if (box.top >= top && box.top + 200 <= window.innerHeight) return;
+    window.scrollTo({ top: Math.max(0, box.top + window.scrollY - top), behavior: reduceMotion ? 'auto' : 'smooth' });
+  }
 
   slot.addEventListener('click', (e) => {
     const t = e.target;
@@ -3486,9 +3524,9 @@ if (demo) {
     rate.innerHTML = rateHtml(meal);
     who.innerHTML = whoHtml(meal);
     who.hidden = !who.innerHTML;
-    // Once, after the first meal you really cook: point at the Kitchen behind Extras.
+    // Once, after the second meal you really cook: point at the Kitchen behind Extras.
     const nudge = $('.js-extras-nudge');
-    if (!prefs.extrasNudge && mine && !sampleOn()) { prefs.extrasNudge = 'shown'; savePrefs(); d.nudge = true; }
+    if (!prefs.extrasNudge && mine && !sampleOn() && s.cooked >= 2) { prefs.extrasNudge = 'shown'; savePrefs(); d.nudge = true; }
     nudge.hidden = !d.nudge;
   }
   // Ratings: one tap per person who ate. Single device, so pass the phone.
@@ -3609,7 +3647,7 @@ if (demo) {
   });
   $('.js-again').addEventListener('click', () => {
     checkRadios();
-    if (state.meal && state.energy && state.time) renderHave(false);
+    if (state.meal && state.energy && state.time) { rank(); suggest(false); }
     go('pick');
     yolk('default', 'Round two? Same questions, new meal.');
   });
@@ -6242,7 +6280,8 @@ if (demo) {
     syncBanner();
     dress();
     if (state.meal && state.energy && state.time) {
-      if (state.haveDone) { rank(); suggest(false); } else renderHave(false);
+      rank();
+      suggest(false);
     }
     if (openFeature()) return;
     // An invite link (#join=YOLK-XXXX) opens the join screen with the code filled in.
